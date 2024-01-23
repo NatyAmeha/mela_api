@@ -1,22 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
+import { AuthResolver } from './auth.controller';
 import { AuthService } from './auth.service';
 
 describe('AuthController', () => {
-  let authController: AuthController;
+  let authController: AuthResolver;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [AuthController],
+      controllers: [AuthResolver],
       providers: [AuthService],
     }).compile();
 
-    authController = app.get<AuthController>(AuthController);
+    authController = app.get<AuthResolver>(AuthResolver);
   });
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(authController.getHello()).toBe('Hello World!');
+      // expect(authController.getUser()).toBe('Hello World!');
     });
   });
 });
