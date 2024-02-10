@@ -2,12 +2,18 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Query {
-  me(email: String!, passwrod: String!): User!
+interface Animal {
+  name: String!
 }
 
-type User {
+type Query {
+  me(email: String!, passwrod: String!): User!
+  token: String
+}
+
+type User implements Animal {
   email: String
+  name: String!
   password: String
   pin: Int
 }

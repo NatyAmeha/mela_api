@@ -10,6 +10,11 @@ export class AuthResolver {
 
   @Query(returns => User, { name: "me" })
   getUser(@Args() emailDto: EmailAuthArgs): User {
-    return new User({ email: emailDto.email, password: emailDto.passwrod });
+    return new User({ email: emailDto.email, password: this.authService.getHello() });
+  }
+
+  @Query(returns => String, { name: "token", nullable: true })
+  getAuthToken(): String {
+    return "fake jwt token"
   }
 }
