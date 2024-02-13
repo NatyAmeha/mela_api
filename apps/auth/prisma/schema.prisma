@@ -11,6 +11,14 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  userName String? @unique
+  id              String  @id @default(auto()) @map("_id") @db.ObjectId
+  email           String? @unique
+  phoneNumber     String?
+  username        String?
+  firstName       String?
+  lastName        String?
+  password        String?
+  profileImageUrl String?
+  refreshToken    String?
+  accountStatus   String? @default("PENDING")
 }

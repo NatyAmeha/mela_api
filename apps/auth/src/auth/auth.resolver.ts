@@ -1,20 +1,27 @@
-import { Controller, Get } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { Args, Query, Resolver } from '@nestjs/graphql';
-import { User } from './user.model';
-import { EmailAuthArgs } from './dto/email_auth_args.dto';
+import { Controller, Get, Logger } from '@nestjs/common';
+import { AuthService } from './usecase/auth.service';
+import { Args, InputType, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { User } from './model/user.model';
+
+import { SignupInput } from './dto/signup.input';
+import { AuthResponse } from './model/auth.response';
 
 @Resolver(of => User)
 export class AuthResolver {
   constructor(private readonly authService: AuthService) { }
 
   @Query(returns => User, { name: "me" })
-  getUser(@Args() emailDto: EmailAuthArgs): User {
-    return new User({ email: emailDto.email, password: this.authService.getHello() });
+  getUser(): User {
+    return new User({ email: "Natnael" });
   }
 
-  @Query(returns => String, { name: "token", nullable: true })
-  getAuthToken(): String {
-    return "fake jwt token"
+  @Mutation(returns => AuthResponse)
+  async createUserAccount(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse> {
+    // register user account with pending status
+    // create refreshtoken, auth token
+    var userInfo = User.createUserFromSignupInfo(signupInfo);
+    var result = await this.authService.createUserAccount(userInfo);
+    return result;
   }
+
 }
