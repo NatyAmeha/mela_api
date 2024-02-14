@@ -17,11 +17,15 @@ export class AuthResolver {
 
   @Mutation(returns => AuthResponse)
   async createUserAccount(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse> {
-    // register user account with pending status
-    // create refreshtoken, auth token
-    var userInfo = User.createUserFromSignupInfo(signupInfo);
-    var result = await this.authService.createUserAccount(userInfo);
-    return result;
+    try {
+      // register user account with pending status
+      // create refreshtoken, auth token
+      var userInfo = User.createUserFromSignupInfo(signupInfo);
+      var result = await this.authService.createUserAccount(userInfo);
+      return result;
+    } catch (ex) {
+      console.log("exception", ex);
+    }
   }
 
 }

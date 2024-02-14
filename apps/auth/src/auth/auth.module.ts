@@ -6,13 +6,16 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import Joi from 'joi';
 import { CommonModule } from '@app/common';
-import { UserRepository, IUserRepository } from './user.repository';
+import { UserRepository } from './user.repository';
 import { LoggerModule } from '@app/logger';
-import { PassportModule } from '@nestjs/passport';
 import { configuration } from 'apps/auth/configuration';
 import { AccessTokenStretegy } from './service/jwt.service';
 import { RefreshTokenStrategy } from './service/jwt_refresh.service';
 import { JwtModule } from '@nestjs/jwt';
+import { DatasourceModule, PrismaDataSource } from '@app/datasource';
+import { User } from './model/user.model';
+
+
 
 @Module({
   imports: [
@@ -25,8 +28,8 @@ import { JwtModule } from '@nestjs/jwt';
       //   "NODE_ENV" : Joi.string().valid("development", "production").default("development")
       // })
     }),
+    DatasourceModule,
     JwtModule.register({}),
-    CommonModule,
     LoggerModule,
     GraphQLModule.forRoot({
       driver: ApolloDriver,
@@ -36,6 +39,11 @@ import { JwtModule } from '@nestjs/jwt';
     })
   ],
   controllers: [],
-  providers: [AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy, { provide: IUserRepository, useClass: UserRepository }],
+  providers: [
+    {
+      provide: UserRepository.injectName,
+      useClass: UserRepository
+    },
+    AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy],
 })
 export class AuthModule { }

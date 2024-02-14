@@ -29,6 +29,12 @@
       ],
       "@app/logger/*": [
         "libs/logger/src/*"
+      ],
+      "@app/datasource": [
+        "libs/datasource/src",
+      ],
+      "@app/datasource/*": [
+        "libs/datasource/src/*",
       ]
     }
   }
