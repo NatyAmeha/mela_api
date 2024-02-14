@@ -8,5 +8,5 @@ export class AuthResponse {
     @Field()
     accessToken?: string
     @Field()
-    refreshtoke?: string
+    refreshToken?: string
 }
