@@ -11,11 +11,10 @@ export class AuthServiceExceptionHandler implements GqlExceptionFilter {
         var gqlhost = GqlArgumentsHost.create(host);
         var errorResponse: ErrorResponse;
         if (exception instanceof DbException) {
-            console.log("error insde serialize", exception.error)
             errorResponse = exception.serializeError();
         }
         else if (exception instanceof RequestValidationException) {
-
+            errorResponse = exception.serializeError()
         }
 
         return errorResponse;
