@@ -12,8 +12,7 @@ import { configuration } from 'apps/auth/configuration';
 import { AccessTokenStretegy } from './service/jwt.service';
 import { RefreshTokenStrategy } from './service/jwt_refresh.service';
 import { JwtModule } from '@nestjs/jwt';
-import { DatasourceModule, AuthServicePrismaDataSource } from '@app/datasource';
-import { User } from './model/user.model';
+import { AuthServicePrismaDataSource } from './data/datasource/auth_service_prisma_datasource.impl';
 
 
 
@@ -28,7 +27,6 @@ import { User } from './model/user.model';
       //   "NODE_ENV" : Joi.string().valid("development", "production").default("development")
       // })
     }),
-    DatasourceModule,
     JwtModule.register({}),
     LoggerModule,
     GraphQLModule.forRoot({

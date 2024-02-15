@@ -1,15 +1,15 @@
 import { BaseModel } from "@app/common/base.model";
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
-import { IDataSrouce } from "../../../../../../libs/datasource/src/datasource.interface";
 import { User } from "apps/auth/src/auth/model/user.model";
-import { QueryInfo } from "../../../../../../libs/datasource/src/query_helper";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { DbException } from "@app/common/errors/db_exception";
+import { IDatasource } from "@app/common/datasource_helper/datasource.interface";
+import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 @Injectable()
 // pass The T type with class instance (Eg, new User({})) not js object literal
-export class AuthServicePrismaDataSource<T extends BaseModel> extends PrismaClient implements IDataSrouce<T>, OnModuleInit, OnModuleDestroy {
+export class AuthServicePrismaDataSource<T extends BaseModel> extends PrismaClient implements IDatasource<T>, OnModuleInit, OnModuleDestroy {
     static injectName = "AUTH_SERVICE_PRISMA_DATA_SOURCE"
     async onModuleInit() {
         await this.$connect()
@@ -38,9 +38,9 @@ export class AuthServicePrismaDataSource<T extends BaseModel> extends PrismaClie
         throw new Error("Method not implemented.")
     }
 
-    async findOne(query: QueryInfo<T>): Promise<T> {
-        if (query.query instanceof User) {
-            var userResult = await this.user.findFirst({ where: { email: (query.query as User).email } });
+    async findOne(queryHelper: QueryHelper<T>): Promise<T> {
+        if (queryHelper.query instanceof User) {
+            var userResult = await this.user.findFirst({ where: { email: (queryHelper.query as User).email } });
             if (userResult) {
 
             }
@@ -50,7 +50,7 @@ export class AuthServicePrismaDataSource<T extends BaseModel> extends PrismaClie
             throw Error("error occured")
         }
     }
-    async findMany(query: QueryInfo<T>): Promise<T[]> {
+    async findMany(query: QueryHelper<T>): Promise<T[]> {
         // if (query instanceof User) {
         //     var result = await this.user.findMany({ where: { ...query as User }, orderBy : {email : } });
         //     return new User({ ...result }) as unknown as T;

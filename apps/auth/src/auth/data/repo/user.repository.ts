@@ -1,9 +1,9 @@
-
-import { DatasourceService, IDataSrouce, AuthServicePrismaDataSource, QueryInfo } from "@app/datasource";
-
 import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
 import { User } from "../../model/user.model";
+import { AuthServicePrismaDataSource } from "../datasource/auth_service_prisma_datasource.impl";
+import { IDatasource } from "@app/common/datasource_helper/datasource.interface";
+import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>
@@ -14,13 +14,12 @@ export abstract class IUserRepository {
 export class UserRepository implements IUserRepository {
     static injectName = "USERREPOSITORY";
 
-    constructor(@Inject(AuthServicePrismaDataSource.injectName) private datasource: IDataSrouce<User>) {
+    constructor(@Inject(AuthServicePrismaDataSource.injectName) private datasource: IDatasource<User>) {
     }
 
     async isUserRegisteredBefore(email?: string, phone?: string): Promise<boolean> {
-        var queryInfo: QueryInfo<User> = {
+        var queryInfo: QueryHelper<User> = {
             query: new User({ email, phoneNumber: phone }),
-            unique: true,
         }
         var result = await this.datasource.findOne(queryInfo)
         return result.email != undefined;
