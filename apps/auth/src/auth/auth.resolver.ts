@@ -5,6 +5,7 @@ import { User } from './model/user.model';
 
 import { SignupInput } from './dto/signup.input';
 import { AuthResponse } from './model/auth.response';
+import { AppException } from '@app/common/errors/exception.model';
 
 @Resolver(of => User)
 export class AuthResolver {
@@ -16,16 +17,12 @@ export class AuthResolver {
   }
 
   @Mutation(returns => AuthResponse)
-  async createUserAccount(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse> {
-    try {
-      // register user account with pending status
-      // create refreshtoken, auth token
-      var userInfo = User.createUserFromSignupInfo(signupInfo);
-      var result = await this.authService.createUserAccount(userInfo);
-      return result;
-    } catch (ex) {
-      console.log("exception", ex);
-    }
+  async createUserAccount(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse | AppException> {
+    // register user account with pending status
+    // create refreshtoken, auth token
+    var userInfo = User.createUserFromSignupInfo(signupInfo);
+    var result = await this.authService.createUserAccount(userInfo);
+    return result;
   }
 
 }

@@ -6,13 +6,13 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import Joi from 'joi';
 import { CommonModule } from '@app/common';
-import { UserRepository } from './user.repository';
+import { UserRepository } from './data/repo/user.repository';
 import { LoggerModule } from '@app/logger';
 import { configuration } from 'apps/auth/configuration';
 import { AccessTokenStretegy } from './service/jwt.service';
 import { RefreshTokenStrategy } from './service/jwt_refresh.service';
 import { JwtModule } from '@nestjs/jwt';
-import { DatasourceModule, PrismaDataSource } from '@app/datasource';
+import { DatasourceModule, AuthServicePrismaDataSource } from '@app/datasource';
 import { User } from './model/user.model';
 
 
@@ -44,6 +44,11 @@ import { User } from './model/user.model';
       provide: UserRepository.injectName,
       useClass: UserRepository
     },
-    AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy],
+    {
+      provide: AuthServicePrismaDataSource.injectName,
+      useClass: AuthServicePrismaDataSource
+    },
+    AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy
+  ],
 })
 export class AuthModule { }
