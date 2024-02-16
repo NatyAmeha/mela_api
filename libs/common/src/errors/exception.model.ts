@@ -1,18 +1,12 @@
 import { ErrorResponse } from "./error_response";
 
-export class AppException extends Error {
+export interface AppException extends Error {
     source?: String;
     message: string
     statusCode?: number
     stack?: string;
-    constructor(data: Partial<AppException>) {
-        super();
-        Object.assign(this, data);
-        Object.setPrototypeOf(this, AppException.prototype)
-    }
+    exception?: any;
 
-    serializeError(): ErrorResponse {
-        return {};
-    }
+    serializeError(): ErrorResponse
 
 }

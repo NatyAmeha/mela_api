@@ -2,16 +2,22 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ErrorResponse } from "./error_response";
 import { AppException } from "./exception.model";
 
-export class DbException extends AppException {
+export class DbException implements AppException {
     defaultSTatusCode = 500;
-    constructor(private error: any) {
-        super({});
+    constructor(data: Partial<DbException>) {
+        Object.assign(this, data);
     }
+    source?: String;
+    message: string;
+    statusCode?: number;
+    stack?: string;
+    exception?: any;
+    name: string;
 
     serializeError(): ErrorResponse {
-        if (this.error instanceof PrismaClientKnownRequestError) {
-            const message = this.error.message.replace(/\n/g, '');
-            switch (this.error.code) {
+        if (this.exception instanceof PrismaClientKnownRequestError) {
+            const message = this.exception.message.replace(/\n/g, '');
+            switch (this.exception.code) {
                 case 'P2002': {
                     // process the message
                 }
@@ -20,14 +26,11 @@ export class DbException extends AppException {
 
                     break;
             }
-            return {
-                errors: [new AppException({ message, statusCode: this.defaultSTatusCode })]
-            }
+            return new ErrorResponse([{ message, statusCode: this.defaultSTatusCode } as AppException])
+
         }
         else {
-            return {
-                errors: [new AppException({ message: "Error occured on database", source: this.source, statusCode: this.defaultSTatusCode })]
-            }
+            return new ErrorResponse([{ message: "Error occured in database", statusCode: this.defaultSTatusCode } as AppException])
         }
     }
 }
