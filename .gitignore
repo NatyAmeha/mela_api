@@ -3,7 +3,7 @@
 /node_modules
 
 *.env.*
-*.gql
+# *.gql
 
 # Logs
 logs
@@ -36,5 +36,4 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-apps/auth/schema.gql
-apps/auth/schema.gql
+

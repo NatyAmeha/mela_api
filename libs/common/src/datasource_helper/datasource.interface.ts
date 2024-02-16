@@ -11,6 +11,4 @@ export interface IDatasource<T> {
     updateMany(id: String[], data: T[]): Promise<boolean>
     deleteOne(id: String): Promise<boolean>
     deleteMany(id: String[]): Promise<boolean>
-
-
 }
