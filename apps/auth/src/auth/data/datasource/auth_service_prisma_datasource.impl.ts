@@ -2,7 +2,6 @@ import { BaseModel } from "@app/common/base.model";
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
 import { User } from "apps/auth/src/auth/model/user.model";
-import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { DbException } from "@app/common/errors/db_exception";
 import { IDatasource } from "@app/common/datasource_helper/datasource.interface";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
