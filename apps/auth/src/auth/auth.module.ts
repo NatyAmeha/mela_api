@@ -9,8 +9,8 @@ import { CommonModule } from '@app/common';
 import { UserRepository } from './data/repo/user.repository';
 import { LoggerModule } from '@app/logger';
 import { configuration } from 'apps/auth/configuration';
-import { AccessTokenStretegy } from './service/jwt.service';
-import { RefreshTokenStrategy } from './service/jwt_refresh.service';
+import { AccessTokenStretegy } from './service/guard/jwt.service';
+import { RefreshTokenStrategy } from './service/guard/jwt_refresh.service';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthServicePrismaDataSource } from './data/datasource/auth_service_prisma_datasource.impl';
 import { AuthSecurityService } from './service/auth_security.service';
@@ -55,6 +55,7 @@ import { PhoneAuthProvder } from './service/auth_provider/phone_auth_provider';
           //     code: error.extensions?.code,
           //   };
           // },
+          context: ({ req }) => ({ headers: req.headers })
         }
       }
     })

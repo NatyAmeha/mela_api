@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, UseFilters } from '@nestjs/common';
+import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 import { AuthService } from './usecase/auth.service';
 import { Args, InputType, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { User } from './model/user.model';
@@ -9,6 +9,8 @@ import { AppException } from '@app/common/errors/app_exception.model';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { SecurityException } from '@app/common/errors/security_exception';
 import { AuthInfo } from './dto/auth_info.args';
+import { JwtGuard } from './service/guard/jwt.gurad';
+import { CurrentUser } from './service/guard/get_user_decorator';
 
 @Resolver(of => User)
 export class AuthResolver {
@@ -38,5 +40,15 @@ export class AuthResolver {
     var userInfo = User.createUserInfoForPhoneAuth(phone)
     var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(userInfo);
     return authResponse;
+  }
+
+  @UseGuards(JwtGuard)
+  @Mutation(returns => User)
+  async updateProfileInfo(@CurrentUser() currentUser: User, @Args("user") updatedUserInfo: SignupInput): Promise<User> {
+
+    return {
+      username: "Username",
+      password: "password"
+    } as User
   }
 }

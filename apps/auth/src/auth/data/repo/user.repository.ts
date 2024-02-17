@@ -9,6 +9,7 @@ export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>
     abstract isUserRegisteredBefore(checkingField: Partial<User>): Promise<boolean>
     abstract updateRefreshToken(userId: string, refreshToken: string): Promise<boolean>
+    abstract getUser(query: Partial<User>): Promise<User>
     abstract getUserByEmail(email: string): Promise<User | undefined>
     abstract getUserByPhoneNumber(email: string): Promise<User | undefined>
 }
@@ -39,6 +40,12 @@ export class UserRepository implements IUserRepository {
         var queryInfo = { query: new User({ email }) }
         var userResult = await this.datasource.findOne(queryInfo)
         return userResult
+    }
+
+    async getUser(userQuery: Partial<User>): Promise<User> {
+        var queryInfo = { query: new User(userQuery) }
+        var userInfo = await this.datasource.findOne(queryInfo)
+        return userInfo;
     }
 
     async getUserByPhoneNumber(phoneNumber: string): Promise<User> {
