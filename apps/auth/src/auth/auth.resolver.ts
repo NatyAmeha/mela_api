@@ -35,8 +35,8 @@ export class AuthResolver {
 
   @Mutation(returns => AuthResponse)
   async signInWithPhoneNumber(@Args("phone") phone: string): Promise<AuthResponse> {
-    var user = new User({ phoneNumber: phone })
-    var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(user);
+    var userInfo = User.createUserInfoForPhoneAuth(phone)
+    var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(userInfo);
     return authResponse;
   }
 }

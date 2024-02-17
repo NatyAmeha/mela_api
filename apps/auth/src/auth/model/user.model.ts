@@ -26,6 +26,8 @@ export class User extends BaseModel {
     refreshToken?: string
     @Field()
     accountStatus?: string
+    @Field()
+    isEmailPlaceholder?: boolean = false
 
     constructor(data: Partial<User>) {
         super();
@@ -37,6 +39,13 @@ export class User extends BaseModel {
             email: signupInfo.email, phoneNumber: signupInfo.phoneNumber, firstName: signupInfo.firstName, lastName: signupInfo.lastName,
             password: signupInfo.password, profileImageUrl: signupInfo.profileImageUrl,
             accountStatus: AccountStatus.PENDING
+        })
+    }
+
+    static createUserInfoForPhoneAuth(phone: string) {
+        return new User({
+            phoneNumber: phone,
+            isEmailPlaceholder: true
         })
     }
 

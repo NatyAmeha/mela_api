@@ -17,7 +17,6 @@ export class PhoneAuthProvder implements IAuthProvider {
         if (!userInfo.phoneNumber) {
             throw new RequestValidationException({ message: "Phone number is not provided", statusCode: 400 })
         }
-        console.log(userInfo.phoneNumber)
         var isUserRegisteredBefore = await this.userRepo.isUserRegisteredBefore({ phoneNumber: userInfo.phoneNumber })
         if (isUserRegisteredBefore) {
             throw new RequestValidationException({ message: "User already exist", statusCode: 400, errorType: ErrorTypes.USER_ALREADY_EXIST })
