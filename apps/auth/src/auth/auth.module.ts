@@ -17,6 +17,7 @@ import { AuthSecurityService } from './service/auth_security.service';
 import { AppException } from '@app/common/errors/app_exception.model';
 import { EmailAuthProvider } from './service/auth_provider/email_auth_provider';
 import { PhoneAuthProvder } from './service/auth_provider/phone_auth_provider';
+import { UserResolver } from './user.resolver';
 
 
 
@@ -82,7 +83,8 @@ import { PhoneAuthProvder } from './service/auth_provider/phone_auth_provider';
       provide: PhoneAuthProvder.injectName,
       useClass: PhoneAuthProvder,
     },
-    AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy
+    AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy,
+    UserResolver
   ],
 })
 export class AuthModule { }

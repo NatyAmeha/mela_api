@@ -18,9 +18,9 @@ import { boolean } from 'joi';
 export class AuthResolver {
   constructor(private readonly authService: AuthService) { }
 
-  @Query(returns => User, { name: "me" })
+  @Query(returns => User, { name: "placeholder" })
   getUser(): User {
-    return new User({ email: "Natnael" });
+    return new User({ email: "" });
   }
 
   @Mutation(returns => AuthResponse)
@@ -42,13 +42,5 @@ export class AuthResolver {
     var userInfo = User.createUserInfoForPhoneAuth(phone)
     var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(userInfo);
     return authResponse;
-  }
-
-  @UseGuards(JwtGuard)
-  @Mutation(returns => Boolean)
-  async updateProfileInfo(@CurrentUser() currentUser: User, @Args("user") updateInput: UpdateUserInput): Promise<boolean> {
-    var userInfo = updateInput.getUserInfo();
-    var isUpdated = await this.authService.updateUserInfo(currentUser.id!, userInfo);
-    return isUpdated;
   }
 }
