@@ -6,7 +6,22 @@
   "root": "apps/mela_api",
   "compilerOptions": {
     "webpack": true,
-    "tsConfigPath": "apps/mela_api/tsconfig.app.json"
+    "tsConfigPath": "apps/mela_api/tsconfig.app.json",
+    "plugins": [
+      {
+        "name": "@nestjs/graphql",
+        "options": {
+          "typeFileNameSuffix": [
+            ".input.ts",
+            ".args.ts",
+            ".entity.ts",
+            ".model.ts",
+            ".response.ts"
+          ],
+          "introspectComments": true
+        }
+      }
+    ]
   },
   "projects": {
     "mela_api": {
