@@ -7,8 +7,9 @@ import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>
-    abstract isUserRegisteredBefore(email?: string, phone?: string): Promise<boolean>
+    abstract isUserRegisteredBeforeByEmail(email?: string, phone?: string): Promise<boolean>
     abstract updateRefreshToken(userId: string, refreshToken: string): Promise<boolean>
+    abstract getUserByEmail(email: string): Promise<User | undefined>
 }
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -17,7 +18,7 @@ export class UserRepository implements IUserRepository {
     constructor(@Inject(AuthServicePrismaDataSource.injectName) private datasource: IDatasource<User>) {
     }
 
-    async isUserRegisteredBefore(email?: string, phone?: string): Promise<boolean> {
+    async isUserRegisteredBeforeByEmail(email?: string, phone?: string): Promise<boolean> {
         var queryInfo: QueryHelper<User> = {
             query: new User({ email, phoneNumber: phone }),
         }
@@ -31,6 +32,12 @@ export class UserRepository implements IUserRepository {
     async updateRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
         var updateResult = await this.datasource.update(userId, new User({ refreshToken: refreshToken }))
         return updateResult;
+    }
+
+    async getUserByEmail(email: string): Promise<User | undefined> {
+        var queryInfo = { query: new User({ email }) }
+        var userResult = await this.datasource.findOne(queryInfo)
+        return userResult
     }
 
 }

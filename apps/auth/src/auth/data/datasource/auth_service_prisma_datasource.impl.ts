@@ -5,6 +5,7 @@ import { User } from "apps/auth/src/auth/model/user.model";
 import { DbException } from "@app/common/errors/db_exception";
 import { IDatasource } from "@app/common/datasource_helper/datasource.interface";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 
 @Injectable()
 // pass The T type with class instance (Eg, new User({})) not js object literal
@@ -37,16 +38,16 @@ export class AuthServicePrismaDataSource<T extends BaseModel> extends PrismaClie
         throw new Error("Method not implemented.")
     }
 
-    async findOne(queryHelper: QueryHelper<T>): Promise<T> {
+    async findOne(queryHelper: QueryHelper<T>): Promise<T | undefined> {
         if (queryHelper.query instanceof User) {
             var userResult = await this.user.findFirst({ where: { email: (queryHelper.query as User).email } });
-            if (userResult) {
-
+            if (!userResult.id) {
+                return undefined;
             }
-            return new User({ ...userResult }) as unknown as T;
+            return userResult as unknown as T;
         }
         else {
-            throw Error("error occured")
+            throw new RequestValidationException({ message: "Incorrect query data provided" })
         }
     }
     async findMany(query: QueryHelper<T>): Promise<T[]> {

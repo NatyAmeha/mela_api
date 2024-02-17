@@ -5,7 +5,7 @@ export interface IDatasource<T> {
     createMany(data: T[]): Promise<T[]>
     getById(id: String): Promise<T>
     getAll(): Promise<T[]>
-    findOne(query: QueryHelper<T>): Promise<T>
+    findOne(query: QueryHelper<T>): Promise<T | undefined>
     findMany(query: QueryHelper<T>): Promise<T[]>
     update(id: string, data: T): Promise<boolean>
     updateMany(id: String[], data: T[]): Promise<boolean>

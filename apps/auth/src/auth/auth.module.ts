@@ -15,6 +15,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthServicePrismaDataSource } from './data/datasource/auth_service_prisma_datasource.impl';
 import { AuthSecurityService } from './service/auth_security.service';
 import { AppException } from '@app/common/errors/exception.model';
+import { EmailAuthProvider } from './service/auth_provider/email_auth_provider';
 
 
 
@@ -70,6 +71,10 @@ import { AppException } from '@app/common/errors/exception.model';
     {
       provide: AuthSecurityService.injectName,
       useClass: AuthSecurityService,
+    },
+    {
+      provide: EmailAuthProvider.injectName,
+      useClass: EmailAuthProvider,
     },
     AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy
   ],

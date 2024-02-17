@@ -8,6 +8,7 @@ import { AuthResponse } from './model/auth.response';
 import { AppException } from '@app/common/errors/exception.model';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { SecurityException } from '@app/common/errors/security_exception';
+import { AuthInfo } from './dto/auth_info.args';
 
 @Resolver(of => User)
 export class AuthResolver {
@@ -19,12 +20,16 @@ export class AuthResolver {
   }
 
   @Mutation(returns => AuthResponse)
-  async createUserAccount(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse | AppException> {
-    // register user account with pending status
-    // create refreshtoken, auth token
+  async createUserAccountUsingEmailPassword(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse | AppException> {
     var userInfo = User.createUserFromSignupInfo(signupInfo);
     var result = await this.authService.createUserAccount(userInfo);
     return result;
   }
 
+
+  @Mutation(returns => AuthResponse)
+  async signInWithEmailAndPassword(@Args("email") email: string, @Args("password") password: string): Promise<AuthResponse> {
+    var authResponse = await this.authService.authenticateUsingEmail({ email, password });
+    return authResponse;
+  }
 }
