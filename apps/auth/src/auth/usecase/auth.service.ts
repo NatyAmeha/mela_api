@@ -11,6 +11,7 @@ import { EmailAuthProvider } from '../service/auth_provider/email_auth_provider'
 import { IAuthProvider } from '../service/auth_provider/Iauth_provider.interface';
 import { PhoneAuthProvder } from '../service/auth_provider/phone_auth_provider';
 import { ExceptionHelper } from '@app/common/errors/exception_helper';
+import { RequestValidationException } from '@app/common/errors/request_validation_exception';
 
 @Injectable()
 export class AuthService {
@@ -86,6 +87,11 @@ export class AuthService {
         throw error;
       }
     }
+  }
+
+  async updateUserInfo(userId: string, updateUserInfo: User): Promise<boolean> {
+    var result = await this.userRepo.updateUserInfo(userId, updateUserInfo)
+    return result
   }
 
 

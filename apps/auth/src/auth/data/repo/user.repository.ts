@@ -12,6 +12,7 @@ export abstract class IUserRepository {
     abstract getUser(query: Partial<User>): Promise<User>
     abstract getUserByEmail(email: string): Promise<User | undefined>
     abstract getUserByPhoneNumber(email: string): Promise<User | undefined>
+    abstract updateUserInfo(userId: string, userInfo: Partial<User>): Promise<boolean>
 }
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -52,6 +53,11 @@ export class UserRepository implements IUserRepository {
         var queryInfo = { query: new User({ phoneNumber: phoneNumber }) }
         var userResult = await this.datasource.findOne(queryInfo)
         return userResult as User
+    }
+
+    async updateUserInfo(userId: string, userInfo: Partial<User>): Promise<boolean> {
+        var updateResult = await this.datasource.update(userId, new User(userInfo))
+        return updateResult;
     }
 
 }

@@ -11,6 +11,8 @@ import { SecurityException } from '@app/common/errors/security_exception';
 import { AuthInfo } from './dto/auth_info.args';
 import { JwtGuard } from './service/guard/jwt.gurad';
 import { CurrentUser } from './service/guard/get_user_decorator';
+import { UpdateUserInput } from './dto/update_user.input';
+import { boolean } from 'joi';
 
 @Resolver(of => User)
 export class AuthResolver {
@@ -43,12 +45,10 @@ export class AuthResolver {
   }
 
   @UseGuards(JwtGuard)
-  @Mutation(returns => User)
-  async updateProfileInfo(@CurrentUser() currentUser: User, @Args("user") updatedUserInfo: SignupInput): Promise<User> {
-
-    return {
-      username: "Username",
-      password: "password"
-    } as User
+  @Mutation(returns => Boolean)
+  async updateProfileInfo(@CurrentUser() currentUser: User, @Args("user") updateInput: UpdateUserInput): Promise<boolean> {
+    var userInfo = updateInput.getUserInfo();
+    var isUpdated = await this.authService.updateUserInfo(currentUser.id!, userInfo);
+    return isUpdated;
   }
 }
