@@ -1,12 +1,12 @@
 import { object } from "joi";
 import { ErrorResponse } from "./error_response";
-import { AppException } from "./exception.model";
+import { AppException } from "./app_exception.model";
 
 export class SecurityException implements AppException {
     source?: String;
     message: string;
     statusCode?: number;
-    stack?: string;
+    errorType?: number;
     exception?: any;
     name: string;
 

@@ -5,7 +5,7 @@ import { User } from './model/user.model';
 
 import { SignupInput } from './dto/signup.input';
 import { AuthResponse } from './model/auth.response';
-import { AppException } from '@app/common/errors/exception.model';
+import { AppException } from '@app/common/errors/app_exception.model';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { SecurityException } from '@app/common/errors/security_exception';
 import { AuthInfo } from './dto/auth_info.args';
@@ -22,7 +22,7 @@ export class AuthResolver {
   @Mutation(returns => AuthResponse)
   async createUserAccountUsingEmailPassword(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse | AppException> {
     var userInfo = User.createUserFromSignupInfo(signupInfo);
-    var result = await this.authService.createUserAccount(userInfo);
+    var result = await this.authService.createUserAccountUsingEmailPassword(userInfo);
     return result;
   }
 
@@ -30,6 +30,13 @@ export class AuthResolver {
   @Mutation(returns => AuthResponse)
   async signInWithEmailAndPassword(@Args("email") email: string, @Args("password") password: string): Promise<AuthResponse> {
     var authResponse = await this.authService.authenticateUsingEmail({ email, password });
+    return authResponse;
+  }
+
+  @Mutation(returns => AuthResponse)
+  async signInWithPhoneNumber(@Args("phone") phone: string): Promise<AuthResponse> {
+    var user = new User({ phoneNumber: phone })
+    var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(user);
     return authResponse;
   }
 }

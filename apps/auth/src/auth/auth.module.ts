@@ -14,8 +14,9 @@ import { RefreshTokenStrategy } from './service/jwt_refresh.service';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthServicePrismaDataSource } from './data/datasource/auth_service_prisma_datasource.impl';
 import { AuthSecurityService } from './service/auth_security.service';
-import { AppException } from '@app/common/errors/exception.model';
+import { AppException } from '@app/common/errors/app_exception.model';
 import { EmailAuthProvider } from './service/auth_provider/email_auth_provider';
+import { PhoneAuthProvder } from './service/auth_provider/phone_auth_provider';
 
 
 
@@ -39,21 +40,21 @@ import { EmailAuthProvider } from './service/auth_provider/email_auth_provider';
           autoSchemaFile: './apps/auth/schema.gql',
           sortSchema: true,
           playground: true,
-          formatError: (error) => {
-            const originalError = error.extensions
-              ?.originalError as AppException;
+          // formatError: (error) => {
+          //   const originalError = error.extensions
+          //     ?.originalError as AppException;
 
-            if (!originalError) {
-              return {
-                message: error.message,
-                code: error.extensions?.code,
-              };
-            }
-            return {
-              message: originalError.message,
-              code: error.extensions?.code,
-            };
-          },
+          //   if (!originalError) {
+          //     return {
+          //       message: error.message,
+          //       code: error.extensions?.code,
+          //     };
+          //   }
+          //   return {
+          //     message: originalError.message,
+          //     code: error.extensions?.code,
+          //   };
+          // },
         }
       }
     })
@@ -75,6 +76,10 @@ import { EmailAuthProvider } from './service/auth_provider/email_auth_provider';
     {
       provide: EmailAuthProvider.injectName,
       useClass: EmailAuthProvider,
+    },
+    {
+      provide: PhoneAuthProvder.injectName,
+      useClass: PhoneAuthProvder,
     },
     AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy
   ],

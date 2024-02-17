@@ -43,7 +43,7 @@ export class User extends BaseModel {
     getTokenPayloadFromUser(): JwtPayload {
         return {
             sub: this.id,
-            username: this.username ?? this.email
+            username: this.email
         }
     }
 }

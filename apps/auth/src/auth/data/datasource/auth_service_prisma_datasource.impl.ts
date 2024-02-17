@@ -25,7 +25,7 @@ export class AuthServicePrismaDataSource<T extends BaseModel> extends PrismaClie
                 throw new DbException({ message: "data type is incorrect to save to db" })
             }
         } catch (ex) {
-            throw new DbException(ex)
+            throw new DbException({ message: `Error occured while saving to db`, exception: ex })
         }
     }
     createMany(data: T[]): Promise<T[]> {
@@ -38,13 +38,13 @@ export class AuthServicePrismaDataSource<T extends BaseModel> extends PrismaClie
         throw new Error("Method not implemented.")
     }
 
-    async findOne(queryHelper: QueryHelper<T>): Promise<T | undefined> {
+    async findOne(queryHelper: QueryHelper<T>): Promise<T | null> {
         if (queryHelper.query instanceof User) {
-            var userResult = await this.user.findFirst({ where: { email: (queryHelper.query as User).email } });
-            if (!userResult.id) {
-                return undefined;
+            var userResult = await this.user.findFirst({ where: { ...queryHelper.query as User } });
+            if (!userResult?.id) {
+                return Promise.resolve(null)
             }
-            return userResult as unknown as T;
+            return new User({ ...userResult }) as unknown as T;
         }
         else {
             throw new RequestValidationException({ message: "Incorrect query data provided" })

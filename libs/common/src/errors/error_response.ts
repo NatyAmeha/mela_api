@@ -1,4 +1,4 @@
-import { AppException } from "./exception.model";
+import { AppException } from "./app_exception.model";
 
 export class ErrorResponse {
     constructor(public errors: AppException[]) { }

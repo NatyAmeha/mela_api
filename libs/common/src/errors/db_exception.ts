@@ -1,6 +1,6 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ErrorResponse } from "./error_response";
-import { AppException } from "./exception.model";
+import { AppException } from "./app_exception.model";
 
 export class DbException implements AppException {
     defaultSTatusCode = 500;
@@ -10,7 +10,7 @@ export class DbException implements AppException {
     source?: String;
     message: string;
     statusCode?: number;
-    stack?: string;
+    errorType?: number;
     exception?: any;
     name: string;
 
@@ -26,11 +26,11 @@ export class DbException implements AppException {
 
                     break;
             }
-            return new ErrorResponse([{ message, statusCode: this.defaultSTatusCode } as AppException])
+            return new ErrorResponse([<AppException>{ message: message, statusCode: 500 }])
 
         }
         else {
-            return new ErrorResponse([{ message: "Error occured in database", statusCode: this.defaultSTatusCode } as AppException])
+            return new ErrorResponse([<AppException>{ message: "Error occured in database", statusCode: 500 }])
         }
     }
 }

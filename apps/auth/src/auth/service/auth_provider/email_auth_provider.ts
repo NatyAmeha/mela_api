@@ -18,14 +18,14 @@ export class EmailAuthProvider implements IAuthProvider {
         if (!userInfo.email || !userInfo.password) {
             throw new RequestValidationException({ message: "Email is not provided", statusCode: 400 })
         }
-        var isUserRegisteredBefore = await this.userRepo.isUserRegisteredBeforeByEmail(userInfo.email)
+        var isUserRegisteredBefore = await this.userRepo.isUserRegisteredBefore({ email: userInfo.email })
         if (isUserRegisteredBefore) {
             throw new RequestValidationException({ message: "User already exist", statusCode: 400 })
         }
         // hash password
         var hashedPassword = await this.authSecurity.hashPassword(userInfo.password);
         userInfo.password = hashedPassword;
-        // create account to db
+        // create account to db 
         var userResult = await this.userRepo.createUser(userInfo)
         return userResult;
     }
@@ -37,7 +37,7 @@ export class EmailAuthProvider implements IAuthProvider {
         if (userByEmail && userByEmail.password) {
             var hashedPassword = userByEmail.password;
             var isMatched = await this.authSecurity.verifyPassword(authInfo.password, hashedPassword);
-            if (isMatched) {
+            if (!isMatched) {
                 throw new RequestValidationException({ message: "Password is incorrect", statusCode: 400 })
             }
             return userByEmail;

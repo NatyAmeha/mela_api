@@ -2,7 +2,7 @@ import { ArgumentsHost, Catch } from "@nestjs/common";
 import { GqlArgumentsHost, GqlExceptionFilter } from "@nestjs/graphql";
 import { DbException } from "./db_exception";
 import { RequestValidationException } from "./request_validation_exception";
-import { AppException } from "./exception.model";
+import { AppException } from "./app_exception.model";
 import { ErrorResponse } from "./error_response";
 import { SecurityException } from "./security_exception";
 import { GraphQLError } from "graphql";
@@ -24,7 +24,7 @@ export class AuthServiceExceptionHandler implements GqlExceptionFilter {
             errorResponse = exception.serializeError();
             // throw exception;
         }
-        console.log("error", errorResponse)
+        console.log("error", exception)
         exception = errorResponse
         var error = new GraphQLError(errorResponse.errors.map(e => e.message).join(","), {
             extensions: { code: 400 },

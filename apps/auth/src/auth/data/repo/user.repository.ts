@@ -7,9 +7,10 @@ import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>
-    abstract isUserRegisteredBeforeByEmail(email?: string, phone?: string): Promise<boolean>
+    abstract isUserRegisteredBefore(checkingField: Partial<User>): Promise<boolean>
     abstract updateRefreshToken(userId: string, refreshToken: string): Promise<boolean>
     abstract getUserByEmail(email: string): Promise<User | undefined>
+    abstract getUserByPhoneNumber(email: string): Promise<User | undefined>
 }
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -18,12 +19,12 @@ export class UserRepository implements IUserRepository {
     constructor(@Inject(AuthServicePrismaDataSource.injectName) private datasource: IDatasource<User>) {
     }
 
-    async isUserRegisteredBeforeByEmail(email?: string, phone?: string): Promise<boolean> {
+    async isUserRegisteredBefore(checkingField: Partial<User>): Promise<boolean> {
         var queryInfo: QueryHelper<User> = {
-            query: new User({ email, phoneNumber: phone }),
+            query: new User({ ...checkingField }),
         }
         var result = await this.datasource.findOne(queryInfo)
-        return result.email != undefined;
+        return result?.id != undefined;
     }
     async createUser(userInfo: User): Promise<User> {
         var userResult = await this.datasource.create(userInfo);
@@ -38,6 +39,12 @@ export class UserRepository implements IUserRepository {
         var queryInfo = { query: new User({ email }) }
         var userResult = await this.datasource.findOne(queryInfo)
         return userResult
+    }
+
+    async getUserByPhoneNumber(phoneNumber: string): Promise<User> {
+        var queryInfo = { query: new User({ phoneNumber: phoneNumber }) }
+        var userResult = await this.datasource.findOne(queryInfo)
+        return userResult as User
     }
 
 }
