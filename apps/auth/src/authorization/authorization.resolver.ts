@@ -7,7 +7,6 @@ import { AuthorizationService } from "./authorization.service";
 import { boolean } from "joi";
 import { ParseArrayPipe, UseGuards } from "@nestjs/common";
 import { JwtGuard } from "../auth/service/guard/jwt.gurad";
-import { AccessArgs } from "./dto/access.args";
 import { CreatePermissionInput } from "./dto/permission.input";
 // import { CreatePermissionInput } from "./dto/permission.input";
 
@@ -27,23 +26,23 @@ export class AuthorizationResolver {
 
     @UseGuards(JwtGuard)
     @Mutation(returns => Boolean)
-    async removeAccessFromUser(@Args("info") info: AccessArgs): Promise<boolean> {
-        var removeAccessResult = await this.authorizationService.removeAccessFromUser(info.user, info.accesses)
+    async removeAccessFromUser(@Args("user") user: string, @Args({ name: "accesses", type: () => [String] }) accesses: string[]): Promise<boolean> {
+        var removeAccessResult = await this.authorizationService.removeAccessFromUser(user, accesses)
         return removeAccessResult;
     }
 
     @UseGuards(JwtGuard)
     @Mutation(returns => [Permission])
-    async addPermissionToUserAccess(@Args("info") info: AccessArgs, @Args({ name: "permissions", type: () => [CreatePermissionInput] }) newPermissions: CreatePermissionInput[]): Promise<Permission[]> {
+    async addPermissionToUserAccess(@Args("user") userId: string, @Args("access") accessId: string, @Args({ name: "permissions", type: () => [CreatePermissionInput] }, new ParseArrayPipe({ items: CreatePermissionInput })) newPermissions: CreatePermissionInput[]): Promise<Permission[]> {
         var permissions = Permission.getPermissionFromPermissionInput(newPermissions)
-        var permissionResult = await this.authorizationService.addPermission(info.user, info.access, permissions)
+        var permissionResult = await this.authorizationService.addPermission(userId, accessId, permissions)
         return permissionResult;
     }
 
     @UseGuards(JwtGuard)
     @Mutation(returns => Boolean)
-    async removePermissionFromUserAccess(@Args("info") info: AccessArgs): Promise<boolean> {
-        var removeAccessResult = await this.authorizationService.removePermission(info.user, info.access, info.permissions)
+    async removePermissionFromUserAccess(@Args("user") userId: string, @Args("access") accessId: string, @Args({ name: "permissions", type: () => [String] }) PermissionIds: string[]): Promise<boolean> {
+        var removeAccessResult = await this.authorizationService.removePermission(userId, accessId, PermissionIds)
         return removeAccessResult;
     }
 

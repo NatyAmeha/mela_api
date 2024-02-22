@@ -2,6 +2,7 @@ import { Field, InputType, OmitType, PartialType } from "@nestjs/graphql";
 import { NameType, Permission, PermissionGroup } from "../model/access.model";
 import { capitalize } from "lodash";
 import { Transform } from "class-transformer";
+import { IsEmail } from "class-validator";
 
 @InputType()
 export class CreatePermissionInput {
@@ -18,7 +19,6 @@ export class CreatePermissionInput {
     @Transform((param) => param.value?.toUpperCase())
     effect: string
     @Field(type => [PermissionGroupInput])
-
     groups?: PermissionGroupInput[]
 }
 

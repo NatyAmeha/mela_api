@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { Access, Permission } from "../model/access.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { ErrorTypes } from "@app/common/errors/error_types";
+import { find, includes, map, pull, remove } from "lodash";
 
 export interface IAuthorizationRepo {
     addAccessToUser(userId: string, accesses: Access[]): Promise<Access[]>
@@ -41,16 +42,24 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
     }
 
     async removeAccessFromUser(userId: string, accessId: string[]): Promise<boolean> {
-        var result = await this.user.update({
-            where: { id: userId }, data: {
-                accesses: {
-                    deleteMany: {
-                        id: { in: accessId }
+        try {
+            var user = await this.user.findFirstOrThrow({ where: { id: userId }, include: { accesses: true } })
+            var userAccessIds = map(user.accesses, access => access.id)
+            var newAccessIds = pull(userAccessIds, ...accessId)
+            var result = await this.user.update({
+                where: { id: userId }, data: {
+                    accessIds: newAccessIds,
+                    accesses: {
+                        deleteMany: {
+                            id: { in: accessId }
+                        }
                     }
-                }
-            },
-        })
-        return true
+                },
+            })
+            return true
+        } catch (error) {
+            return false
+        }
     }
 
     async addPermissionToAccess(userId: string, accessId: string, permissions: Permission[]): Promise<Permission[]> {
@@ -75,6 +84,7 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
                 }
             }
         })
+        var ress = result.permissions as Permission[]
         return true;
     }
 

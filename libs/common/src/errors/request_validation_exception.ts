@@ -18,7 +18,7 @@ export class RequestValidationException implements AppException {
 
     serializeError(): ErrorResponse {
         var errorMsg: String[] = [];
-        this.validationErrors.forEach(error => {
+        this.validationErrors?.forEach(error => {
             errorMsg.push(...values(error.constraints))
         })
         var finalMessage = errorMsg.length > 0 ? `${errorMsg.join(", ")}` : this.message;
