@@ -67,6 +67,8 @@ export class Permission {
 export class PermissionGroup {
     @Field()
     id: string
+    @Field()
+    key: string
     @Field(type => [NameType])
     name: NameType[]
     constructor(data: Partial<PermissionGroup>) {
@@ -74,7 +76,7 @@ export class PermissionGroup {
     }
 
     static getPermissionGroupFromInput(inputs: PermissionGroupInput[]): PermissionGroup[] {
-        return inputs.map(grp => new PermissionGroup({ name: grp.name as NameType[] }))
+        return inputs.map(grp => new PermissionGroup({ name: grp.name as NameType[], key: grp.key }))
     }
 }
 

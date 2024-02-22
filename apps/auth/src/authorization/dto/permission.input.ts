@@ -1,8 +1,8 @@
 import { Field, InputType, OmitType, PartialType } from "@nestjs/graphql";
 import { NameType, Permission, PermissionGroup } from "../model/access.model";
 import { capitalize } from "lodash";
-import { Transform } from "class-transformer";
-import { IsEmail } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsEmail, ValidateNested } from "class-validator";
 
 @InputType()
 export class CreatePermissionInput {
@@ -19,13 +19,19 @@ export class CreatePermissionInput {
     @Transform((param) => param.value?.toUpperCase())
     effect: string
     @Field(type => [PermissionGroupInput])
+    @ValidateNested()
+    @Type(() => PermissionGroupInput)
     groups?: PermissionGroupInput[]
 }
 
 @InputType()
 export class PermissionGroupInput {
     @Field(type => [NameTypeInput])
+    @ValidateNested()
+    @Type(() => NameTypeInput)
     name: NameTypeInput[]
+    @Transform((param) => param.value?.toUpperCase())
+    key: string
 }
 
 @InputType()

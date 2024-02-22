@@ -52,6 +52,7 @@ type Permission {
 type PermissionGroup {
   id   String?    @default(uuid())
   name NameType[]
+  key  String?
 }
 
 type NameType {

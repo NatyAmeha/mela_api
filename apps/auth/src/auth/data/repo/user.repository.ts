@@ -30,7 +30,7 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
     }
 
     async getUser(userQuery: Partial<User>): Promise<User | undefined> {
-        var userInfo = await this.user.findFirst({ where: { ...userQuery as any } })
+        var userInfo = await this.user.findFirst({ where: { ...userQuery as any }, include: { accesses: true } })
         if (!userInfo.id) {
             throw new RequestValidationException({ message: "Incorrect query data provided" })
         }
