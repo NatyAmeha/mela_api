@@ -1,4 +1,4 @@
-import { ArgumentsHost, BadRequestException, Catch, UnauthorizedException } from "@nestjs/common";
+import { ArgumentsHost, BadRequestException, Catch, HttpException, UnauthorizedException } from "@nestjs/common";
 import { GqlArgumentsHost, GqlExceptionFilter } from "@nestjs/graphql";
 import { DbException } from "./db_exception";
 import { RequestValidationException } from "./request_validation_exception";
@@ -27,6 +27,11 @@ export class AuthServiceExceptionHandler implements GqlExceptionFilter {
         else if (exception instanceof UnauthorizedException) {
             errorResponse = {
                 errors: [{ message: "UnAuthorized exception", statusCode: 401 } as AppException,]
+            }
+        }
+        else if (exception instanceof HttpException) {
+            errorResponse = {
+                errors: [{ message: exception.message, statusCode: exception.getStatus() } as AppException]
             }
         }
         else if (exception instanceof BadRequestException) {

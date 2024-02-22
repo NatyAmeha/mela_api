@@ -6,15 +6,17 @@ import { CurrentUser } from "./service/guard/get_user_decorator";
 import { AuthService } from "./usecase/auth.service";
 import { UpdateUserInput } from "./dto/update_user.input";
 import { UserResponse } from "./dto/user.response";
+import { PermissionGuard } from "@app/common/permission_helper/authorization.guard";
+import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
 
 @Resolver(of => UserResponse)
 export class UserResolver {
     constructor(private readonly authService: AuthService) { }
 
-    @UseGuards(JwtGuard)
+    @RequiresPermission({ resourceType: "BUSINESS", action: "CREATE", resourceTarget: "ALL", effect: "ALLOW" })
+    @UseGuards(JwtGuard, PermissionGuard)
     @Query(returns => UserResponse, { name: "me" })
     async getUserInfo(@CurrentUser() currentUser: User): Promise<UserResponse> {
-        // fetch user info based on their permission and role
         return {
             user: currentUser
         }
