@@ -29,7 +29,7 @@ export class AuthService {
     // generate tokens
     var generatedAccessToken = await this.jwtService.signAsync(registredUser.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
     var generatedRefreshToken = await this.jwtService.signAsync(registredUser.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
-    await this.userRepo.updateRefreshToken(registredUser.id, generatedAccessToken)
+    await this.userRepo.updateUserInfo(registredUser.id, { refreshToken: generatedRefreshToken })
     // response
     return {
       user: registredUser,
@@ -45,7 +45,7 @@ export class AuthService {
     var authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
     var generatedAccessToken = await this.jwtService.signAsync(authenticatedUser.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
     var generatedRefreshToken = await this.jwtService.signAsync(authenticatedUser.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
-    var updateTokenResult = await this.userRepo.updateRefreshToken(authenticatedUser.id, generatedAccessToken)
+    var updateTokenResult = await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: generatedRefreshToken })
     // response
     return {
       user: authenticatedUser,
@@ -63,7 +63,7 @@ export class AuthService {
       authenticatedUserResult = await this.phoneAuthProvider.createAccount(userInfo)
       var generatedAccessToken = await this.jwtService.signAsync(authenticatedUserResult.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
       var generatedRefreshToken = await this.jwtService.signAsync(authenticatedUserResult.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
-      await this.userRepo.updateRefreshToken(authenticatedUserResult.id, generatedAccessToken)
+      await this.userRepo.updateUserInfo(authenticatedUserResult.id, { refreshToken: generatedRefreshToken })
       return {
         user: authenticatedUserResult,
         accessToken: generatedAccessToken,
@@ -75,7 +75,7 @@ export class AuthService {
         authenticatedUserResult = await this.phoneAuthProvider.authenticate({ phoneNumber: userInfo.phoneNumber });
         var generatedAccessToken = await this.jwtService.signAsync(authenticatedUserResult.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
         var generatedRefreshToken = await this.jwtService.signAsync(authenticatedUserResult.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
-        await this.userRepo.updateRefreshToken(authenticatedUserResult.id, generatedAccessToken)
+        await this.userRepo.updateUserInfo(authenticatedUserResult.id, { refreshToken: generatedRefreshToken })
         return {
           user: authenticatedUserResult,
           accessToken: generatedAccessToken,

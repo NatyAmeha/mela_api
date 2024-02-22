@@ -12,12 +12,12 @@ import { configuration } from 'apps/auth/configuration';
 import { AccessTokenStretegy } from './service/guard/jwt.service';
 import { RefreshTokenStrategy } from './service/guard/jwt_refresh.service';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthServicePrismaDataSource } from './data/datasource/auth_service_prisma_datasource.impl';
 import { AuthSecurityService } from './service/auth_security.service';
 import { AppException } from '@app/common/errors/app_exception.model';
 import { EmailAuthProvider } from './service/auth_provider/email_auth_provider';
 import { PhoneAuthProvder } from './service/auth_provider/phone_auth_provider';
 import { UserResolver } from './user.resolver';
+import { AuthorizationModule } from '../authorization';
 
 
 
@@ -34,6 +34,7 @@ import { UserResolver } from './user.resolver';
     }),
     JwtModule.register({}),
     LoggerModule,
+    AuthorizationModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
       useFactory: () => {
@@ -66,10 +67,6 @@ import { UserResolver } from './user.resolver';
     {
       provide: UserRepository.injectName,
       useClass: UserRepository
-    },
-    {
-      provide: AuthServicePrismaDataSource.injectName,
-      useClass: AuthServicePrismaDataSource
     },
     {
       provide: AuthSecurityService.injectName,

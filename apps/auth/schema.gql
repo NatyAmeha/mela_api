@@ -2,18 +2,131 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-interface Animal {
-  name: String!
+type Access {
+  dateCreated: DateTime
+  dateUpdated: DateTime
+  id: ID
+  permissions: [Permission!]
+  resourceId: String
+  role: String!
+  user: User
+  userId: String!
+}
+
+input AccessArgs {
+  access: String
+  accesses: [String!]
+  permissions: [String!]
+  user: String!
+}
+
+type AuthResponse {
+  accessToken: String
+  isNewUser: Boolean
+  refreshToken: String
+  user: User
+}
+
+input CreateAccessInput {
+  permissions: [CreatePermissionInput!]!
+  resourceId: String
+  role: String!
+}
+
+input CreatePermissionInput {
+  action: String!
+  effect: String!
+  groups: [PermissionGroupInput!]
+  resourceTarget: String!
+  resourceType: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  addAuthorizationAccess(accesses: [CreateAccessInput!]!, user: String!): [Access!]!
+  addPermissionToUserAccess(info: AccessArgs!, permissions: [CreatePermissionInput!]!): [Permission!]!
+  createUserAccountUsingEmailPassword(signup: SignupInput!): AuthResponse!
+  removeAccessFromUser(info: AccessArgs!): Boolean!
+  removePermissionFromUserAccess(info: AccessArgs!): Boolean!
+  signInWithEmailAndPassword(email: String!, password: String!): AuthResponse!
+  signInWithPhoneNumber(phone: String!): AuthResponse!
+  updateProfileInfo(user: UpdateUserInput!): Boolean!
+}
+
+type NameType {
+  key: String!
+  value: String!
+}
+
+input NameTypeInput {
+  key: String!
+  value: String!
+}
+
+type Permission {
+  action: String!
+  effect: String!
+  groups: [PermissionGroup!]
+  id: ID
+  resourceTarget: String!
+  resourceType: String!
+  userGenerated: Boolean
+}
+
+type PermissionGroup {
+  id: String!
+  name: [NameType!]!
+}
+
+input PermissionGroupInput {
+  name: [NameTypeInput!]!
 }
 
 type Query {
-  me(email: String!, passwrod: String!): User!
-  token: String
+  me: UserResponse!
+  placeholder: User!
 }
 
-type User implements Animal {
-  email: String
-  name: String!
+input SignupInput {
+  email: String!
+  firstName: String!
+  lastName: String
   password: String
-  pin: Int
+  phoneNumber: String!
+  profileImageUrl: String
+}
+
+input UpdateUserInput {
+  accountStatus: String
+  email: String
+  firstName: String
+  lastName: String
+  password: String
+  phoneNumber: String
+  profileImageUrl: String
+}
+
+type User {
+  accessIds: [String!]
+  accesses: [Access!]
+  accountStatus: String
+  email: String
+  firstName: String
+  id: ID
+  isEmailPlaceholder: Boolean
+  lastName: String
+  password: String
+  phoneNumber: String
+  profileImageUrl: String
+  refreshToken: String
+  username: String
+}
+
+type UserResponse {
+  token: String
+  user: User
 }

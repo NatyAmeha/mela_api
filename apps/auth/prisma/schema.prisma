@@ -22,4 +22,39 @@ model User {
   refreshToken       String?
   accountStatus      String?  @default("PENDING")
   isEmailPlaceholder Boolean? @default(false)
+  accesses           Access[]
+  accessIds          String[]
+  dateCreated        DateTime @default(now())
+  dateUpdated        DateTime @default(now())
+}
+
+model Access {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  role        String
+  resourceId  String?
+  permissions Permission[]
+  userId      String       @db.ObjectId
+  user        User         @relation(fields: [userId], references: [id])
+  dateCreated DateTime     @default(now())
+  dateUpdated DateTime     @default(now())
+}
+
+type Permission {
+  id             String            @default(uuid())
+  action         String // CRUD, etc
+  resourceType   String // bueiness, subscription, product, service etc
+  resourceTarget String
+  effect         String // ALLOW, DENY,
+  userGenerated  Boolean           @default(false)
+  groups         PermissionGroup[]
+}
+
+type PermissionGroup {
+  id   String?    @default(uuid())
+  name NameType[]
+}
+
+type NameType {
+  key   String
+  value String
 }

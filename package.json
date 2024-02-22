@@ -99,7 +99,8 @@
     "moduleNameMapper": {
       "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1",
       "^@app/logger(|/.*)$": "<rootDir>/libs/logger/src/$1",
-      "^@app/datasource(|/.*)$": "<rootDir>/libs/datasource/src/$1"
+      "^@app/datasource(|/.*)$": "<rootDir>/libs/datasource/src/$1",
+      "^@app/authorization(|/.*)$": "<rootDir>/libs/authorization/src/$1"
     }
   }
 }

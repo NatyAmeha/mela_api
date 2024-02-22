@@ -33,7 +33,7 @@ export class EmailAuthProvider implements IAuthProvider {
         if (!authInfo.email || !authInfo.password) {
             throw new RequestValidationException({ message: "Email or password not found", statusCode: 400 })
         }
-        var userByEmail = await this.userRepo.getUserByEmail(authInfo.email)
+        var userByEmail = await this.userRepo.getUser({ email: authInfo.email })
         if (userByEmail && userByEmail.password) {
             var hashedPassword = userByEmail.password;
             var isMatched = await this.authSecurity.verifyPassword(authInfo.password, hashedPassword);

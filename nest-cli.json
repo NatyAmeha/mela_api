@@ -16,7 +16,8 @@
             ".args.ts",
             ".entity.ts",
             ".model.ts",
-            ".response.ts"
+            ".response.ts",
+            ".resolver.ts"
           ],
           "introspectComments": true
         }

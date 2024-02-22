@@ -3,6 +3,7 @@ import { Field, ID, Int, InterfaceType, ObjectType, registerEnumType } from "@ne
 import { SignupInput } from "../dto/signup.input";
 import { AccountStatus } from "./account_status.enum";
 import { JwtPayload } from "./jwt_payload.model";
+import { Access } from "../../authorization/model/access.model";
 
 @ObjectType()
 export class User extends BaseModel {
@@ -28,6 +29,12 @@ export class User extends BaseModel {
     accountStatus?: string
     @Field()
     isEmailPlaceholder?: boolean = false
+    @Field(type => [Access])
+    accesses?: Access[]
+    @Field(type => [String])
+    accessIds?: string[]
+
+
 
     constructor(data: Partial<User>) {
         super();

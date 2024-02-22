@@ -29,7 +29,7 @@ export class PhoneAuthProvder implements IAuthProvider {
         if (!authInfo.phoneNumber) {
             throw new RequestValidationException({ message: "Phone number is not provided", statusCode: 400 })
         }
-        var userByPhoneNumber = await this.userRepo.getUserByPhoneNumber(authInfo.phoneNumber)
+        var userByPhoneNumber = await this.userRepo.getUser({ phoneNumber: authInfo.phoneNumber })
         if (!userByPhoneNumber) {
             throw new RequestValidationException({ message: "User not foud by this phone number", statusCode: 400, errorType: ErrorTypes.USER_NOT_FOUND })
         }
