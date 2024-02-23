@@ -6,6 +6,7 @@ import { AppException } from "./app_exception.model";
 import { ErrorResponse } from "./error_response";
 import { SecurityException } from "./security_exception";
 import { GraphQLError } from "graphql";
+import { first } from "lodash";
 
 @Catch()
 export class AuthServiceExceptionHandler implements GqlExceptionFilter {
@@ -44,7 +45,7 @@ export class AuthServiceExceptionHandler implements GqlExceptionFilter {
         console.log("error", exception)
         exception = errorResponse
         var error = new GraphQLError(errorResponse.errors.map(e => e.message).join(","), {
-            extensions: { code: 400 },
+            extensions: { code: first(errorResponse.errors)?.statusCode ?? 400 },
             nodes: []
         },)
 

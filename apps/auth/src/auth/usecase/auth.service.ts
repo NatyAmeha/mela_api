@@ -94,5 +94,25 @@ export class AuthService {
     return result
   }
 
+  async refreshToken(userInfo: User): Promise<AuthResponse> {
+    var authResponse = await this.tokenGeneratorHelper(userInfo)
+    var updateTokenResult = await this.userRepo.updateUserInfo(userInfo.id, { refreshToken: authResponse.refreshToken })
+    return {
+      ...authResponse,
+      isNewUser: false
+    }
+  }
+
+  async tokenGeneratorHelper(user: User): Promise<AuthResponse> {
+    var authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
+    var generatedAccessToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
+    var generatedRefreshToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
+    return {
+      user: user,
+      accessToken: generatedAccessToken,
+      refreshToken: generatedRefreshToken
+    }
+  }
+
 
 }

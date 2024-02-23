@@ -25,5 +25,4 @@ export const isPermissionsGranted = (userAccesses: Access[], requiredPermission:
     }
     return !matchedPermission.some(p => p.effect == PermissionEffectType.DENY.toString())
 
-    var permissions = userAccesses.map
 }

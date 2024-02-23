@@ -8,7 +8,6 @@ import { boolean } from "joi";
 import { ParseArrayPipe, UseGuards } from "@nestjs/common";
 import { JwtGuard } from "../auth/service/guard/jwt.gurad";
 import { CreatePermissionInput } from "./dto/permission.input";
-// import { CreatePermissionInput } from "./dto/permission.input";
 
 @Resolver(of => Access)
 export class AuthorizationResolver {
