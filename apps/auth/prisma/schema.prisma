@@ -11,21 +11,24 @@ datasource db {
 }
 
 model User {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  email              String?  @unique @default(uuid())
-  phoneNumber        String?  @unique @default(uuid())
-  username           String?  @unique @default(uuid())
-  firstName          String?
-  lastName           String?
-  password           String?
-  profileImageUrl    String?
-  refreshToken       String?
-  accountStatus      String?  @default("PENDING")
-  isEmailPlaceholder Boolean? @default(false)
-  accesses           Access[]
-  accessIds          String[]
-  dateCreated        DateTime @default(now())
-  dateUpdated        DateTime @default(now())
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String?  @unique @default(uuid())
+  phoneNumber           String?  @unique @default(uuid())
+  username              String?  @unique @default(uuid())
+  firstName             String?
+  lastName              String?
+  password              String?
+  profileImageUrl       String?
+  refreshToken          String?
+  accountStatus         String?  @default("PENDING")
+  isEmailPlaceholder    Boolean? @default(false)
+  isUsernamePlaceholder Boolean? @default(false)
+  accesses              Access[]
+  accessIds             String[]
+  emailVerified         Boolean? @default(false)
+  phoneVerified         Boolean? @default(false)
+  dateCreated           DateTime @default(now())
+  dateUpdated           DateTime @default(now())
 }
 
 model Access {

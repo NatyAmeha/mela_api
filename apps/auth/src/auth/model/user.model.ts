@@ -15,6 +15,7 @@ export class User extends BaseModel {
     phoneNumber?: string
     @Field()
     username?: string
+    isUsernamePlaceholder?: string
     @Field()
     password?: string
     @Field()
@@ -29,6 +30,9 @@ export class User extends BaseModel {
     accountStatus?: string
     @Field()
     isEmailPlaceholder?: boolean = false
+    @Field()
+    emailVerified?: boolean = false
+    phoneVerified?: boolean = false
     @Field(type => [Access])
     accesses?: Access[]
     @Field(type => [String])

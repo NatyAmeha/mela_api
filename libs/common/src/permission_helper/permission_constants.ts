@@ -1,5 +1,5 @@
 export enum PermissionEffectType {
-    ALLOW, DENY
+    ALLOW = "ALLOW", DENY = "DENY"
 }
 export enum PermissionResourceType {
     BUSINESS, SUBSCRIPTIONI, SERVICE, PRODUCT, ANY
