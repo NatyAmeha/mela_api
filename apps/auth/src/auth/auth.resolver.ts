@@ -50,4 +50,11 @@ export class AuthResolver {
     var authResponse = await this.authService.refreshToken(user)
     return authResponse
   }
+
+  @UseGuards(JwtGuard)
+  @Mutation(returns => Boolean)
+  async logout(@CurrentUser() user: User) {
+    var logoutResult = await this.authService.logout(user.id)
+    return logoutResult;
+  }
 }
