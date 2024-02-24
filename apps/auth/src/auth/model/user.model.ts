@@ -32,6 +32,7 @@ export class User extends BaseModel {
     isEmailPlaceholder?: boolean = false
     @Field()
     emailVerified?: boolean = false
+    @Field()
     phoneVerified?: boolean = false
     @Field(type => [Access])
     accesses?: Access[]

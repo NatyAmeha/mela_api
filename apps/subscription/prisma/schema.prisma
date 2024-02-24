@@ -1,0 +1,49 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("SUBSCRIPTION_DB_URL")
+}
+
+model SubscriptionPlan {
+    id            String           @id @default(auto()) @map("_id") @db.ObjectId
+    name          NameType[]
+    description   String?
+    category      String[]
+    benefits      String[]
+    duration      Int
+    trialPeriod   Int?
+    type          SubscriptionType
+    subscriptions Subscription[]
+    owner         String?          @db.ObjectId
+    isActive      Boolean          @default(true)
+    createdAt     DateTime         @default(now())
+    updatedAt     DateTime         @default(now())
+}
+
+model Subscription {
+    id            String            @id @default(auto()) @map("_id") @db.ObjectId
+    startDate     DateTime          @default(now())
+    endDate       DateTime
+    plan          SubscriptionPlan? @relation(fields: [planId], references: [id])
+    planId        String            @db.ObjectId
+    isTrialPeriod Boolean?          @default(false)
+    type          SubscriptionType
+    owner         String            @db.ObjectId
+    createdAt     DateTime          @default(now())
+    updatedAt     DateTime          @default(now())
+}
+
+type NameType {
+    key   String
+    value String
+}
+
+enum SubscriptionType {
+    PLATFORM
+    BUSINESS
+    SERVICE
+    PRODUCT
+}

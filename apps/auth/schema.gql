@@ -13,13 +13,6 @@ type Access {
   userId: String!
 }
 
-input AccessArgs {
-  access: String
-  accesses: [String!]
-  permissions: [String!]
-  user: String!
-}
-
 type AuthResponse {
   accessToken: String
   isNewUser: Boolean
@@ -48,10 +41,11 @@ scalar DateTime
 
 type Mutation {
   addAuthorizationAccess(accesses: [CreateAccessInput!]!, user: String!): [Access!]!
-  addPermissionToUserAccess(info: AccessArgs!, permissions: [CreatePermissionInput!]!): [Permission!]!
+  addPermissionToUserAccess(access: String!, permissions: [CreatePermissionInput!]!, user: String!): [Permission!]!
   createUserAccountUsingEmailPassword(signup: SignupInput!): AuthResponse!
-  removeAccessFromUser(info: AccessArgs!): Boolean!
-  removePermissionFromUserAccess(info: AccessArgs!): Boolean!
+  logout: Boolean!
+  removeAccessFromUser(accesses: [String!]!, user: String!): Boolean!
+  removePermissionFromUserAccess(access: String!, permissions: [String!]!, user: String!): Boolean!
   signInWithEmailAndPassword(email: String!, password: String!): AuthResponse!
   signInWithPhoneNumber(phone: String!): AuthResponse!
   updateProfileInfo(user: UpdateUserInput!): Boolean!
@@ -79,16 +73,19 @@ type Permission {
 
 type PermissionGroup {
   id: String!
+  key: String!
   name: [NameType!]!
 }
 
 input PermissionGroupInput {
+  key: String!
   name: [NameTypeInput!]!
 }
 
 type Query {
   me: UserResponse!
   placeholder: User!
+  refreshToken: AuthResponse!
 }
 
 input SignupInput {
@@ -115,18 +112,21 @@ type User {
   accesses: [Access!]
   accountStatus: String
   email: String
+  emailVerified: Boolean
   firstName: String
   id: ID
   isEmailPlaceholder: Boolean
+  isUsernamePlaceholder: String
   lastName: String
   password: String
   phoneNumber: String
+  phoneVerified: Boolean
   profileImageUrl: String
   refreshToken: String
   username: String
 }
 
 type UserResponse {
-  token: String
+  accesses: [Access!]
   user: User
 }
