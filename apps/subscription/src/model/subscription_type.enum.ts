@@ -2,7 +2,7 @@ import { registerEnumType } from "@nestjs/graphql";
 
 export enum SubscriptionType {
     PLATFORM = "PLATFORM",
-    BUSINES = "BUSINES",
+    BUSINESS = "BUSINESS",
     SERVICE = "SERVICE",
     PRODUCT = "PRODUCT",
 }

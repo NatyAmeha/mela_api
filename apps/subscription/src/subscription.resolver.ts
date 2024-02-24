@@ -5,21 +5,48 @@ import { SubscriptionPlan } from './model/subscription_plan.model';
 import { Subscription } from './model/subscription.model';
 import { CreateSubscriptionPlanInput } from './dto/subscription_plan.input';
 import { SubscriptionType } from './model/subscription_type.enum';
+import { QueryHelper } from '@app/common/datasource_helper/query_helper';
 
 @Resolver(of => [SubscriptionPlan])
 export class SubscriptionResolver {
   constructor(private readonly subscriptionService: SubscriptionService) { }
 
-  @Query(returns => String)
-  getHello(): string {
-    return "subscription result"
-  }
-
-
   @Mutation(returns => SubscriptionPlan)
   async createPlatformSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
     var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.PLATFORM, isActiveSubscription: false })
     var result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
+    return result;
+  }
+
+  @Query(returns => [SubscriptionPlan])
+  async getSubscriptionPlans(@Args({ name: "type", type: () => SubscriptionType, nullable: true }) type: SubscriptionType, @Args({ name: "owner", nullable: true }) owner?: string) {
+    var queryHelper: QueryHelper<SubscriptionPlan> = {
+      query: { type, owner } as SubscriptionPlan
+    }
+    var result = await this.subscriptionService.getSubscriptions(queryHelper)
+    return result;
+  }
+
+  @Mutation(returns => SubscriptionPlan)
+  async createBusinessSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
+    var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.BUSINESS, isActiveSubscription: false })
+    var result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
+    return result;
+  }
+
+  @Mutation(returns => SubscriptionPlan)
+  async createServiceSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
+    var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.SERVICE, isActiveSubscription: false })
+    var result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
+    return result;
+  }
+
+  @Query(returns => [SubscriptionPlan])
+  async getBusienssSubscriptionPlans(@Args({ name: "type", type: () => SubscriptionType, nullable: true }) type: SubscriptionType, @Args({ name: "owner", nullable: true }) owner?: string) {
+    var queryHelper: QueryHelper<SubscriptionPlan> = {
+      query: { type, owner } as SubscriptionPlan
+    }
+    var result = await this.subscriptionService.getSubscriptions(queryHelper)
     return result;
   }
 }
