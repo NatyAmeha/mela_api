@@ -1,9 +1,10 @@
 import { BaseModel } from "@app/common/base.model";
-import { Field, ID, ObjectType } from "@nestjs/graphql";
+import { Field, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { SubscriptionType } from "./subscription_type.enum";
 
 @ObjectType()
+@InputType("SubscriptionIinput")
 export class Subscription extends BaseModel {
     @Field(type => ID)
     id?: string

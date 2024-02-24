@@ -6,7 +6,6 @@ import { AppLogger } from "@app/logger";
 import { GqlExceptionHandler } from "@app/common/errors/exception_handler";
 
 async function bootstrap() {
-  // const app = await NestFactory.createMicroservice<MicroserviceOptions>(AuthModule, {transport : Transport.RMQ , });
   const app = await NestFactory.create(SubscriptionModule, { bufferLogs: true })
   app.useGlobalPipes(new ValidationPipe({
     transform: true,

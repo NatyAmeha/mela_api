@@ -8,19 +8,20 @@ datasource db {
 }
 
 model SubscriptionPlan {
-    id            String           @id @default(auto()) @map("_id") @db.ObjectId
+    id            String         @id @default(auto()) @map("_id") @db.ObjectId
     name          NameType[]
-    description   String?
+    description   NameType[]
+    price         Float
     category      String[]
-    benefits      String[]
+    benefits      BenefitType[]
     duration      Int
     trialPeriod   Int?
-    type          SubscriptionType
+    type          String
     subscriptions Subscription[]
-    owner         String?          @db.ObjectId
-    isActive      Boolean          @default(true)
-    createdAt     DateTime         @default(now())
-    updatedAt     DateTime         @default(now())
+    owner         String?        @db.ObjectId
+    isActive      Boolean        @default(true)
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @default(now())
 }
 
 model Subscription {
@@ -30,20 +31,18 @@ model Subscription {
     plan          SubscriptionPlan? @relation(fields: [planId], references: [id])
     planId        String            @db.ObjectId
     isTrialPeriod Boolean?          @default(false)
-    type          SubscriptionType
+    type          String
     owner         String            @db.ObjectId
     createdAt     DateTime          @default(now())
     updatedAt     DateTime          @default(now())
 }
 
+type BenefitType {
+    tags         String[]
+    descriptions NameType[]
+}
+
 type NameType {
     key   String
     value String
-}
-
-enum SubscriptionType {
-    PLATFORM
-    BUSINESS
-    SERVICE
-    PRODUCT
 }
