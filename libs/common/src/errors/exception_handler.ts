@@ -9,7 +9,7 @@ import { GraphQLError } from "graphql";
 import { first } from "lodash";
 
 @Catch()
-export class AuthServiceExceptionHandler implements GqlExceptionFilter {
+export class GqlExceptionHandler implements GqlExceptionFilter {
     catch(exception: any, host: ArgumentsHost) {
         var gqlhost = GqlArgumentsHost.create(host);
         var errorResponse = new ErrorResponse([{ message: "Unkown error occured, please try again", statusCode: 400 } as AppException])
