@@ -6,6 +6,7 @@ import { Subscription } from './model/subscription.model';
 import { CreateSubscriptionPlanInput } from './dto/subscription_plan.input';
 import { SubscriptionType } from './model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
+import { CreateSubscriptionInput } from './dto/subscription.input';
 
 @Resolver(of => [SubscriptionPlan])
 export class SubscriptionResolver {
@@ -48,5 +49,17 @@ export class SubscriptionResolver {
     }
     var result = await this.subscriptionService.getSubscriptions(queryHelper)
     return result;
+  }
+
+  @Mutation(returns => Boolean)
+  async changeSubscriptionStatus(@Args("subscription") subscriptionId: string, @Args("status") status: boolean) {
+    var result = await this.subscriptionService.updateSubscriptionStatus(subscriptionId, status)
+    return result;
+  }
+
+  @Mutation(returns => Subscription)
+  async subscribeToPlan(@Args("info") info: CreateSubscriptionInput): Promise<Subscription> {
+    var subscriptionPlan = await this.subscriptionService.subscribeToPlan(info);
+    return subscriptionPlan;
   }
 }

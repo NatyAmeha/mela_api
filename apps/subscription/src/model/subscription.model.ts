@@ -4,7 +4,7 @@ import { SubscriptionPlan } from "./subscription_plan.model";
 import { SubscriptionType } from "./subscription_type.enum";
 
 @ObjectType()
-@InputType("SubscriptionIinput")
+@InputType("SubscriptionInput")
 export class Subscription extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -13,11 +13,11 @@ export class Subscription extends BaseModel {
     @Field(type => Date)
     endDate: Date
     @Field()
-    planId: string
+    subscriptioinPlanId?: string
     @Field()
     isTrialPeriod: boolean
     @Field(type => SubscriptionType)
-    type: SubscriptionType
+    type: string
     @Field()
     owner?: string
     @Field(type => Date)
