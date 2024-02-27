@@ -1,4 +1,4 @@
-import { BaseModel } from "@app/common/base.model";
+import { BaseModel } from "@app/common/model/base.model";
 import { Field, ID, InputType, ObjectType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
 import { CreateAccessInput } from "../dto/access.input";
 import { IsArray, IsOptional } from "class-validator";

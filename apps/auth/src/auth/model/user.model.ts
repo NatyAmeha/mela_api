@@ -1,4 +1,4 @@
-import { BaseModel } from "@app/common/base.model";
+import { BaseModel } from "@app/common/model/base.model";
 import { Field, ID, Int, InterfaceType, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { SignupInput } from "../dto/signup.input";
 import { AccountStatus } from "./account_status.enum";
