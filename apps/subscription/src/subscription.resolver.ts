@@ -3,12 +3,13 @@ import { SubscriptionService } from './subscription.service';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { SubscriptionPlan } from './model/subscription_plan.model';
 import { Subscription } from './model/subscription.model';
-import { CreateSubscriptionPlanInput } from './dto/subscription_plan.input';
+import { CreateSubscriptionPlanInput, UpdateSubscriptionPlanInput } from './dto/subscription_plan.input';
 import { SubscriptionType } from './model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
 import { CreateSubscriptionInput } from './dto/subscription.input';
+import { SubscriptionResponse } from './model/subscription.response';
 
-@Resolver(of => [SubscriptionPlan])
+@Resolver(of => [SubscriptionResponse, SubscriptionPlan])
 export class SubscriptionResolver {
   constructor(private readonly subscriptionService: SubscriptionService) { }
 
@@ -53,13 +54,22 @@ export class SubscriptionResolver {
 
   @Mutation(returns => Boolean)
   async changeSubscriptionStatus(@Args("subscription") subscriptionId: string, @Args("status") status: boolean) {
-    var result = await this.subscriptionService.updateSubscriptionStatus(subscriptionId, status)
+    var result = await this.subscriptionService.updateSubscriptionPlanStatus(subscriptionId, status)
     return result;
   }
 
-  @Mutation(returns => Subscription)
-  async subscribeToPlan(@Args("info") info: CreateSubscriptionInput): Promise<Subscription> {
-    var subscriptionPlan = await this.subscriptionService.subscribeToPlan(info);
-    return subscriptionPlan;
+  @Mutation(returns => SubscriptionResponse)
+  async updateSubscriptionPlan(@Args("id") id: string, @Args("data") data: UpdateSubscriptionPlanInput): Promise<SubscriptionResponse> {
+    var updatedInfo = data.updateSubscriptionPlanInfo()
+    var response = await this.subscriptionService.updateSubscriptionPlanInfo(id, updatedInfo)
+    return response
   }
+
+  @Mutation(returns => SubscriptionResponse)
+  async subscribeToPlan(@Args("info") info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
+    var response = await this.subscriptionService.subscribeToPlan(info);
+    return response
+  }
+
+
 }

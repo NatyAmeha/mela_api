@@ -1,9 +1,9 @@
 import { Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql"
-import { BaseModel } from "@app/common/base.model"
+import { BaseModel } from "@app/common/model/base.model"
 import { Subscription } from "./subscription.model"
 import { SubscriptionType } from "./subscription_type.enum"
 import { Transform, Type } from "class-transformer"
-import { IsNotEmpty, IsNumber, ValidateIf, isNotEmpty, } from "class-validator"
+import { IsNotEmpty, IsNumber, IsOptional, ValidateIf, isNotEmpty, } from "class-validator"
 import { LocalizedData } from "@app/common/model/localized_model"
 
 @ObjectType()
@@ -12,30 +12,21 @@ export class SubscriptionPlan extends BaseModel {
     @Field(type => ID)
     id?: string
     @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    name: LocalizedData[]
+    name?: LocalizedData[]
     @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
     description?: LocalizedData[]
     @Field(type => Float)
-    @IsNumber()
-    price: number
+    price?: number
     @Field(type => [String])
-    @IsNotEmpty()
-    @Transform((param) => (param.value as string[]).map(e => e.toUpperCase()))
-    category: string[]
+    category?: string[]
     @Field(type => [BenefitInfo])
-    @IsNotEmpty()
-    @Type(() => BenefitInfo)
-    benefits: BenefitInfo[]
+    benefits?: BenefitInfo[]
     @Field(type => Int)
-    @IsNumber()
-    duration: number
+    duration?: number
     @Field(type => Int)
-    @IsNumber()
     trialPeriod?: number
     @Field(type => SubscriptionType, { description: "PLATFORM, BUSEINSS, PRODUCT, SERVICE" })
-    type: string
+    type?: string
     @Field()
     @ValidateIf((obj: SubscriptionPlan, value) => obj.type != SubscriptionType.PLATFORM)
     @IsNotEmpty()

@@ -7,10 +7,11 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 
 export interface ISubscriptionPlanRepository {
     createSubscriptionPlan(subscriptionInfo: SubscriptionPlan): Promise<SubscriptionPlan>
-    updateSubscriptionInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean>
+    updateSubscriptionPlanInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean>
     getPlans(queryInfo: QueryHelper<SubscriptionPlan>): Promise<SubscriptionPlan[]>
     getSubscriptionPlan(planId: string): Promise<SubscriptionPlan>
     createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
+    getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
 }
 
 export class SubscriptionPlanRepository extends PrismaClient implements ISubscriptionPlanRepository, OnModuleInit, OnModuleDestroy {
@@ -20,10 +21,10 @@ export class SubscriptionPlanRepository extends PrismaClient implements ISubscri
     }
 
     async createSubscriptionPlan(subscriptionInfo: SubscriptionPlan): Promise<SubscriptionPlan> {
-        var createResult = await this.subscriptionPlan.create({ data: { ...subscriptionInfo, subscriptions: {} } })
+        var createResult = await this.subscriptionPlan.create({ data: { ...subscriptionInfo as any, subscriptions: {} } })
         return new SubscriptionPlan({ ...createResult });
     }
-    async updateSubscriptionInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean> {
+    async updateSubscriptionPlanInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean> {
         var updateResult = await this.subscriptionPlan.update({
             where: { id: planId },
             data: {
@@ -48,6 +49,11 @@ export class SubscriptionPlanRepository extends PrismaClient implements ISubscri
     async createSubscription(sub: Subscription): Promise<Subscription> {
         var result = await this.subscription.create({ data: { ...sub as any } })
         return new Subscription({ ...result })
+    }
+
+    async getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]> {
+        var result = await this.subscription.findMany({ where: { subscriptioinPlanId: planId, owner: owner } })
+        return result.map(sub => new Subscription({ ...sub }))
     }
 
     async onModuleDestroy() {

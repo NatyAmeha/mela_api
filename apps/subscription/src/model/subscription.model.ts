@@ -1,4 +1,4 @@
-import { BaseModel } from "@app/common/base.model";
+import { BaseModel } from "@app/common/model/base.model";
 import { Field, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { SubscriptionType } from "./subscription_type.enum";
@@ -18,7 +18,7 @@ export class Subscription extends BaseModel {
     isTrialPeriod: boolean
     @Field(type => SubscriptionType)
     type: string
-    @Field()
+    @Field({ description: "owner can be business id, service id, product id" })
     owner?: string
     @Field(type => Date)
     createdAt?: Date
