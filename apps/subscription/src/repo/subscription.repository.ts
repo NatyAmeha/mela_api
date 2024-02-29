@@ -4,6 +4,7 @@ import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { Subscription } from "../model/subscription.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { SubscriptionResponse } from "../model/subscription.response";
 
 export interface ISubscriptionPlanRepository {
     createSubscriptionPlan(subscriptionInfo: SubscriptionPlan): Promise<SubscriptionPlan>
@@ -12,9 +13,11 @@ export interface ISubscriptionPlanRepository {
     getSubscriptionPlan(planId: string): Promise<SubscriptionPlan>
     createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
     getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
+    deleteSubscriptionPlan(planId: string): Promise<SubscriptionResponse>
 }
 
 export class SubscriptionPlanRepository extends PrismaClient implements ISubscriptionPlanRepository, OnModuleInit, OnModuleDestroy {
+
     static InjectName = "SUBSCRIPTION_PLAN_REPOISTORY"
     async onModuleInit() {
         await this.$connect();
@@ -54,6 +57,29 @@ export class SubscriptionPlanRepository extends PrismaClient implements ISubscri
     async getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]> {
         var result = await this.subscription.findMany({ where: { subscriptioinPlanId: planId, owner: owner } })
         return result.map(sub => new Subscription({ ...sub }))
+    }
+
+    async deleteSubscriptionPlan(planId: string): Promise<SubscriptionResponse> {
+        var subscriptionsToDelete: Subscription[] = [];
+        subscriptionsToDelete = await this.subscription.findMany({ where: { id: planId } }) as Subscription[]
+        var trResult = await this.$transaction(async (tx) => {
+            var deletedSubscriptions = await tx.subscriptionPlan.update({
+                where: { id: planId },
+                data: {
+                    subscriptions: {
+                        deleteMany: { subscriptioinPlanId: planId }
+                    }
+                }
+            })
+            var planToDelete = await tx.subscriptionPlan.delete({ where: { id: planId } })
+            var result: SubscriptionResponse = {
+                success: true,
+                plan: new SubscriptionPlan({ ...planToDelete }),
+                deletedSubscritpions: subscriptionsToDelete
+            }
+            return result;
+        })
+        return trResult;
     }
 
     async onModuleDestroy() {

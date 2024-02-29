@@ -71,5 +71,14 @@ export class SubscriptionResolver {
     return response
   }
 
+  @Mutation(returns => SubscriptionResponse)
+  async deleteSubscriptionPlan(@Args("id") planId: string): Promise<SubscriptionResponse> {
+    // delete subscription plan
+    // delete associated subscription
+    // delete active subscription on business, service, product
+    var response = await this.subscriptionService.deleteSubscriptionPlan(planId);
+    return response
+  }
+
 
 }
