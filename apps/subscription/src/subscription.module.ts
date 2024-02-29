@@ -6,7 +6,7 @@ import { Subscriptionconfiguration } from '../subscription_service.config';
 import { LoggerModule } from '@app/logger';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
-import { SubscriptionPlanRepository } from './repo/subscription.repository';
+import { SubscriptionRepository } from './repo/subscription.repository';
 
 @Module({
   imports: [
@@ -46,7 +46,7 @@ import { SubscriptionPlanRepository } from './repo/subscription.repository';
   ],
   controllers: [],
   providers: [
-    { provide: SubscriptionPlanRepository.InjectName, useClass: SubscriptionPlanRepository },
+    { provide: SubscriptionRepository.InjectName, useClass: SubscriptionRepository },
     SubscriptionResolver, SubscriptionService],
 })
 export class SubscriptionModule { }

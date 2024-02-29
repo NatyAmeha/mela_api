@@ -6,7 +6,7 @@ import { Subscription } from "../model/subscription.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { SubscriptionResponse } from "../model/subscription.response";
 
-export interface ISubscriptionPlanRepository {
+export interface ISubscritpionRepository {
     createSubscriptionPlan(subscriptionInfo: SubscriptionPlan): Promise<SubscriptionPlan>
     updateSubscriptionPlanInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean>
     getPlans(queryInfo: QueryHelper<SubscriptionPlan>): Promise<SubscriptionPlan[]>
@@ -16,7 +16,7 @@ export interface ISubscriptionPlanRepository {
     deleteSubscriptionPlan(planId: string): Promise<SubscriptionResponse>
 }
 
-export class SubscriptionPlanRepository extends PrismaClient implements ISubscriptionPlanRepository, OnModuleInit, OnModuleDestroy {
+export class SubscriptionRepository extends PrismaClient implements ISubscritpionRepository, OnModuleInit, OnModuleDestroy {
 
     static InjectName = "SUBSCRIPTION_PLAN_REPOISTORY"
     async onModuleInit() {
