@@ -4,7 +4,7 @@ import { SubscriptionService } from './subscription.service';
 import { GraphQLModule } from '@nestjs/graphql';
 import { Subscriptionconfiguration } from '../subscription_service.config';
 import { LoggerModule } from '@app/logger';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ApolloDriver, ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import { SubscriptionRepository } from './repo/subscription.repository';
 
@@ -17,10 +17,13 @@ import { SubscriptionRepository } from './repo/subscription.repository';
     }),
     LoggerModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
-      driver: ApolloDriver,
+      driver: ApolloFederationDriver,
       useFactory: () => {
         return {
-          autoSchemaFile: './apps/subscription/schema.gql',
+          autoSchemaFile: {
+            federation: 2,
+            path: './apps/subscription/schema.gql'
+          },
           sortSchema: true,
           playground: true,
           // formatError: (error) => {
