@@ -3,9 +3,9 @@ import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { Observable } from "rxjs";
 import { RequestValidationException } from "../errors/request_validation_exception";
-import { Permission } from "@prisma/client";
 import { isPermissionsGranted } from "./permission_util";
 import { User } from "apps/auth/src/auth/model/user.model";
+import { Permission } from "apps/auth/src/authorization/model/access.model";
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -21,7 +21,7 @@ export class PermissionGuard implements CanActivate {
             throw new RequestValidationException({ message: "UnAuthorized Exception", statusCode: 401 })
         }
         var currentUser = user as User;
-        var requiredPermissions = this.reflector.get<Permission>(PermissionGuard.REQUIRED_PERMISSION, context.getHandler())
+        var requiredPermissions: Permission = this.reflector.get<Permission>(PermissionGuard.REQUIRED_PERMISSION, context.getHandler())
 
         if (!requiredPermissions) {
             throw new RequestValidationException({ message: "Bad request", statusCode: 400 })
