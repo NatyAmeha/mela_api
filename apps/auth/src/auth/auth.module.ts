@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { AuthResolver } from './auth.resolver';
 import { AuthService } from './usecase/auth.service';
 import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { ConfigModule } from '@nestjs/config';
+import { ApolloDriver, ApolloDriverConfig, ApolloFederationDriver, ApolloFederationDriverConfig } from '@nestjs/apollo';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import Joi from 'joi';
 import { CommonModule } from '@app/common';
 import { UserRepository } from './data/repo/user.repository';
 import { LoggerModule } from '@app/logger';
-import { configuration } from 'apps/auth/configuration';
+import { configuration } from 'apps/auth/auth_configuration';
 import { AccessTokenStretegy } from './service/guard/jwt.service';
 import { RefreshTokenStrategy } from './service/guard/jwt_refresh.service';
 import { JwtModule } from '@nestjs/jwt';
@@ -18,6 +18,10 @@ import { EmailAuthProvider } from './service/auth_provider/email_auth_provider';
 import { PhoneAuthProvder } from './service/auth_provider/phone_auth_provider';
 import { UserResolver } from './user.resolver';
 import { AuthorizationModule } from '../authorization';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RmqModule } from 'libs/rmq/rmq_module';
+import { AUTH_RMQ_CLIENT } from '../cosntants';
+import { AuthServiceMsgBrocker } from '../auth_service_msg_brocker';
 
 
 
@@ -32,17 +36,21 @@ import { AuthorizationModule } from '../authorization';
       //   "NODE_ENV" : Joi.string().valid("development", "production").default("development")
       // })
     }),
+    RmqModule,
     JwtModule.register({}),
     LoggerModule,
     AuthorizationModule,
-    GraphQLModule.forRootAsync<ApolloDriverConfig>({
-      driver: ApolloDriver,
+    GraphQLModule.forRootAsync<ApolloFederationDriverConfig>({
+      driver: ApolloFederationDriver,
       useFactory: () => {
         return {
-          autoSchemaFile: './apps/auth/schema.gql',
+          autoSchemaFile: {
+            path: './apps/auth/schema.gql',
+            federation: 2
+          },
           sortSchema: true,
           playground: true,
-          // formatError: (error) => {
+          // formatError: (error) => {  
           //   const originalError = error.extensions
           //     ?.originalError as AppException;
 
@@ -80,6 +88,7 @@ import { AuthorizationModule } from '../authorization';
       provide: PhoneAuthProvder.injectName,
       useClass: PhoneAuthProvder,
     },
+    { provide: AuthServiceMsgBrocker.InjectName, useClass: AuthServiceMsgBrocker },
     AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy,
     UserResolver
   ],

@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { SubscriptionPlan } from './model/subscription_plan.model';
@@ -8,14 +8,30 @@ import { SubscriptionType } from './model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
 import { CreateSubscriptionInput } from './dto/subscription.input';
 import { SubscriptionResponse } from './model/subscription.response';
+import { SubscriptionMessageBrocker } from './subscription_message_brocker';
+import { AppMsgQueues } from 'libs/rmq/constants';
+import { IMessageBrocker } from 'libs/rmq/message_brocker';
+import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
+
 
 @Resolver(of => [SubscriptionResponse, SubscriptionPlan])
 export class SubscriptionResolver {
-  constructor(private readonly subscriptionService: SubscriptionService) { }
+  constructor(
+    @Inject(SubscriptionMessageBrocker.InjectName) private subscriptionBroker: SubscriptionMessageBrocker,
+    private readonly subscriptionService: SubscriptionService,
+  ) { }
 
   @Mutation(returns => SubscriptionPlan)
   async createPlatformSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
     var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.PLATFORM, isActiveSubscription: false })
+    var messageInfo: IMessageBrocker<SubscriptionPlan> = {
+      data: subscriptionInfo,
+      coorelationId: AuthServiceMessageType.REQUEST_AUTH_USER,
+      replyQueue: AppMsgQueues.AUTH_SERVICE_REPLY_QUEUE,
+      expirationInSecond: 60 * 1
+    }
+    var reply = await this.subscriptionBroker.sendMessageGetReply<SubscriptionPlan, number>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+    console.log("reply from auth service", reply)
     var result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
     return result;
   }

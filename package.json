@@ -36,6 +36,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.3.0",
     "@prisma/client": "^5.9.1",
+    "@types/amqplib": "^0.10.5",
     "@types/lodash": "^4.14.202",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.3",

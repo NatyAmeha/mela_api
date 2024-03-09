@@ -13,8 +13,8 @@ import { RequiresPermission } from "@app/common/permission_helper/require_permis
 export class UserResolver {
     constructor(private readonly authService: AuthService) { }
 
-    @RequiresPermission({ resourceType: "BUSINESS", action: "CREATE", resourceTarget: "ALL", effect: "ALLOW" })
-    @UseGuards(JwtGuard, PermissionGuard)
+    // @RequiresPermission({ resourceType: "BUSINESS", action: "CREATE", resourceTarget: "ALL", effect: "ALLOW" })
+    @UseGuards(JwtGuard)
     @Query(returns => UserResponse, { name: "me" })
     async getUserInfo(@CurrentUser() currentUser: User): Promise<UserResponse> {
         return {

@@ -1,12 +1,15 @@
-import { Module } from '@nestjs/common';
+import { Inject, Module } from '@nestjs/common';
 import { SubscriptionResolver } from './subscription.resolver';
 import { SubscriptionService } from './subscription.service';
 import { GraphQLModule } from '@nestjs/graphql';
 import { Subscriptionconfiguration } from '../subscription_service.config';
 import { LoggerModule } from '@app/logger';
 import { ApolloDriver, ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SubscriptionRepository } from './repo/subscription.repository';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RmqModule } from 'libs/rmq/rmq_module';
+import { SubscriptionMessageBrocker } from './subscription_message_brocker';
 
 @Module({
   imports: [
@@ -15,6 +18,9 @@ import { SubscriptionRepository } from './repo/subscription.repository';
       isGlobal: true,
       load: [Subscriptionconfiguration],
     }),
+    // RmqModule.register(SUBSCRIPTION_RMQ_CLIENT),
+    RmqModule,
+
     LoggerModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloFederationDriver,
@@ -50,6 +56,7 @@ import { SubscriptionRepository } from './repo/subscription.repository';
   controllers: [],
   providers: [
     { provide: SubscriptionRepository.InjectName, useClass: SubscriptionRepository },
+    { provide: SubscriptionMessageBrocker.InjectName, useClass: SubscriptionMessageBrocker },
     SubscriptionResolver, SubscriptionService],
 })
 export class SubscriptionModule { }

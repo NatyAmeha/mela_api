@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import { Access, Permission } from "../model/access.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { ErrorTypes } from "@app/common/errors/error_types";
 import { find, includes, map, pull, remove } from "lodash";
+import { PrismaClient } from "apps/auth/prisma/generated/prisma_auth_client";
 
 export interface IAuthorizationRepo {
     addAccessToUser(userId: string, accesses: Access[]): Promise<Access[]>
