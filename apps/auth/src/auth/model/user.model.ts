@@ -15,7 +15,7 @@ export class User extends BaseModel {
     phoneNumber?: string
     @Field()
     username?: string
-    isUsernamePlaceholder?: string
+    isUsernamePlaceholder?: boolean
     @Field()
     password?: string
     @Field()

@@ -1,7 +1,7 @@
 import { Field, ObjectType } from "@nestjs/graphql";
 import { User } from "./user.model";
 import { ConfigService } from "@nestjs/config";
-import { ACCESS_TOKEN, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN, REFRESH_TOKEN_EXPIRES_IN } from "apps/auth/configuration";
+import { ACCESS_TOKEN, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN, REFRESH_TOKEN_EXPIRES_IN } from "apps/auth/auth_configuration";
 import { BaseResponse } from "@app/common/model/base.response";
 
 @ObjectType()

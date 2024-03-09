@@ -4,7 +4,7 @@ import { IUserRepository, UserRepository } from '../data/repo/user.repository';
 import { User } from '../model/user.model';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { ACCESS_TOKEN, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN, REFRESH_TOKEN_EXPIRES_IN } from 'apps/auth/configuration';
+import { ACCESS_TOKEN, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN, REFRESH_TOKEN_EXPIRES_IN } from 'apps/auth/auth_configuration';
 import { AuthResponse } from '../model/auth.response';
 import { AuthInfo } from '../dto/auth_info.args';
 import { EmailAuthProvider } from '../service/auth_provider/email_auth_provider';
@@ -91,6 +91,7 @@ export class AuthService {
     var generatedAccessToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
     var generatedRefreshToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
     return {
+      success: true,
       user: user,
       accessToken: generatedAccessToken,
       refreshToken: generatedRefreshToken

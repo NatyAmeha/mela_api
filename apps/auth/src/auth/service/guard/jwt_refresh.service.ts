@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from "../../model/jwt_payload.model";
-import { REFRESH_TOKEN } from "apps/auth/configuration";
+import { REFRESH_TOKEN } from "apps/auth/auth_configuration";
 import { IUserRepository, UserRepository } from "../../data/repo/user.repository";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { User } from "../../model/user.model";
