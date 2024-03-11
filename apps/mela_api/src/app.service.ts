@@ -3,6 +3,7 @@ import { UserInfo } from '@app/common/model/gateway_user.model';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Configuration } from 'apps/mela_api/configuration';
 import axios from 'axios';
 import { GraphQLError } from 'graphql';
 
@@ -13,16 +14,18 @@ export class AppService {
   }
 
   async validateJwtAndQueryUser(authorization?: string): Promise<UserInfo> {
-    var jwtService = new JwtService()
     try {
+      var jwtService = new JwtService()
+      var config = Configuration()
       if (authorization != undefined) {
         var token = (authorization)?.split(" ")[1]
         if (token) {
-          var jwtPayload = await jwtService.verifyAsync(token, { secret: "DEFAULTACCESSTOKEN" })
-          var response = await axios.get(`http://localhost:3002/access?user=${jwtPayload.sub}`)
+          var jwtPayload = await jwtService.verifyAsync(token, { secret: config.auth.accessToken })
+          var userAccessApiEndpoint = config.auth.userAccessEndpointFromAuthService(jwtPayload.sub)
+          var response = await axios.get(userAccessApiEndpoint)
           var userInfo = response.data as UserInfo
           if (!userInfo) {
-            throw new RequestValidationException({ message: "Not user found by this id" })
+            throw new RequestValidationException({ message: "User not found by this id" })
           }
           return userInfo
         }

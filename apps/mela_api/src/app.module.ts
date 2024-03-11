@@ -11,9 +11,16 @@ import axios, { Axios } from 'axios';
 import { GraphQLError } from 'graphql';
 import { JwtService } from '@nestjs/jwt';
 import { UserInfo } from '../../../libs/common/src/model/gateway_user.model';
+import { ConfigModule } from '@nestjs/config';
+import { Configuration } from 'apps/mela_api/configuration';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      cache: true,
+      isGlobal: true,
+      load: [Configuration],
+    }),
     HttpModule,
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
