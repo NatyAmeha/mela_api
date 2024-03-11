@@ -13,8 +13,8 @@ export const configuration = () => ({
         refreshTokenExpiresIn: "7d"
     },
     rmq: {
-        rmq_config: {
-            url: "amqp://host.docker.internal:5672",
+        rmq_config: {  // host.docker.internal
+            url: "amqp://localhost:5672",
             queue: AppMsgQueues.AUTH_SERVICE_QUEUE,
             requestQueue: AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE,
             replyQueue: AppMsgQueues.AUTH_SERVICE_REPLY_QUEUE,

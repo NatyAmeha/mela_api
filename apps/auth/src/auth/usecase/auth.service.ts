@@ -98,6 +98,11 @@ export class AuthService {
     }
   }
 
+  async getUserInfo(userId: string): Promise<User | undefined> {
+    var userInfo = await this.userRepo.getUser({ id: userId })
+    return userInfo
+  }
+
   async logout(userId: string) {
     var result = await this.emailAuthProvider.logout(userId);
     return result;

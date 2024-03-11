@@ -22,6 +22,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqModule } from 'libs/rmq/rmq_module';
 import { AUTH_RMQ_CLIENT } from '../cosntants';
 import { AuthServiceMsgBrocker } from '../auth_service_msg_brocker';
+import { AuthController } from './auth.controller';
 
 
 
@@ -70,7 +71,7 @@ import { AuthServiceMsgBrocker } from '../auth_service_msg_brocker';
       }
     })
   ],
-  controllers: [],
+  controllers: [AuthController],
   providers: [
     {
       provide: UserRepository.injectName,

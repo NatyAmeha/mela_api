@@ -64,7 +64,9 @@ export class User extends BaseModel {
     getTokenPayloadFromUser(): JwtPayload {
         return {
             sub: this.id,
-            username: this.email
+            username: this.email,
+            accesses: this.accesses,
+            email: this.email
         }
     }
 }

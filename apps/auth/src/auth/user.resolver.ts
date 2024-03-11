@@ -1,4 +1,4 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
+import { Args, Int, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { User } from "./model/user.model";
 import { UseGuards } from "@nestjs/common";
 import { JwtGuard } from "./service/guard/jwt.gurad";
@@ -6,8 +6,9 @@ import { CurrentUser } from "./service/guard/get_user_decorator";
 import { AuthService } from "./usecase/auth.service";
 import { UpdateUserInput } from "./dto/update_user.input";
 import { UserResponse } from "./dto/user.response";
-import { PermissionGuard } from "@app/common/permission_helper/authorization.guard";
+import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
 import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
+import { Access } from "../authorization/model/access.model";
 
 @Resolver(of => UserResponse)
 export class UserResolver {
@@ -20,6 +21,11 @@ export class UserResolver {
         return {
             user: currentUser
         }
+    }
+
+    @Query(returns => String, { name: "check" })
+    getData(): string {
+        return "Natnael ameha"
     }
 
     @UseGuards(JwtGuard)

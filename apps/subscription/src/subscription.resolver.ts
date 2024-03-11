@@ -1,4 +1,4 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { SubscriptionPlan } from './model/subscription_plan.model';
@@ -12,6 +12,10 @@ import { SubscriptionMessageBrocker } from './subscription_message_brocker';
 import { AppMsgQueues } from 'libs/rmq/constants';
 import { IMessageBrocker } from 'libs/rmq/message_brocker';
 import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
+import { UserAuthGuard } from 'libs/common/authorization.guard';
+import { CurrentUser } from 'apps/auth/src/auth/service/guard/get_user_decorator';
+import { UserInfo } from '@app/common/model/gateway_user.model';
+
 
 
 @Resolver(of => [SubscriptionResponse, SubscriptionPlan])
@@ -21,6 +25,7 @@ export class SubscriptionResolver {
     private readonly subscriptionService: SubscriptionService,
   ) { }
 
+  @UseGuards(UserAuthGuard)
   @Mutation(returns => SubscriptionPlan)
   async createPlatformSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
     var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.PLATFORM, isActiveSubscription: false })
@@ -37,7 +42,11 @@ export class SubscriptionResolver {
   }
 
   @Query(returns => [SubscriptionPlan])
-  async getSubscriptionPlans(@Args({ name: "type", type: () => SubscriptionType, nullable: true }) type: SubscriptionType, @Args({ name: "owner", nullable: true }) owner?: string) {
+  async getSubscriptionPlans(
+    @CurrentUser() data: UserInfo,
+    @Args({ name: "type", type: () => SubscriptionType, nullable: true }) type: SubscriptionType,
+    @Args({ name: "owner", nullable: true },) owner?: string,
+  ) {
     var queryHelper: QueryHelper<SubscriptionPlan> = {
       query: { type, owner } as SubscriptionPlan
     }

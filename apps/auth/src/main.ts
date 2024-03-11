@@ -25,6 +25,7 @@ async function bootstrap() {
   // var queueName = config.get<string>("rmq.rmq_config.queue")
   // app.connectMicroservice(rmqService.getOption(queueName));
   // await app.startAllMicroservices();
+  app.enableCors()
   await app.listen(3002);
 }
 bootstrap();

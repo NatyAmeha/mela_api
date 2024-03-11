@@ -7,8 +7,8 @@ export const Subscriptionconfiguration = () => ({
         port: parseInt(process.env.DATABASE_PORT, 10) || 5435
     },
     rmq: {
-        rmq_config: {
-            url: "amqp://host.docker.internal:5672",
+        rmq_config: {  // host.docker.internal
+            url: "amqp://localhost:5672",
             queue: AppMsgQueues.SUBSCRITPION_SERVICE_QUEUE,
             requestQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REQUEST_QUEUE,
             replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
