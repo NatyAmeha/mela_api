@@ -28,8 +28,8 @@ import { RmqModule } from 'libs/rmq/rmq_module';
         },
         supergraphSdl: new IntrospectAndCompose({
           subgraphs: [
-            { name: "subscription_service", url: "http://localhost:3001/graphql" },
-            { name: "auth_service", url: "http://localhost:3002/graphql" }
+            { name: "subscription_service", url: "http://host.docker.internal:3001/graphql" },
+            { name: "auth_service", url: "http://host.docker.internal:3002/graphql" }
           ]
         })
       }

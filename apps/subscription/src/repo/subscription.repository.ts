@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
 import { SubscriptionPlan } from "../model/subscription_plan.model";
 import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { Subscription } from "../model/subscription.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { SubscriptionResponse } from "../model/subscription.response";
+import { PrismaClient } from '@prisma/client'
+
 
 export interface ISubscritpionRepository {
     createSubscriptionPlan(subscriptionInfo: SubscriptionPlan): Promise<SubscriptionPlan>

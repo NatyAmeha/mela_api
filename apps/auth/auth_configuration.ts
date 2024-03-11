@@ -14,7 +14,7 @@ export const configuration = () => ({
     },
     rmq: {
         rmq_config: {
-            url: ["amqp://guest:guest@127.0.0.1:5672"],
+            url: "amqp://host.docker.internal:5672",
             queue: AppMsgQueues.AUTH_SERVICE_QUEUE,
             requestQueue: AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE,
             replyQueue: AppMsgQueues.AUTH_SERVICE_REPLY_QUEUE,

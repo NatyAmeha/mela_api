@@ -40,7 +40,6 @@
     "@types/lodash": "^4.14.202",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.3",
-    "argon2": "^0.31.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "graphql": "^16.8.1",
