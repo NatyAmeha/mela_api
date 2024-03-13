@@ -12,7 +12,7 @@ import { SubscriptionMessageBrocker } from './subscription_message_brocker';
 import { AppMsgQueues } from 'libs/rmq/constants';
 import { IMessageBrocker } from 'libs/rmq/message_brocker';
 import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
-import { UserAuthGuard } from 'libs/common/authorization.guard';
+import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'apps/auth/src/auth/service/guard/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
 
@@ -25,7 +25,7 @@ export class SubscriptionResolver {
     private readonly subscriptionService: SubscriptionService,
   ) { }
 
-  @UseGuards(UserAuthGuard)
+  @UseGuards(AuthzGuard)
   @Mutation(returns => SubscriptionPlan)
   async createPlatformSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
     var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.PLATFORM, isActiveSubscription: false })

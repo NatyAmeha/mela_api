@@ -3,7 +3,7 @@ import { GqlExecutionContext } from "@nestjs/graphql";
 import { Request } from "express";
 import { Observable } from "rxjs";
 
-export class UserAuthGuard implements CanActivate {
+export class AuthzGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
         var gqlContext = GqlExecutionContext.create(context)
         var request = gqlContext.getContext().req;

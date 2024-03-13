@@ -16,7 +16,9 @@ type Access {
 type AuthResponse {
   accessToken: String
   isNewUser: Boolean
+  message: String
   refreshToken: String
+  success: Boolean!
   user: User
 }
 
@@ -83,6 +85,7 @@ input PermissionGroupInput {
 }
 
 type Query {
+  check: String!
   me: UserResponse!
   placeholder: User!
   refreshToken: AuthResponse!
@@ -116,7 +119,7 @@ type User {
   firstName: String
   id: ID
   isEmailPlaceholder: Boolean
-  isUsernamePlaceholder: String
+  isUsernamePlaceholder: Boolean
   lastName: String
   password: String
   phoneNumber: String

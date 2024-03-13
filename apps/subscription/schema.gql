@@ -1,0 +1,174 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type BenefitInfo {
+  descriptions: [LocalizedData!]!
+  tags: [String!]
+}
+
+input BenefitInput {
+  descriptions: [LocalizedDataInput!]!
+  tags: [String!]
+}
+
+input CreateSubscriptionInput {
+  """owner can be business id, service id, product id"""
+  owner: String
+  subscriptioinPlanId: String
+}
+
+input CreateSubscriptionPlanInput {
+  benefits: [BenefitInput!]!
+  category: [String!]!
+  description: [LocalizedDataInput!]
+  duration: Float!
+  name: [LocalizedDataInput!]!
+  owner: String
+  price: Float!
+  trialPeriod: Float!
+
+  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
+  type: SubscriptionType!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+enum LanguageKey {
+  AMHARIC
+  ENGLISH
+  OROMIC
+}
+
+type LocalizedData {
+  """the name of the language, ex. english, amharic"""
+  key: LanguageKey!
+  value: String!
+}
+
+input LocalizedDataInput {
+  """the name of the language, ex. english, amharic"""
+  key: LanguageKey!
+  value: String!
+}
+
+type Mutation {
+  changeSubscriptionStatus(status: Boolean!, subscription: String!): Boolean!
+  createBusinessSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
+  createPlatformSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
+  createServiceSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
+  deleteSubscriptionPlan(id: String!): SubscriptionResponse!
+  subscribeToPlan(info: CreateSubscriptionInput!): SubscriptionResponse!
+  updateSubscriptionPlan(data: UpdateSubscriptionPlanInput!, id: String!): SubscriptionResponse!
+}
+
+type Query {
+  getBusienssSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
+  getSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
+}
+
+type Subscription {
+  createdAt: DateTime
+  endDate: DateTime!
+  id: ID
+  isTrialPeriod: Boolean!
+
+  """owner can be business id, service id, product id"""
+  owner: String
+  plan: SubscriptionPlan
+  startDate: DateTime!
+  subscriptioinPlanId: String
+  type: SubscriptionType!
+  updatedAt: DateTime!
+}
+
+input SubscriptionInput {
+  createdAt: DateTime
+  endDate: DateTime!
+  id: ID
+  isTrialPeriod: Boolean!
+
+  """owner can be business id, service id, product id"""
+  owner: String
+  plan: SubscriptionPlanInput
+  startDate: DateTime!
+  subscriptioinPlanId: String
+  type: SubscriptionType!
+  updatedAt: DateTime!
+}
+
+type SubscriptionPlan {
+  benefits: [BenefitInfo!]
+  category: [String!]
+  createdAt: DateTime
+  description: [LocalizedData!]
+  duration: Int
+  id: ID
+  isActive: Boolean
+  name: [LocalizedData!]
+  owner: String
+  price: Float
+  subscriptions: [Subscription!]
+  trialPeriod: Int
+
+  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
+  type: SubscriptionType
+  updatedAt: DateTime
+}
+
+input SubscriptionPlanInput {
+  benefits: [BenefitInput!]
+  category: [String!]
+  createdAt: DateTime
+  description: [LocalizedDataInput!]
+  duration: Int
+  id: ID
+  isActive: Boolean
+  name: [LocalizedDataInput!]
+  owner: String
+  price: Float
+  subscriptions: [SubscriptionInput!]
+  trialPeriod: Int
+
+  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
+  type: SubscriptionType
+  updatedAt: DateTime
+}
+
+type SubscriptionResponse {
+  """subscription info created"""
+  createdSubscription: Subscription
+  deletedSubscritpions: [Subscription!]
+
+  """existing subscription available for requested by planId and owner"""
+  existingActiveSubscriptions: [Subscription!]
+  message: String
+
+  """Subscription plan info that is subscribed"""
+  plan: SubscriptionPlan
+  success: Boolean!
+}
+
+enum SubscriptionType {
+  BUSINESS
+  PLATFORM
+  PRODUCT
+  SERVICE
+}
+
+input UpdateSubscriptionPlanInput {
+  benefits: [BenefitInput!]
+  category: [String!]
+  description: [LocalizedDataInput!]
+  duration: Int
+  name: [LocalizedDataInput!]
+  owner: String
+  price: Float
+  trialPeriod: Int
+
+  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
+  type: SubscriptionType
+}
