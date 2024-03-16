@@ -6,6 +6,7 @@ import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 export interface IPlatformServiceRepo {
     createPlatformService(serviceInfo: PlatformService): Promise<PlatformService>
     findPlatfromServices(queryHelper: QueryHelper<PlatformService>): Promise<PlatformService[]>
+    getPlatformService(platformServiceId: string): Promise<PlatformService | undefined>
 }
 @Injectable()
 export class PlatformServiceRepository extends PrismaClient implements IPlatformServiceRepo, OnModuleInit, OnModuleDestroy {
@@ -22,6 +23,14 @@ export class PlatformServiceRepository extends PrismaClient implements IPlatform
     async findPlatfromServices(queryHelper: QueryHelper<PlatformService>): Promise<PlatformService[]> {
         var result = await this.platformService.findMany({ where: { ...queryHelper.query as any } })
         return result as PlatformService[]
+    }
+
+    async getPlatformService(platformServiceId: string): Promise<PlatformService> {
+        var result = await this.platformService.findFirst({ where: { id: platformServiceId } })
+        if (!result.id) {
+            return undefined
+        }
+        return new PlatformService({ ...result });
     }
 
 

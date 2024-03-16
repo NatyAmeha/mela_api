@@ -1,6 +1,6 @@
 import { BaseModel } from "@app/common/model/base.model";
 import { LocalizedData } from "@app/common/model/localized_model";
-import { Field, Float, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
 
 @ObjectType()
@@ -17,6 +17,7 @@ export class PlatformService extends BaseModel {
     @Type(() => LocalizedData)
     description?: LocalizedData[]
 
+    @Field()
     image?: string
     @Field(type => Float)
     basePrice: number
@@ -36,9 +37,30 @@ export class PlatformService extends BaseModel {
     @Type(() => PlatformService)
     relatedServices?: PlatformService[]
 
+    @Field(type => Int)
+    trialPeriod?: number
+    @Field(type => Int)
+    duration?: number = 90
+
     constructor(data: Partial<PlatformService>) {
         super()
         Object.assign(this, data)
+    }
+
+    hasTrialPeriod() {
+        if (this.trialPeriod && this.trialPeriod > 0) {
+            return true
+        }
+        return false
+    }
+
+    getDefaultCustomization(): string[] {
+        var result: string[] = []
+        this.customizationCategories.forEach(cc => {
+            var defaultcustomzationId = cc.customizations.filter(customzation => customzation.default == true).map(cust => cust.id);
+            result.push(...defaultcustomzationId)
+        });
+        return result;
     }
 }
 

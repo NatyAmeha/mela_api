@@ -63,12 +63,16 @@ export class SubscriptionResolver {
     return result;
   }
 
-  @Mutation(returns => SubscriptionPlan)
-  async createServiceSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
-    var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.SERVICE, isActiveSubscription: false })
-    var result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
-    return result;
+  @Mutation(returns => SubscriptionResponse)
+  async subscribeToPlatformServices(@Args("input") planInput: CreateSubscriptionInput) {
+    // validate the input
+    // create subscription info
+    var response = await this.subscriptionService.subscribeToPlan(planInput);
+    // create access permission for business on auth servcie
+    // update subscription status
+    return response
   }
+
 
   @Query(returns => [SubscriptionPlan])
   async getBusienssSubscriptionPlans(@Args({ name: "type", type: () => SubscriptionType, nullable: true }) type: SubscriptionType, @Args({ name: "owner", nullable: true }) owner?: string) {

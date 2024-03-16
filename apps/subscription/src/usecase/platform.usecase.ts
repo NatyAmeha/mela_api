@@ -16,7 +16,6 @@ export class PlatfromUsecase {
     async getPlatAllPlatformServices(queryHelper: QueryHelper<PlatformService>) {
         var result = await this.platformServiceRepo.findPlatfromServices(queryHelper)
         return result;
-
     }
 
 

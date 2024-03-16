@@ -12,10 +12,17 @@ input BenefitInput {
   tags: [String!]
 }
 
+input CreatePlatformServiceSubscriptionInput {
+  selectedCustomizationId: [String!]!
+  serviceId: ID!
+}
+
 input CreateSubscriptionInput {
   """owner can be business id, service id, product id"""
   owner: String
+  selectedPlatformServices: [CreatePlatformServiceSubscriptionInput!]
   subscriptioinPlanId: String
+  type: SubscriptionType!
 }
 
 input CreateSubscriptionPlanInput {
@@ -94,9 +101,9 @@ type Mutation {
   createBusinessSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
   createPlatformService(serviceInfo: PlatformServiceInput!): PlatformService!
   createPlatformSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
-  createServiceSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
   deleteSubscriptionPlan(id: String!): SubscriptionResponse!
   subscribeToPlan(info: CreateSubscriptionInput!): SubscriptionResponse!
+  subscribeToPlatformServices(input: CreateSubscriptionInput!): SubscriptionResponse!
   updateSubscriptionPlan(data: UpdateSubscriptionPlanInput!, id: String!): SubscriptionResponse!
 }
 
@@ -104,24 +111,48 @@ type PlatformService {
   basePrice: Float!
   customizationCategories: [CustomizationCategory!]
   description: [LocalizedData!]
+  duration: Int
   features: [LocalizedData!]
   id: ID
   image: String
   name: [LocalizedData!]!
   relatedServices: [PlatformService!]
   relatedServicesId: [String!]
+  trialPeriod: Int
 }
 
 input PlatformServiceInput {
   basePrice: Float!
   customizationCategories: [CustomizationCategoryInput!]
   description: [LocalizedDataInput!]
+  duration: Int = 90
   features: [LocalizedDataInput!]
   id: ID
   image: String
   name: [LocalizedDataInput!]!
   relatedServices: [PlatformServiceInput!]
   relatedServicesId: [String!]
+  trialPeriod: Int
+}
+
+input PlatformServiceSubscriptionInput {
+  createdAt: DateTime
+  endDate: DateTime!
+  isTrialPeriod: Boolean
+  selectedCustomizationId: [String!]!
+  serviceId: ID!
+  startDate: DateTime!
+  updatedAt: DateTime!
+}
+
+type PlatfromServiceSubscription {
+  createdAt: DateTime
+  endDate: DateTime!
+  isTrialPeriod: Boolean
+  selectedCustomizationId: [String!]!
+  serviceId: ID!
+  startDate: DateTime!
+  updatedAt: DateTime!
 }
 
 type Query {
@@ -144,6 +175,7 @@ type Subscription {
   """owner can be business id, service id, product id"""
   owner: String
   plan: SubscriptionPlan
+  platformServices: [PlatfromServiceSubscription!]
   startDate: DateTime!
   subscriptioinPlanId: String
   type: SubscriptionType!
@@ -159,6 +191,7 @@ input SubscriptionInput {
   """owner can be business id, service id, product id"""
   owner: String
   plan: SubscriptionPlanInput
+  platformServices: [PlatformServiceSubscriptionInput!]
   startDate: DateTime!
   subscriptioinPlanId: String
   type: SubscriptionType!
@@ -221,7 +254,6 @@ enum SubscriptionType {
   BUSINESS
   PLATFORM
   PRODUCT
-  SERVICE
 }
 
 input UpdateSubscriptionPlanInput {
