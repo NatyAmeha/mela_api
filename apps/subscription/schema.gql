@@ -32,6 +32,40 @@ input CreateSubscriptionPlanInput {
   type: SubscriptionType!
 }
 
+type Customization {
+  additionalPrice: Float
+  default: Boolean
+  id: ID
+  name: [LocalizedData!]!
+  value: String!
+}
+
+type CustomizationCategory {
+  customizations: [Customization!]!
+  description: [LocalizedData!]
+  id: ID
+  name: [LocalizedData!]!
+  selectionRequired: Boolean
+  selectionType: SelectionType
+}
+
+input CustomizationCategoryInput {
+  customizations: [CustomizationInput!]!
+  description: [LocalizedDataInput!]
+  id: ID
+  name: [LocalizedDataInput!]!
+  selectionRequired: Boolean
+  selectionType: SelectionType
+}
+
+input CustomizationInput {
+  additionalPrice: Float
+  default: Boolean
+  id: ID
+  name: [LocalizedDataInput!]!
+  value: String!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -58,6 +92,7 @@ input LocalizedDataInput {
 type Mutation {
   changeSubscriptionStatus(status: Boolean!, subscription: String!): Boolean!
   createBusinessSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
+  createPlatformService(serviceInfo: PlatformServiceInput!): PlatformService!
   createPlatformSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
   createServiceSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
   deleteSubscriptionPlan(id: String!): SubscriptionResponse!
@@ -65,9 +100,39 @@ type Mutation {
   updateSubscriptionPlan(data: UpdateSubscriptionPlanInput!, id: String!): SubscriptionResponse!
 }
 
+type PlatformService {
+  basePrice: Float!
+  customizationCategories: [CustomizationCategory!]
+  description: [LocalizedData!]
+  features: [LocalizedData!]
+  id: ID
+  image: String
+  name: [LocalizedData!]!
+  relatedServices: [PlatformService!]
+  relatedServicesId: [String!]
+}
+
+input PlatformServiceInput {
+  basePrice: Float!
+  customizationCategories: [CustomizationCategoryInput!]
+  description: [LocalizedDataInput!]
+  features: [LocalizedDataInput!]
+  id: ID
+  image: String
+  name: [LocalizedDataInput!]!
+  relatedServices: [PlatformServiceInput!]
+  relatedServicesId: [String!]
+}
+
 type Query {
   getBusienssSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
+  getPlatformServices: [PlatformService!]!
   getSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
+}
+
+enum SelectionType {
+  MULTI_SELECTION
+  SINGLE_SELECTION
 }
 
 type Subscription {

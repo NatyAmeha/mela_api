@@ -1,6 +1,5 @@
 import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { AuthService } from "./usecase/auth.service";
-import { Access } from "../authorization/model/access.model";
 import { User } from "./model/user.model";
 import { CurrentUser } from "./service/guard/get_user_decorator";
 import { userInfo } from "os";

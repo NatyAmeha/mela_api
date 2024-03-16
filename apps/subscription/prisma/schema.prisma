@@ -39,9 +39,37 @@ model Subscription {
     updatedAt           DateTime         @default(now())
 }
 
+model PlatformService {
+    id                      String                  @id @default(auto()) @map("_id") @db.ObjectId
+    name                    NameType[]
+    description             NameType[]
+    image                   String?
+    basePrice               Float
+    features                NameType[]
+    customizationCategories CustomizationCategory[]
+    relatedServicesId       String[]
+}
+
 type BenefitType {
     tags         String[]
     descriptions NameType[]
+}
+
+type CustomizationCategory {
+    id                String          @default(uuid())
+    name              NameType[]
+    selectionType     String          @default("SINGLE_SELECTION")
+    description       NameType[]
+    selectionRequired Boolean         @default(true)
+    customizations    Customization[]
+}
+
+type Customization {
+    id              String     @default(uuid())
+    name            NameType[]
+    value           String
+    additionalPrice Float      @default(0)
+    default         Boolean    @default(false)
 }
 
 type NameType {

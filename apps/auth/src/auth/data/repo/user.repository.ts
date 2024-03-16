@@ -5,7 +5,6 @@ import { IDatasource } from "@app/common/datasource_helper/datasource.interface"
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaClient } from "apps/auth/prisma/generated/prisma_auth_client";
-import { Access } from "apps/auth/src/authorization/model/access.model";
 
 export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>

@@ -1,6 +1,6 @@
 import { Inject, Module } from '@nestjs/common';
-import { SubscriptionResolver } from './subscription.resolver';
-import { SubscriptionService } from './subscription.service';
+import { SubscriptionResolver } from './resolver/subscription.resolver';
+import { SubscriptionService } from './usecase/subscription.usecase';
 import { GraphQLModule } from '@nestjs/graphql';
 import { Subscriptionconfiguration } from '../subscription_service.config';
 import { LoggerModule } from '@app/logger';
@@ -10,6 +10,9 @@ import { SubscriptionRepository } from './repo/subscription.repository';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqModule } from 'libs/rmq/rmq_module';
 import { SubscriptionMessageBrocker } from './subscription_message_brocker';
+import { PlatformServiceRepository } from './repo/platform_service.repo';
+import { PlatformServiceResolver } from './resolver/platform_service.resolver';
+import { PlatfromUsecase } from './usecase/platform.usecase';
 
 @Module({
   imports: [
@@ -57,6 +60,7 @@ import { SubscriptionMessageBrocker } from './subscription_message_brocker';
   providers: [
     { provide: SubscriptionRepository.InjectName, useClass: SubscriptionRepository },
     { provide: SubscriptionMessageBrocker.InjectName, useClass: SubscriptionMessageBrocker },
-    SubscriptionResolver, SubscriptionService],
+    { provide: PlatformServiceRepository.InjectName, useClass: PlatformServiceRepository },
+    SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase],
 })
 export class SubscriptionModule { }

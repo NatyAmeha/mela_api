@@ -8,7 +8,6 @@ import { UpdateUserInput } from "./dto/update_user.input";
 import { UserResponse } from "./dto/user.response";
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
 import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
-import { Access } from "../authorization/model/access.model";
 
 @Resolver(of => UserResponse)
 export class UserResolver {

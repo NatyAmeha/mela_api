@@ -1,14 +1,14 @@
 import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
-import { SubscriptionService } from './subscription.service';
+import { SubscriptionService } from '../usecase/subscription.usecase';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { SubscriptionPlan } from './model/subscription_plan.model';
-import { Subscription } from './model/subscription.model';
-import { CreateSubscriptionPlanInput, UpdateSubscriptionPlanInput } from './dto/subscription_plan.input';
-import { SubscriptionType } from './model/subscription_type.enum';
+import { SubscriptionPlan } from '../model/subscription_plan.model';
+import { Subscription } from '../model/subscription.model';
+import { CreateSubscriptionPlanInput, UpdateSubscriptionPlanInput } from '../dto/subscription_plan.input';
+import { SubscriptionType } from '../model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
-import { CreateSubscriptionInput } from './dto/subscription.input';
-import { SubscriptionResponse } from './model/subscription.response';
-import { SubscriptionMessageBrocker } from './subscription_message_brocker';
+import { CreateSubscriptionInput } from '../dto/subscription.input';
+import { SubscriptionResponse } from '../model/subscription.response';
+import { SubscriptionMessageBrocker } from '../subscription_message_brocker';
 import { AppMsgQueues } from 'libs/rmq/constants';
 import { IMessageBrocker } from 'libs/rmq/message_brocker';
 import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
@@ -25,9 +25,10 @@ export class SubscriptionResolver {
     private readonly subscriptionService: SubscriptionService,
   ) { }
 
-  @UseGuards(AuthzGuard)
+  // @UseGuards(AuthzGuard)
   @Mutation(returns => SubscriptionPlan)
   async createPlatformSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
+    console.log("real sub info", plan)
     var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.PLATFORM, isActiveSubscription: false })
     var messageInfo: IMessageBrocker<SubscriptionPlan> = {
       data: subscriptionInfo,
@@ -55,6 +56,7 @@ export class SubscriptionResolver {
   }
 
   @Mutation(returns => SubscriptionPlan)
+  @UseGuards(AuthzGuard)
   async createBusinessSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
     var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.BUSINESS, isActiveSubscription: false })
     var result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
@@ -78,6 +80,7 @@ export class SubscriptionResolver {
   }
 
   @Mutation(returns => Boolean)
+  @UseGuards(AuthzGuard)
   async changeSubscriptionStatus(@Args("subscription") subscriptionId: string, @Args("status") status: boolean) {
     var result = await this.subscriptionService.updateSubscriptionPlanStatus(subscriptionId, status)
     return result;
@@ -90,12 +93,14 @@ export class SubscriptionResolver {
     return response
   }
 
+  @UseGuards(AuthzGuard)
   @Mutation(returns => SubscriptionResponse)
   async subscribeToPlan(@Args("info") info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
     var response = await this.subscriptionService.subscribeToPlan(info);
     return response
   }
 
+  @UseGuards(AuthzGuard)
   @Mutation(returns => SubscriptionResponse)
   async deleteSubscriptionPlan(@Args("id") planId: string): Promise<SubscriptionResponse> {
     // delete subscription plan

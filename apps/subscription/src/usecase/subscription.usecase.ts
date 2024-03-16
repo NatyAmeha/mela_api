@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ISubscritpionRepository, SubscriptionRepository } from './repo/subscription.repository';
-import { SubscriptionPlan } from './model/subscription_plan.model';
+import { ISubscritpionRepository, SubscriptionRepository } from '../repo/subscription.repository';
+import { SubscriptionPlan } from '../model/subscription_plan.model';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
-import { CreateSubscriptionInput } from './dto/subscription.input';
-import { Subscription } from './model/subscription.model';
-import { SubscriptionResponse } from './model/subscription.response';
+import { CreateSubscriptionInput } from '../dto/subscription.input';
+import { Subscription } from '../model/subscription.model';
+import { SubscriptionResponse } from '../model/subscription.response';
 
 @Injectable()
 export class SubscriptionService {
