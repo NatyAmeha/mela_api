@@ -2,6 +2,19 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Access {
+  businessId: String
+  dateCreated: DateTime
+  dateUpdated: DateTime
+  id: ID
+  permissionType: PermissionType!
+  permissions: [Permission!]
+  resourceId: String
+  role: String
+  user: User
+  userId: String
+}
+
 type BenefitInfo {
   descriptions: [LocalizedData!]!
   tags: [String!]
@@ -14,7 +27,8 @@ input BenefitInput {
 
 input CreatePlatformServiceSubscriptionInput {
   selectedCustomizationId: [String!]!
-  serviceId: ID!
+  serviceId: String!
+  serviceName: String!
 }
 
 input CreateSubscriptionInput {
@@ -97,6 +111,7 @@ input LocalizedDataInput {
 }
 
 type Mutation {
+  addPlatformServiceToSubscription(platformServiceInfo: [CreatePlatformServiceSubscriptionInput!]!, subscriptionId: String!): SubscriptionResponse!
   changeSubscriptionStatus(status: Boolean!, subscription: String!): Boolean!
   createBusinessSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
   createPlatformService(serviceInfo: PlatformServiceInput!): PlatformService!
@@ -105,6 +120,27 @@ type Mutation {
   subscribeToPlan(info: CreateSubscriptionInput!): SubscriptionResponse!
   subscribeToPlatformServices(input: CreateSubscriptionInput!): SubscriptionResponse!
   updateSubscriptionPlan(data: UpdateSubscriptionPlanInput!, id: String!): SubscriptionResponse!
+}
+
+type Permission {
+  action: String!
+  effect: String!
+  groups: [PermissionGroup!]
+  id: ID
+  resourceTarget: String!
+  resourceType: String!
+  userGenerated: Boolean
+}
+
+type PermissionGroup {
+  id: String!
+  key: String!
+  name: [LocalizedData!]!
+}
+
+enum PermissionType {
+  PLATFORM_PERMISSION
+  PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION
 }
 
 type PlatformService {
@@ -141,6 +177,7 @@ input PlatformServiceSubscriptionInput {
   isTrialPeriod: Boolean
   selectedCustomizationId: [String!]!
   serviceId: ID!
+  serviceName: String!
   startDate: DateTime!
   updatedAt: DateTime!
 }
@@ -151,6 +188,7 @@ type PlatfromServiceSubscription {
   isTrialPeriod: Boolean
   selectedCustomizationId: [String!]!
   serviceId: ID!
+  serviceName: String!
   startDate: DateTime!
   updatedAt: DateTime!
 }
@@ -170,6 +208,7 @@ type Subscription {
   createdAt: DateTime
   endDate: DateTime!
   id: ID
+  isActive: Boolean
   isTrialPeriod: Boolean!
 
   """owner can be business id, service id, product id"""
@@ -186,6 +225,7 @@ input SubscriptionInput {
   createdAt: DateTime
   endDate: DateTime!
   id: ID
+  isActive: Boolean
   isTrialPeriod: Boolean!
 
   """owner can be business id, service id, product id"""
@@ -237,12 +277,15 @@ input SubscriptionPlanInput {
 }
 
 type SubscriptionResponse {
+  addedPlatformServices: [PlatfromServiceSubscription!]
+
   """subscription info created"""
   createdSubscription: Subscription
   deletedSubscritpions: [Subscription!]
 
   """existing subscription available for requested by planId and owner"""
   existingActiveSubscriptions: [Subscription!]
+  existingPlatformService: [PlatfromServiceSubscription!]
   message: String
 
   """Subscription plan info that is subscribed"""
@@ -268,4 +311,23 @@ input UpdateSubscriptionPlanInput {
 
   """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
   type: SubscriptionType
+}
+
+type User {
+  accessIds: [String!]
+  accesses: [Access!]
+  accountStatus: String
+  email: String
+  emailVerified: Boolean
+  firstName: String
+  id: ID
+  isEmailPlaceholder: Boolean
+  isUsernamePlaceholder: Boolean
+  lastName: String
+  password: String
+  phoneNumber: String
+  phoneVerified: Boolean
+  profileImageUrl: String
+  refreshToken: String
+  username: String
 }

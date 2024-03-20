@@ -3,14 +3,16 @@
 # ------------------------------------------------------
 
 type Access {
+  businessId: String
   dateCreated: DateTime
   dateUpdated: DateTime
   id: ID
+  permissionType: PermissionType!
   permissions: [Permission!]
   resourceId: String
-  role: String!
+  role: String
   user: User
-  userId: String!
+  userId: String
 }
 
 type AuthResponse {
@@ -20,6 +22,16 @@ type AuthResponse {
   refreshToken: String
   success: Boolean!
   user: User
+}
+
+type BenefitInfo {
+  descriptions: [LocalizedData!]!
+  tags: [String!]
+}
+
+input BenefitInput {
+  descriptions: [LocalizedDataInput!]!
+  tags: [String!]
 }
 
 input CreateAccessInput {
@@ -41,6 +53,24 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+enum LanguageKey {
+  AMHARIC
+  ENGLISH
+  OROMIC
+}
+
+type LocalizedData {
+  """the name of the language, ex. english, amharic"""
+  key: LanguageKey!
+  value: String!
+}
+
+input LocalizedDataInput {
+  """the name of the language, ex. english, amharic"""
+  key: LanguageKey!
+  value: String!
+}
+
 type Mutation {
   addAuthorizationAccess(accesses: [CreateAccessInput!]!, user: String!): [Access!]!
   addPermissionToUserAccess(access: String!, permissions: [CreatePermissionInput!]!, user: String!): [Permission!]!
@@ -51,11 +81,6 @@ type Mutation {
   signInWithEmailAndPassword(email: String!, password: String!): AuthResponse!
   signInWithPhoneNumber(phone: String!): AuthResponse!
   updateProfileInfo(user: UpdateUserInput!): Boolean!
-}
-
-type NameType {
-  key: String!
-  value: String!
 }
 
 input NameTypeInput {
@@ -76,12 +101,39 @@ type Permission {
 type PermissionGroup {
   id: String!
   key: String!
-  name: [NameType!]!
+  name: [LocalizedData!]!
 }
 
 input PermissionGroupInput {
   key: String!
   name: [NameTypeInput!]!
+}
+
+enum PermissionType {
+  PLATFORM_PERMISSION
+  PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION
+}
+
+input PlatformServiceSubscriptionInput {
+  createdAt: DateTime
+  endDate: DateTime!
+  isTrialPeriod: Boolean
+  selectedCustomizationId: [String!]!
+  serviceId: ID!
+  serviceName: String!
+  startDate: DateTime!
+  updatedAt: DateTime!
+}
+
+type PlatfromServiceSubscription {
+  createdAt: DateTime
+  endDate: DateTime!
+  isTrialPeriod: Boolean
+  selectedCustomizationId: [String!]!
+  serviceId: ID!
+  serviceName: String!
+  startDate: DateTime!
+  updatedAt: DateTime!
 }
 
 type Query {
@@ -98,6 +150,84 @@ input SignupInput {
   password: String
   phoneNumber: String!
   profileImageUrl: String
+}
+
+type Subscription {
+  createdAt: DateTime
+  endDate: DateTime!
+  id: ID
+  isActive: Boolean
+  isTrialPeriod: Boolean!
+
+  """owner can be business id, service id, product id"""
+  owner: String
+  plan: SubscriptionPlan
+  platformServices: [PlatfromServiceSubscription!]
+  startDate: DateTime!
+  subscriptioinPlanId: String
+  type: SubscriptionType!
+  updatedAt: DateTime!
+}
+
+input SubscriptionInput {
+  createdAt: DateTime
+  endDate: DateTime!
+  id: ID
+  isActive: Boolean
+  isTrialPeriod: Boolean!
+
+  """owner can be business id, service id, product id"""
+  owner: String
+  plan: SubscriptionPlanInput
+  platformServices: [PlatformServiceSubscriptionInput!]
+  startDate: DateTime!
+  subscriptioinPlanId: String
+  type: SubscriptionType!
+  updatedAt: DateTime!
+}
+
+type SubscriptionPlan {
+  benefits: [BenefitInfo!]
+  category: [String!]
+  createdAt: DateTime
+  description: [LocalizedData!]
+  duration: Int
+  id: ID
+  isActive: Boolean
+  name: [LocalizedData!]
+  owner: String
+  price: Float
+  subscriptions: [Subscription!]
+  trialPeriod: Int
+
+  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
+  type: SubscriptionType
+  updatedAt: DateTime
+}
+
+input SubscriptionPlanInput {
+  benefits: [BenefitInput!]
+  category: [String!]
+  createdAt: DateTime
+  description: [LocalizedDataInput!]
+  duration: Int
+  id: ID
+  isActive: Boolean
+  name: [LocalizedDataInput!]
+  owner: String
+  price: Float
+  subscriptions: [SubscriptionInput!]
+  trialPeriod: Int
+
+  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
+  type: SubscriptionType
+  updatedAt: DateTime
+}
+
+enum SubscriptionType {
+  BUSINESS
+  PLATFORM
+  PRODUCT
 }
 
 input UpdateUserInput {

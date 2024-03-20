@@ -4,7 +4,7 @@ services:
   auth_service:
     # image: auth_service
     build:
-     context: ./
+     context: .
      dockerfile: ./apps/auth/Dockerfile
     environment:
       NODE_ENV: development
@@ -17,14 +17,14 @@ services:
     container_name: Auth_service
     volumes:
       - .:/usr/src/app
-      - /usr/src/app/nodule_modules
+      - ./usr/src/app/nodule_modules
     command: npm run start:dev auth
     networks:
       - api_network
   subscription_service:
     # image: subscription_service
     build:
-     context: ./
+     context: .
      dockerfile: ./apps/subscription/Dockerfile
     environment:
       NODE_ENV: development
@@ -36,7 +36,7 @@ services:
       - 3001:3001
     volumes:
       - .:/usr/src/app
-      - /usr/src/app/nodule_modules
+      - ./usr/src/app/nodule_modules
     container_name: Subscription_service
     command: npm run start:dev subscription   
     networks:
@@ -44,7 +44,7 @@ services:
   api_gateway:
     # image: api_gateway
     build:
-     context: ./
+     context: .
      dockerfile: ./apps/mela_api/Dockerfile
     environment:
       NODE_ENV: development
@@ -78,4 +78,5 @@ networks:
     driver: bridge
   api_network:
     driver: bridge
+
 

@@ -1,4 +1,6 @@
 FROM node:18.18-alpine
+# RUN apt-get update && apt-get install -y git \ 
+#     && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=development
 WORKDIR /usr/src/app
 RUN apk add openssl
