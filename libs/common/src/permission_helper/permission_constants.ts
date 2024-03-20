@@ -5,8 +5,8 @@ export enum PermissionResourceType {
     BUSINESS, SUBSCRIPTIONI, SERVICE, PRODUCT, ANY
 }
 export enum PermissionTargetType {
-    ANY
+    ANY = "ANY"
 }
 export enum PERMISSIONACTION {
-    CREATE, READ, UPDATE, DELETE, ANY
+    CREATE = "CREATE", READ = "READ", UPDATE = "UPDATE", DELETE = "DELETE", ANY = "ANY"
 }

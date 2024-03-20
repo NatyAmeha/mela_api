@@ -4,7 +4,8 @@ export interface IMessageBrocker<T> {
     exchangeType?: ExchangeType
     routingKey?: string
     coorelationId?: string,
-    replyQueue?: string,
+    replyCoorelationId?: string
+    replyQueue?: string,  // to listen and filter message reply by id
     expirationInSecond?: number,
     persistMessage?: boolean
 }

@@ -17,6 +17,7 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
 
     async onModuleInit() {
         try {
+            console.log("channel opened")
             await this.connectMessageBrocker();
             this.listenSubscriptionRequestAndReply();
             this.listenSubscriptionServiceEvent();
@@ -43,6 +44,8 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
     }
 
     onModuleDestroy() {
+        console.log("channel closed")
+        this.channel.close()
     }
 
 

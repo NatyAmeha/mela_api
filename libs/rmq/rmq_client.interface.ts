@@ -4,12 +4,14 @@ import amqp, { Channel, ChannelWrapper } from 'amqp-connection-manager';
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { ConsumeMessage } from "amqplib";
 import { Injectable } from "@nestjs/common";
+import { Observable } from "rxjs";
 
 export interface IRMQService {
     connect(url: string[], queues: string[]): Promise<ChannelWrapper>
     sendMessage<T>(channel: ChannelWrapper, queue: string, messageInfo: IMessageBrocker<T>): Promise<boolean>
     sendMessageAndWaitResponse<T>(channel: ChannelWrapper, queue: string, replyToQueue: string, messageInfo: IMessageBrocker<T>): Promise<boolean>
     listenMessage(channel: ChannelWrapper, queue: string, messageType?: string): Promise<ConsumeMessage>
+    listenMessageBeta(channel: ChannelWrapper, queue: string, messageType?: string): Observable<ConsumeMessage>
     publishMessage<T>(channel: ChannelWrapper, messageInfo: IMessageBrocker<T>): Promise<boolean>
     subscribeToMessage(channel: ChannelWrapper, messageInfo: IMessageBrocker<any>, fromQueue: string): Promise<ConsumeMessage | undefined>
 }
@@ -36,8 +38,7 @@ export class RMQService implements IRMQService {
         try {
             var sendResult = await channel.sendToQueue(queue, Buffer.from(JSON.stringify(messageInfo.data)), {
                 correlationId: messageInfo.coorelationId,
-                expiration: messageInfo.expirationInSecond,
-                persistent: messageInfo.persistMessage
+                // expiration: messageInfo.expirationInSecond,
             });
             return sendResult;
         } catch (ex) {
@@ -49,8 +50,7 @@ export class RMQService implements IRMQService {
             var sendResult = await channel.sendToQueue(queue, Buffer.from(JSON.stringify(messageInfo.data)), {
                 correlationId: messageInfo.coorelationId,
                 replyTo: replyToQueue,
-                expiration: messageInfo.expirationInSecond,
-
+                // expiration: messageInfo.expirationInSecond,
             });
             return sendResult;
 
@@ -61,7 +61,7 @@ export class RMQService implements IRMQService {
     async listenMessage(channel: ChannelWrapper, queue: string, messageType?: string): Promise<ConsumeMessage> {
         return new Promise(async (resolve: (value: ConsumeMessage) => void, reject: (error: Error) => void) => {
             channel.consume(queue, (response) => {
-                console.log("listen request reply", queue, messageType, response.content.toString(), response.properties)
+                console.log("listen request reply", queue, messageType, response.content.BYTES_PER_ELEMENT.toString(), response.properties)
                 if (messageType != undefined) {
                     if (response.properties.correlationId == messageType) {
                         resolve(response);
@@ -72,6 +72,23 @@ export class RMQService implements IRMQService {
                 }
             })
         })
+    }
+
+    listenMessageBeta(channel: ChannelWrapper, queue: string, messageType?: string): Observable<ConsumeMessage> {
+        return new Observable(observer => {
+            channel.consume(queue, (response) => {
+                console.log("listen request reply observable", queue, messageType, response.content.toString(), response.properties)
+                if (messageType != undefined) {
+                    if (response.properties.correlationId == messageType) {
+                        observer.next(response)
+                    }
+                }
+                else {
+                    observer.next(response)
+                }
+            })
+        })
+
     }
     async publishMessage<T>(channel: ChannelWrapper, messageInfo: IMessageBrocker<T>): Promise<boolean> {
         try {

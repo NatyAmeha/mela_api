@@ -48,6 +48,11 @@ export class SubscriptionService {
     return result;
   }
 
+  async updateSubscriptionStatus(subscritpionId: string, status: boolean) {
+    var result = await this.subscriptionRepo.updateSubscriptionInfo(subscritpionId, { isActive: status })
+    return result;
+  }
+
   async subscribeToPlan(info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
     var subscriptionInfo: Subscription
     if (info.type == SubscriptionType.PLATFORM) {

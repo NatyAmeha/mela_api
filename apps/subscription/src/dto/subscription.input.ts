@@ -3,7 +3,7 @@ import { PlatfromServiceSubscription, Subscription } from "../model/subscription
 import { SubscriptionPlan } from "../model/subscription_plan.model";
 import { gt, isArray, isEmpty, remove } from "lodash";
 import { Type } from "class-transformer";
-import { IsArray, IsNotEmpty, ValidateIf, isNotEmpty } from "class-validator";
+import { IsArray, IsNotEmpty, IsString, IsUUID, ValidateIf, isNotEmpty } from "class-validator";
 import { SubscriptionType } from "../model/subscription_type.enum";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { IPlatformServiceRepo } from "../repo/platform_service.repo";
@@ -44,6 +44,7 @@ export class CreateSubscriptionInput extends PickType(Subscription, ["owner", "t
                 endDate.setDate(endDate.getDate() + serviceInfo.duration)
                 return <PlatfromServiceSubscription>{
                     serviceId: serviceInfo.id,
+                    serviceName: service.serviceName,
                     selectedCustomizationId: service.selectedCustomizationId,
                     startDate: startDate,
                     endDate: endDate,
@@ -58,12 +59,19 @@ export class CreateSubscriptionInput extends PickType(Subscription, ["owner", "t
             owner: this.owner,
             createdAt: startDate,
             updatedAt: startDate,
-            platformServices: serviceSubscriptionInfo
+            platformServices: serviceSubscriptionInfo,
+            isActive: false
         })
     }
 }
 
 @InputType()
-export class CreatePlatformServiceSubscriptionInput extends PickType(PlatfromServiceSubscription, ["serviceId", "selectedCustomizationId"] as const, InputType) {
-
+export class CreatePlatformServiceSubscriptionInput extends PickType(PlatfromServiceSubscription, ["serviceId", "serviceName", "selectedCustomizationId"] as const, InputType) {
+    @IsString()
+    serviceId: string;
+    @IsString()
+    serviceName: string;
+    @IsArray()
+    @IsUUID()
+    selectedCustomizationId: string[];
 }

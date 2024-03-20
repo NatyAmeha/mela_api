@@ -1,5 +1,5 @@
 import { Field, InputType, OmitType, PartialType } from "@nestjs/graphql";
-import { NameType, Permission, PermissionGroup } from "../model/access.model";
+import { Permission, PermissionGroup } from "../model/access.model";
 import { capitalize } from "lodash";
 import { Transform, Type } from "class-transformer";
 import { IsEmail, ValidateNested } from "class-validator";

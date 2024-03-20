@@ -11,9 +11,18 @@ export interface IAuthorizationRepo {
     removePermissionsFromAccess(userId: string, accessId: string, permissionsId: string[]): Promise<boolean>
     getAccessByResourceId(resourceId: string): Promise<Access>
     // getUserGrantedAccess(userId: string): Promise<Access[]>
+    addPlatformServiceAccessToBusiness(accesses: Access[]): Promise<boolean>
 }
 
 export class AuthorizationRepo extends PrismaClient implements IAuthorizationRepo {
+
+    async addPlatformServiceAccessToBusiness(accesses: Access[]): Promise<boolean> {
+        var txResult = await this.$transaction(async (tx) => {
+            let result = await tx.access.createMany({ data: accesses });
+            return result.count > 0
+        })
+        return txResult;
+    }
     static injectName = "AUTHORIZATION_REPOSITORY"
     async addAccessToUser(userId: string, accesses: Access[]): Promise<Access[]> {
         return this.$transaction(async (tx) => {
@@ -22,7 +31,7 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
                 data: {
                     accesses: {
                         createMany: {
-                            data: accesses.map(acc => { return { ...acc } }),
+                            data: accesses,
                         }
                     },
                 },

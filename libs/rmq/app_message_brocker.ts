@@ -11,6 +11,7 @@ export interface IAppMessageBrocker {
     sendMessageGetReply<T, K>(queue: string, message: T, messageId: string, replyQueue: string): Promise<K>
 }
 
+@Injectable()
 export class AppMessageBrocker implements IAppMessageBrocker {
     constructor(public rmqService: IRMQService, public configService: ConfigService) { }
 
@@ -39,15 +40,21 @@ export class AppMessageBrocker implements IAppMessageBrocker {
 
 
     async sendMessageGetReply<T, K>(queue: string, messageInfo: IMessageBrocker<T>): Promise<K> {
-        var sendResult = await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo.replyQueue, messageInfo)
-        var reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
-        console.log("reply received from server", reply.content.toString())
-        if (reply?.content) {
-            var response = reply.content.toString()
-            this.channel.ack(reply)
-            return JSON.parse(response) as K
+        try {
+            await this.connectMessageBrocker()
+            var sendResult = await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo.replyQueue, messageInfo)
+            var reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
+            if (reply?.content) {
+                var response = reply.content.toString()
+                this.channel.ack(reply)
+                return JSON.parse(response) as K
+            }
+            return undefined;
+        } catch (error) {
+            console.log("error occured while sending message and waiting response")
+        } finally {
+            await this.channel.close();
         }
-        return undefined;
     }
 
 

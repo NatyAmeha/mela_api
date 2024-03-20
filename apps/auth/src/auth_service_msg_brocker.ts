@@ -7,6 +7,9 @@ import { AuthServiceMessageType } from "libs/rmq/app_message_type";
 import { ExchangeNames, RoutingKey } from "libs/rmq/constants";
 import { IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
+import { AuthorizationService } from "./authorization";
+import { Subscription } from "apps/subscription/src/model/subscription.model";
+import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 
 export interface IAuthServiceMsgBrocker {
 
@@ -15,12 +18,13 @@ export interface IAuthServiceMsgBrocker {
 @Injectable()
 export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModuleInit, OnModuleDestroy, IAuthServiceMsgBrocker {
     static InjectName = "AUTH_MSG_BROCKER"
-    constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService) {
+    constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService, private authorizationService: AuthorizationService) {
         super(rmqService, configService)
     }
 
     async onModuleInit() {
         try {
+            console.log("channel opened")
             await this.connectMessageBrocker();
             this.listenAuthServiceRequestAndReply()
             this.listenAuthEvents();
@@ -31,10 +35,17 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
     }
 
     async listenAuthServiceRequestAndReply() {
-        var messageResult = await this.rmqService.listenMessage(this.channel, this.requestQueue)
-        if (messageResult.properties.correlationId == AuthServiceMessageType.REQUEST_AUTH_USER) {
-            await this.replyToSubscritpionPlanCreated(messageResult, 33445566, AuthServiceMessageType.REQUEST_AUTH_USER)
-        }
+        this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (messageResult) => {
+            if (messageResult.properties.correlationId == AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION) {
+                console.log("message received from subscription")
+                await this.createPlatformAccessandReply(messageResult, AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION)
+            }
+            else {
+                console.log("default message received")
+                var sendResult = await this.sendMessage(messageResult.properties.replyTo, messageResult, AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION)
+            }
+        })
+
     }
 
     async listenAuthEvents() {
@@ -48,15 +59,20 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
         }
     }
 
-    async replyToSubscritpionPlanCreated(messageInfo: ConsumeMessage, message: number, coorelationId: string) {
-        var sendResult = await this.sendMessage(messageInfo.properties.replyTo, message, coorelationId)
-        if (sendResult) {
-            this.channel.ack(messageInfo)
+    async createPlatformAccessandReply(messageInfo: ConsumeMessage, coorelationId: string) {
+        let subscriptionMessage = JSON.parse(messageInfo.content.toString()) as Subscription;
+        var subscriptionInfo = new Subscription({ ...subscriptionMessage })
+        let createResult = await this.authorizationService.createPlatformServiceAccessPermissionForBusinesses(subscriptionInfo)
+        let messageResult: IMessageBrockerResponse<any> = {
+            success: createResult
         }
+        var sendResult = await this.sendMessage(messageInfo.properties.replyTo, messageResult, coorelationId)
+        this.channel.ack(messageInfo)
     }
 
 
     onModuleDestroy() {
+        console.log("channel closed")
         this.channel.close();
     }
 

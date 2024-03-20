@@ -15,6 +15,7 @@ import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
 import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'apps/auth/src/auth/service/guard/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
+import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
 
 
 
@@ -28,16 +29,17 @@ export class SubscriptionResolver {
   // @UseGuards(AuthzGuard)
   @Mutation(returns => SubscriptionPlan)
   async createPlatformSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
-    console.log("real sub info", plan)
     var subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.PLATFORM, isActiveSubscription: false })
     var messageInfo: IMessageBrocker<SubscriptionPlan> = {
       data: subscriptionInfo,
-      coorelationId: AuthServiceMessageType.REQUEST_AUTH_USER,
-      replyQueue: AppMsgQueues.AUTH_SERVICE_REPLY_QUEUE,
-      expirationInSecond: 60 * 1
+      coorelationId: AuthServiceMessageType.PLATFORM_ACCESS_PERMISSION_CREATED,
+      replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
+      expirationInSecond: 60 * 1,
+      persistMessage: true,
+
+
     }
     var reply = await this.subscriptionBroker.sendMessageGetReply<SubscriptionPlan, number>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
-    console.log("reply from auth service", reply)
     var result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
     return result;
   }
@@ -69,6 +71,20 @@ export class SubscriptionResolver {
     // create subscription info
     var response = await this.subscriptionService.subscribeToPlan(planInput);
     // create access permission for business on auth servcie
+    var messageInfo: IMessageBrocker<Subscription> = {
+      data: response.createdSubscription,
+      coorelationId: AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION,
+      replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
+      expirationInSecond: 60 * 1,
+      persistMessage: true,
+
+    }
+    var reply = await this.subscriptionBroker.sendMessageGetReply<SubscriptionPlan, IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+    if (reply.success) {
+      var updateResult = await this.subscriptionService.updateSubscriptionStatus(response.createdSubscription!.id!, true)
+      console.log("subscritpion status update", updateResult)
+      response.createdSubscription.isActive = updateResult
+    }
     // update subscription status
     return response
   }
@@ -83,7 +99,7 @@ export class SubscriptionResolver {
     return result;
   }
 
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   @UseGuards(AuthzGuard)
   async changeSubscriptionStatus(@Args("subscription") subscriptionId: string, @Args("status") status: boolean) {
     var result = await this.subscriptionService.updateSubscriptionPlanStatus(subscriptionId, status)
@@ -113,6 +129,4 @@ export class SubscriptionResolver {
     var response = await this.subscriptionService.deleteSubscriptionPlan(planId);
     return response
   }
-
-
 }

@@ -15,6 +15,7 @@ export interface ISubscritpionRepository {
     createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
     getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
     deleteSubscriptionPlan(planId: string): Promise<SubscriptionResponse>
+    updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean>
 }
 
 export class SubscriptionRepository extends PrismaClient implements ISubscritpionRepository, OnModuleInit, OnModuleDestroy {
@@ -26,6 +27,9 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
 
     async createSubscriptionPlan(subscriptionInfo: SubscriptionPlan): Promise<SubscriptionPlan> {
         var createResult = await this.subscriptionPlan.create({ data: { ...subscriptionInfo as any, subscriptions: {} } })
+        if (!createResult.id) {
+            throw new RequestValidationException({ message: "Unable to create subscription Plan", statusCode: 400 })
+        }
         return new SubscriptionPlan({ ...createResult });
     }
     async updateSubscriptionPlanInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean> {
@@ -52,6 +56,9 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
     }
     async createSubscription(sub: Subscription): Promise<Subscription> {
         var result = await this.subscription.create({ data: { ...sub as any } })
+        if (!result.id) {
+            throw new RequestValidationException({ message: "Unable to create subscription", statusCode: 400 })
+        }
         return new Subscription({ ...result })
     }
 
@@ -81,6 +88,12 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
             return result;
         })
         return trResult;
+    }
+
+    async updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean> {
+        var a = subscriptionInfo.subscriptioinPlanId;
+        var updateResult = await this.subscription.update({ where: { id: id }, data: { ...subscriptionInfo } as any })
+        return updateResult.id != undefined
     }
 
     async onModuleDestroy() {
