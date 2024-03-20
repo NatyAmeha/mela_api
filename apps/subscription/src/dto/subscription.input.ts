@@ -74,4 +74,30 @@ export class CreatePlatformServiceSubscriptionInput extends PickType(PlatfromSer
     @IsArray()
     @IsUUID()
     selectedCustomizationId: string[];
+    constructor(data: Partial<CreatePlatformServiceSubscriptionInput>) {
+        super()
+        Object.assign(this, data);
+    }
+
+    async generatePlatformServiceSubscriptionInfo(platfromServiceRepo: IPlatformServiceRepo) {
+        var serviceInfo = await platfromServiceRepo.getPlatformService(this.serviceId)
+        if (serviceInfo) {
+            var startDate = new Date(Date.now())
+            var endDate = new Date(Date.now())
+            endDate.setDate(endDate.getDate() + serviceInfo.duration)
+            return <PlatfromServiceSubscription>{
+                serviceId: serviceInfo.id,
+                serviceName: this.serviceName,
+                selectedCustomizationId: this.selectedCustomizationId,
+                startDate: startDate,
+                endDate: endDate,
+                createdAt: new Date(Date.now()),
+                updatedAt: new Date(Date.now()),
+                isTrialPeriod: serviceInfo.hasTrialPeriod()
+            }
+        }
+        else {
+            throw new RequestValidationException({ message: `Unable to get Platform service using this id ${this.serviceId}` })
+        }
+    }
 }

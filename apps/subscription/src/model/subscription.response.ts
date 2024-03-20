@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType } from "@nestjs/graphql";
-import { Subscription } from "./subscription.model";
+import { PlatfromServiceSubscription, Subscription } from "./subscription.model";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { BaseResponse } from "@app/common/model/base.response";
 
@@ -13,5 +13,9 @@ export class SubscriptionResponse extends BaseResponse {
     existingActiveSubscriptions?: Subscription[]
     @Field(type => [Subscription])
     deletedSubscritpions?: Subscription[]
+    @Field(type => [PlatfromServiceSubscription])
+    addedPlatformServices?: PlatfromServiceSubscription[]
+    @Field(type => [PlatfromServiceSubscription])
+    existingPlatformService?: PlatfromServiceSubscription[]
 
 }

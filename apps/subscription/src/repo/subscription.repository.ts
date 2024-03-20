@@ -12,10 +12,13 @@ export interface ISubscritpionRepository {
     updateSubscriptionPlanInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean>
     getPlans(queryInfo: QueryHelper<SubscriptionPlan>): Promise<SubscriptionPlan[]>
     getSubscriptionPlan(planId: string): Promise<SubscriptionPlan>
-    createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
-    getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
     deleteSubscriptionPlan(planId: string): Promise<SubscriptionResponse>
+
+    createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
+    getSubscriptionInfo(id: string): Promise<Subscription>
+    getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
     updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean>
+    isplatformServiceInSubscription(platformServiceId: string[]): Promise<boolean>
 }
 
 export class SubscriptionRepository extends PrismaClient implements ISubscritpionRepository, OnModuleInit, OnModuleDestroy {
@@ -90,10 +93,23 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
         return trResult;
     }
 
+    async getSubscriptionInfo(id: string): Promise<Subscription> {
+        var result = await this.subscription.findFirst({ where: { id: id } })
+        if (!result.id) {
+            throw new RequestValidationException({ message: "Unable to find subscritpion Info with this id" })
+        }
+        return new Subscription({ ...result });
+    }
+
     async updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean> {
         var a = subscriptionInfo.subscriptioinPlanId;
         var updateResult = await this.subscription.update({ where: { id: id }, data: { ...subscriptionInfo } as any })
         return updateResult.id != undefined
+    }
+
+    async isplatformServiceInSubscription(platformServiceId: string[]): Promise<boolean> {
+        var result = await this.subscription.findFirst({ where: { platformServices: { some: { serviceId: { in: platformServiceId } } } } })
+        return result.id != undefined
     }
 
     async onModuleDestroy() {

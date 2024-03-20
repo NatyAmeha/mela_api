@@ -6,7 +6,7 @@ import { Subscription } from '../model/subscription.model';
 import { CreateSubscriptionPlanInput, UpdateSubscriptionPlanInput } from '../dto/subscription_plan.input';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
-import { CreateSubscriptionInput } from '../dto/subscription.input';
+import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from '../dto/subscription.input';
 import { SubscriptionResponse } from '../model/subscription.response';
 import { SubscriptionMessageBrocker } from '../subscription_message_brocker';
 import { AppMsgQueues } from 'libs/rmq/constants';
@@ -70,6 +70,9 @@ export class SubscriptionResolver {
     // validate the input
     // create subscription info
     var response = await this.subscriptionService.subscribeToPlan(planInput);
+    if (!response.success) {
+      return response
+    }
     // create access permission for business on auth servcie
     var messageInfo: IMessageBrocker<Subscription> = {
       data: response.createdSubscription,
@@ -87,6 +90,32 @@ export class SubscriptionResolver {
     }
     // update subscription status
     return response
+  }
+
+  @Mutation(returns => SubscriptionResponse)
+  async addPlatformServiceToSubscription(@Args("subscriptionId") subscriptionId: string, @Args("platformServiceInfo", { type: () => [CreatePlatformServiceSubscriptionInput] }) serviceInfo: CreatePlatformServiceSubscriptionInput[]): Promise<SubscriptionResponse> {
+    // add to subscription
+    var response = await this.subscriptionService.addPlatformServiceToSubscription(subscriptionId, serviceInfo)
+    if (!response.success) {
+      return response
+    }
+
+    var messageInfo: IMessageBrocker<Subscription> = {
+      // only send the new platform service info to create access permission
+      data: { ...response.createdSubscription, platformServices: response.addedPlatformServices } as Subscription,
+      coorelationId: AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION,
+      replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
+      expirationInSecond: 60 * 1,
+      persistMessage: true,
+    }
+    // add access permission
+    var reply = await this.subscriptionBroker.sendMessageGetReply<SubscriptionPlan, IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+    if (reply.success) {
+      return response
+    }
+    // update subscription status
+    return response
+
   }
 
 

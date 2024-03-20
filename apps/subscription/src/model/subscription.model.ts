@@ -6,6 +6,7 @@ import { types } from "joi";
 import { Access, Permission } from "apps/auth/src/authorization/model/access.model";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
+import { includes } from "lodash";
 
 
 @ObjectType()
@@ -62,6 +63,14 @@ export class Subscription extends BaseModel {
 
     changeSubscriptionStatus(status: boolean) {
         this.isActive = status;
+    }
+
+    getPlatformServiceAlreadyInSubscriptioin(info: PlatfromServiceSubscription[]): PlatfromServiceSubscription[] {
+        let result: PlatfromServiceSubscription[] = []
+        var existingPlatformServiceIds = this.platformServices.map(service => service.serviceId);
+        let newPlatformServiceIdToAddToSubscription = info.map(service => service.serviceId);
+        result = this.platformServices.filter(service => includes(newPlatformServiceIdToAddToSubscription, service.serviceId))
+        return result
     }
 
 }

@@ -35,6 +35,5 @@ export class AuthorizationService {
             return createPermissionResult
         }
         return false;
-
     }
 }
