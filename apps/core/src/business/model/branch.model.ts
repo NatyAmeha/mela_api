@@ -25,9 +25,9 @@ export class Branch {
     website?: string;
 
     @Field(() => [String], { defaultValue: [] })
-    productsonBranchId: string[];
+    productIds: string[];
     @Field(() => [Product], { defaultValue: [] })
-    productsonBranch?: Product[];
+    products?: Product[];
 
     @Field()
     businessId: string;
@@ -38,6 +38,10 @@ export class Branch {
     staffsId: string[];
     @Field(() => [Staff])
     staffs?: Staff[];
+    @Field()
+    createdAt?: Date;
+    @Field()
+    updatedAt?: Date;
 
     constructor(partial?: Partial<Branch>) {
         Object.assign(this, partial);

@@ -9,7 +9,7 @@ export class ProductGroup {
     name: string;
 
     @Field(types => [String])
-    image?: string[];
+    images?: string[];
 
     @Field({ nullable: true })
     description?: string;

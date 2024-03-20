@@ -21,6 +21,10 @@ export class Staff {
 
     @Field()
     isActive: boolean;
+    @Field()
+    createdAt?: Date;
+    @Field()
+    updatedAt?: Date;
 
 
     constructor(partial?: Partial<Staff>) {

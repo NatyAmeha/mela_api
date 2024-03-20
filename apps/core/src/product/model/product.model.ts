@@ -73,10 +73,7 @@ export class Product {
     branchIds?: string[];
     @Field(() => [Branch])
     branches?: Branch[];
-    @Field(() => [String], { defaultValue: [] })
-    customersId?: string[];
-    @Field(() => [Customer], { defaultValue: [] })
-    customers?: Customer[];
+
 
 
     constructor(partial?: Partial<Product>) {
