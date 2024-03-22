@@ -4,7 +4,7 @@ import { ProductGroup } from "./product_group.model";
 import { LocalizedData } from "@app/common/model/localized_model";
 import { Gallery } from "./gallery.model";
 import { Address } from "./address.model";
-import { Branch } from "./branch.model";
+import { Branch } from "../../branch/model/branch.model";
 
 @ObjectType()
 @InputType("BusinessInput")

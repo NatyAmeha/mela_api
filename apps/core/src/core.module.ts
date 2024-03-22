@@ -9,15 +9,17 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
 
 import { BusinessModule } from './business/business.module';
+import { BranchModule } from './branch/branch.module';
 
 @Module({
   imports: [
-    BusinessModule,
     ConfigModule.forRoot({
       cache: true,
       isGlobal: true,
       load: [configuration],
     }),
+    BusinessModule,
+    BranchModule,
     RmqModule,
     LoggerModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({

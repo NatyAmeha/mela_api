@@ -74,22 +74,23 @@ model Business {
 
 // branch.model.ts
 model Branch {
-    id          String     @id @default(auto()) @map("_id") @db.ObjectId
-    name        String
+    id          String          @id @default(auto()) @map("_id") @db.ObjectId
+    name        LocalizedData[]
     address     Address
     phoneNumber String
     email       String?
     website     String?
-    businessId  String     @db.ObjectId
-    business    Business   @relation(fields: [businessId], references: [id])
-    customersId String[]   @default([]) @db.ObjectId
-    customers   Customer[] @relation(fields: [customersId], references: [id])
-    productIds  String[]   @default([]) @db.ObjectId
-    products    Product[]  @relation(fields: [productIds], references: [id])
-    staffsId    String[]   @default([]) @db.ObjectId
+    isActive    Boolean         @default(false)
+    businessId  String          @db.ObjectId
+    business    Business        @relation(fields: [businessId], references: [id])
+    customersId String[]        @default([]) @db.ObjectId
+    customers   Customer[]      @relation(fields: [customersId], references: [id])
+    productIds  String[]        @default([]) @db.ObjectId
+    products    Product[]       @relation(fields: [productIds], references: [id])
+    staffsId    String[]        @default([]) @db.ObjectId
     staffs      Staff[]
-    createdAt   DateTime?  @default(now())
-    updatedAt   DateTime?  @updatedAt
+    createdAt   DateTime?       @default(now())
+    updatedAt   DateTime?       @updatedAt
 }
 
 // staff.model.ts

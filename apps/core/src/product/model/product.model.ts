@@ -3,7 +3,7 @@ import { Field, Float, InputType, Int, ObjectType, registerEnumType } from "@nes
 import { DeliveryInfo } from "./delivery.model";
 import { Business } from "../../business/model/business.model";
 import { LocalizedData } from "@app/common/model/localized_model";
-import { Branch } from "../../business/model/branch.model";
+import { Branch } from "../../branch/model/branch.model";
 import { Customer } from "../../customer/model/customer.model";
 import { Gallery } from "../../business/model/gallery.model";
 @ObjectType()

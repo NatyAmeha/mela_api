@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, InputType } from "@nestjs/graphql";
-import { Branch } from "../../business/model/branch.model";
+import { Branch } from "../../branch/model/branch.model";
 
 @ObjectType()
 @InputType('CustomerInput')
