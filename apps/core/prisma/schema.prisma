@@ -6,17 +6,17 @@ generator client {
 
 datasource db {
     provider = "mongodb"
-    url      = env("DATABASE_URL")
+    url      = env("CORE_SERVICE_DB_URL")
 }
 
 // customer.model.ts
 model Customer {
-    id         String     @id @default(auto()) @map("_id") @db.ObjectId
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
     userId     String
-    branchesId String[]   @default([]) @db.ObjectId
-    branches   Branch[]   @relation(fields: [branchesId], references: [id])
-    businessId String[]   @default([]) @db.ObjectId
-    business   Business[] @relation(fields: [businessId], references: [id])
+    branchesId String[] @default([]) @db.ObjectId
+    branches   Branch[] @relation(fields: [branchesId], references: [id])
+    businessId String   @db.ObjectId
+    business   Business @relation(fields: [businessId], references: [id])
 }
 
 // product.model.ts
@@ -58,7 +58,7 @@ model Business {
     updatedAt     DateTime?       @updatedAt
     creator       String
     customersId   String[]        @default([]) @db.ObjectId
-    customers     Customer[]      @relation(fields: [customersId], references: [id])
+    customers     Customer[]
     productsId    String[]        @default([]) @db.ObjectId
     products      Product[]
     openingStatus String?
@@ -69,6 +69,7 @@ model Business {
     website       String?
     branchIds     String[]        @default([]) @db.ObjectId
     branches      Branch[]
+    stage         String          @default("CREATED")
 }
 
 // branch.model.ts

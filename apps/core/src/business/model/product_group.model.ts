@@ -1,6 +1,7 @@
-import { ObjectType, Field } from '@nestjs/graphql';
+import { ObjectType, Field, InputType } from '@nestjs/graphql';
 
 @ObjectType()
+@InputType('ProductGroupInput')
 export class ProductGroup {
     @Field()
     id: string;

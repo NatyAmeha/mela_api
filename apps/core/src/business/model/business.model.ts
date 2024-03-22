@@ -1,4 +1,4 @@
-import { Field, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Customer } from "../../customer/model/customer.model";
 import { ProductGroup } from "./product_group.model";
 import { LocalizedData } from "@app/common/model/localized_model";
@@ -7,29 +7,30 @@ import { Address } from "./address.model";
 import { Branch } from "./branch.model";
 
 @ObjectType()
+@InputType("BusinessInput")
 export class Business {
-    @Field(() => ID)
+    @Field(types => ID)
     id?: string;
 
-    @Field(() => [LocalizedData])
+    @Field(types => [LocalizedData])
     name: LocalizedData[];
 
-    @Field(() => [LocalizedData])
+    @Field(types => [LocalizedData])
     description?: LocalizedData[];
 
-    @Field(() => [String])
+    @Field(types => [String])
     categories: string[];
 
     @Field()
     isActive?: boolean;
 
-    @Field(() => Gallery)
+    @Field(types => Gallery)
     gallery: Gallery;
 
-    @Field(() => Date)
+    @Field(types => Date)
     createdAt?: Date;
 
-    @Field(() => Date)
+    @Field(types => Date)
     updatedAt?: Date;
 
     @Field()
@@ -39,12 +40,12 @@ export class Business {
     @Field(types => [Customer])
     customers?: Customer[];
 
-    @Field(() => OpeningStatus)
+    @Field(types => OpeningStatus)
     openingStatus: OpeningStatus;
     @Field(types => [ProductGroup])
     group?: ProductGroup[];
 
-    @Field(tyeps => Address)
+    @Field(types => Address)
     mainAddress: Address;
     @Field()
     phoneNumber: string;
@@ -52,10 +53,12 @@ export class Business {
     email?: string;
     @Field()
     website?: string;
-    @Field(() => [String], { defaultValue: [] })
+    @Field(types => [String], { defaultValue: [] })
     branchIds?: string[];
-    @Field(() => [Branch])
+    @Field(types => [Branch])
     branches?: Branch[];
+    @Field(types => BusinessRegistrationStage)
+    stage: string
 
     constructor(partial?: Partial<Business>) {
         Object.assign(this, partial);
@@ -67,5 +70,14 @@ enum OpeningStatus {
     CLOSED = "CLOSED",
     TEMPORARILY_CLOSED = "TEMPORARILY_CLOSED",
 }
+
+export enum BusinessRegistrationStage {
+    BUSINESS_CREATED = "CREATED",
+    PRODUCT_SELECTED = "SERVICE_SELECTED",
+    PAYMENT_STAGE = "PAYMENT_STAGE",
+    COMPLETED = "COMPLETED",
+}
+
+registerEnumType(BusinessRegistrationStage, { name: "BusinessRegistrationStage" });
 
 registerEnumType(OpeningStatus, { name: "OpeningStatus" });

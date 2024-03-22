@@ -1,22 +1,23 @@
-import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
+import { ObjectType, Field, Int, ID, InputType } from '@nestjs/graphql';
 import { Branch } from './branch.model';
 
 @ObjectType()
+@InputType('StaffInput')
 export class Staff {
-    @Field(() => ID)
+    @Field(types => ID)
     id?: string;
 
     @Field()
     name: string;
 
-    @Field(() => Int)
+    @Field(types => Int)
     pin: number;
 
-    @Field(() => [String])
+    @Field(types => [String])
     roles: string[];
     @Field()
     branchId?: string;
-    @Field(() => Branch)
+    @Field(types => Branch)
     branch?: Branch
 
     @Field()

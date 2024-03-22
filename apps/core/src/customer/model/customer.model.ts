@@ -1,7 +1,8 @@
-import { ObjectType, Field, ID } from "@nestjs/graphql";
+import { ObjectType, Field, ID, InputType } from "@nestjs/graphql";
 import { Branch } from "../../business/model/branch.model";
 
 @ObjectType()
+@InputType('CustomerInput')
 export class Customer {
     @Field(type => ID)
     id?: string;
@@ -11,7 +12,7 @@ export class Customer {
 
     @Field(types => [String], { defaultValue: [] })
     branchesId?: string[];
-    @Field(() => [Branch], { defaultValue: [] })
+    @Field(types => [Branch], { defaultValue: [] })
     branches?: Branch[];
 
     constructor(partial?: Partial<Customer>) {

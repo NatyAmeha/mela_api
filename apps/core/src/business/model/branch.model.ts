@@ -2,18 +2,16 @@ import { Product } from "../../product/model/product.model";
 import { Address } from "./address.model";
 import { Business } from "./business.model";
 import { Staff } from "./staff.model";
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 
 @ObjectType()
+@InputType('BranchInput')
 export class Branch {
-    @Field(() => ID)
+    @Field(types => ID)
     id?: string;
 
     @Field()
     name: string;
-
-    @Field(tyeps => Address)
-    address: Address;
 
     @Field()
     phoneNumber: string;
@@ -24,19 +22,19 @@ export class Branch {
     @Field()
     website?: string;
 
-    @Field(() => [String], { defaultValue: [] })
+    @Field(types => [String], { defaultValue: [] })
     productIds: string[];
-    @Field(() => [Product], { defaultValue: [] })
+    @Field(types => [Product], { defaultValue: [] })
     products?: Product[];
 
     @Field()
     businessId: string;
-    @Field(() => Business)
+    @Field(types => Business)
     business: Business
 
-    @Field(() => [ID], { defaultValue: [] })
+    @Field(types => [String], { defaultValue: [] })
     staffsId: string[];
-    @Field(() => [Staff])
+    @Field(types => [Staff])
     staffs?: Staff[];
     @Field()
     createdAt?: Date;

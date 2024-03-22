@@ -1,77 +1,80 @@
 
-import { Field, Float, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Field, Float, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { DeliveryInfo } from "./delivery.model";
 import { Business } from "../../business/model/business.model";
 import { LocalizedData } from "@app/common/model/localized_model";
 import { Branch } from "../../business/model/branch.model";
 import { Customer } from "../../customer/model/customer.model";
+import { Gallery } from "../../business/model/gallery.model";
 @ObjectType()
+@InputType('ProductInput')
 export class Product {
-    @Field(() => String, { nullable: true })
+    @Field(types => String, { nullable: true })
     id?: string;
 
-    @Field(() => [LocalizedData])
+    @Field(types => [LocalizedData])
     name: LocalizedData[];
 
-    @Field(() => [LocalizedData])
+    @Field(types => [LocalizedData])
     description: LocalizedData[];
 
-    @Field(() => [String],)
+    @Field(types => [String])
     tag?: string[];
 
-    @Field(() => [String])
-    gallery: string[];
+    @Field(types => Gallery)
+    gallery: Gallery;
 
-    @Field(() => Int, { defaultValue: 0 })
+    @Field(types => Int, { defaultValue: 0 })
     loyaltyPoint: number;
 
-    @Field(() => String)
-    businessId: string; F
-    @Field(() => Business)
+    @Field(types => String)
+    businessId: string;
+
+    @Field(types => Business)
     business: Business
 
-    @Field(() => [String])
+    @Field(types => [String])
     productGroupId?: string[];
 
-    @Field(() => Boolean, { defaultValue: false })
+    @Field(types => Boolean, { defaultValue: false })
     isActive: boolean;
 
-    @Field(() => [String])
+    @Field(types => [String])
     category: string[];
 
-    @Field(() => Float)
+    @Field(types => Float)
     price: number;
 
-    @Field(() => ProductType)
+    @Field(types => ProductType)
     type: string;
 
-    @Field(() => Date)
+    @Field(types => Date)
     createdAt?: Date;
 
-    @Field(() => Date)
+    @Field(types => Date)
     updatedAt?: Date;
 
-    @Field(() => Boolean, { defaultValue: false })
+    @Field(types => Boolean, { defaultValue: false })
     canOrderOnline: boolean;
 
-    @Field(() => String)
+    @Field(types => String)
     unit?: string;
 
-    @Field(() => [String])
+    @Field(types => [String])
     reviewTopics?: string[];
 
-    @Field(() => String)
+    @Field(types => String)
     callToAction?: string;
 
-    @Field(() => [{ planId: String }])
-    subscriptionPlan?: { planId: string }[];
+    // @Field(types => [{ planId: String }])
+    // subscriptionPlan?: { planId: string }[];
 
-    @Field(() => DeliveryInfo)
+    @Field(types => DeliveryInfo)
     deliveryInfo?: DeliveryInfo;
 
-    @Field(() => [String])
+    @Field(types => [String])
     branchIds?: string[];
-    @Field(() => [Branch])
+    @Field(types => [Branch])
     branches?: Branch[];
 
 
