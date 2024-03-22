@@ -1,5 +1,5 @@
-export interface IMessageBrockerResponse<T> {
+export interface IMessageBrockerResponse<T = void> {
     success: boolean
     message?: string
-    data?: T
+    data?: T | undefined
 }
