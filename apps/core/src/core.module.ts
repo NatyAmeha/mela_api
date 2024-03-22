@@ -8,8 +8,11 @@ import { LoggerModule } from '@app/logger';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
 
+import { BusinessModule } from './business/business.module';
+
 @Module({
   imports: [
+    BusinessModule,
     ConfigModule.forRoot({
       cache: true,
       isGlobal: true,
@@ -23,7 +26,7 @@ import { ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
         return {
           autoSchemaFile: {
             federation: 2,
-            path: './apps/subscription/schema.gql'
+            path: './apps/core/schema.gql'
           },
           sortSchema: true,
           playground: true,
@@ -32,7 +35,8 @@ import { ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
       }
     }),
   ],
-  controllers: [CoreController],
+
   providers: [CoreService],
+  exports: [BusinessModule]
 })
 export class CoreModule { }

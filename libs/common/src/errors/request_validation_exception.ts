@@ -4,7 +4,7 @@ import { ValidationError } from "class-validator";
 import { get, mapValues, values } from "lodash";
 
 export class RequestValidationException implements AppException {
-    source?: String;
+    source?: string;
     message: string;
     statusCode?: number;
     errorType?: number;

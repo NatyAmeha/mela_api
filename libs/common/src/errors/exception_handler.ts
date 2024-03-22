@@ -7,6 +7,9 @@ import { ErrorResponse } from "./error_response";
 import { SecurityException } from "./security_exception";
 import { GraphQLError } from "graphql";
 import { first } from "lodash";
+import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { PrismaException } from "./prisma_exception";
 
 @Catch()
 export class GqlExceptionHandler implements GqlExceptionFilter {
@@ -24,6 +27,9 @@ export class GqlExceptionHandler implements GqlExceptionFilter {
         else if (exception instanceof SecurityException) {
             errorResponse = exception.serializeError();
             // throw exception;
+        }
+        else if (exception instanceof PrismaException) {
+            errorResponse = exception.serializeError();
         }
         else if (exception instanceof UnauthorizedException) {
             errorResponse = {

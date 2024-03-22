@@ -19,6 +19,6 @@ async function bootstrap() {
   app.useGlobalFilters(new GqlExceptionHandler())
   app.useLogger(app.get(AppLogger))
   app.enableCors()
-  await app.listen(3001);
+  await app.listen(3003);
 }
 bootstrap();
