@@ -9,7 +9,9 @@ export interface IProductRepository {
 
     addProductToBranch(productId: string[], branchId: string[]): Promise<Product[]>;
     removeProductFromBranch(productId: string[], branchId: string[]): Promise<Product[]>;
+
     getBranchProducts(branchId: string): Promise<Product[]>;
+    getBusinessProducts(businessId: string): Promise<Product[]>;
 
 }
 
@@ -111,6 +113,19 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
             return products.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Get branch products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getBusinessProducts(businessId: string): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: {
+                    businessId: businessId
+                }
+            });
+            return products.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get business products", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

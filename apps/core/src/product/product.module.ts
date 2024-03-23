@@ -7,7 +7,7 @@ import { ProductResolver } from './product.resolver';
 
 
 @Module({
-    imports: [BusinessModule],
+    imports: [],
     providers: [
         { provide: ProductRepository.injectName, useClass: ProductRepository },
         ProductService, ProductResolver

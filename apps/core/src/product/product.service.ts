@@ -26,4 +26,8 @@ export class ProductService {
     async getBranchProducts(branchId: string): Promise<Product[]> {
         return await this.productRepository.getBranchProducts(branchId);
     }
+
+    async getBusinessProducts(businessId: string): Promise<Product[]> {
+        return await this.productRepository.getBusinessProducts(businessId);
+    }
 }

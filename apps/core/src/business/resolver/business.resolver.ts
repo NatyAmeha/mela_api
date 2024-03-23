@@ -3,18 +3,24 @@ import { BusinessService } from "../usecase/business.service";
 import { Business } from "../model/business.model";
 import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
 import { BusinessResponse } from "../model/business.response";
+import { ProductService } from "../../product/product.service";
+import { BranchService } from "../../branch/usecase/branch.service";
 
 
 @Resolver(of => BusinessResponse)
 export class BusinessResolver {
-    constructor(private businessService: BusinessService) {
+    constructor(private businessService: BusinessService, private productService: ProductService, private branchService: BranchService) {
     }
     @Query(returns => BusinessResponse)
-    async getBusiness(@Args("id") id: string): Promise<BusinessResponse> {
+    async getBusinessDetails(@Args("id") id: string): Promise<BusinessResponse> {
         let business = await this.businessService.getBusiness(id);
+        var businessProducts = await this.productService.getBusinessProducts(id);
+        var businessBranches = await this.branchService.getBusinessBranches(id);
         return {
             success: true,
-            business: business
+            business: business,
+            products: businessProducts,
+            branches: businessBranches
         }
     }
 

@@ -8,9 +8,6 @@ export class BranchService {
     constructor(@Inject(BranchRepository.injectName) private branchRepo: IBranchRepository) {
     }
 
-    async getBranch(branchId: string): Promise<Branch> {
-        return await this.branchRepo.getBranch(branchId);
-    }
     async addBranchToBusiness(businessId: string, branchInfo: CreateBranchInput) {
         var fullBranchInfo = branchInfo.toBranch();
         return await this.branchRepo.addBranchToBusiness(businessId, fullBranchInfo);
@@ -18,6 +15,14 @@ export class BranchService {
 
     updateBranchInfo(branchId: string, branchInfo: Partial<Branch>) {
         return this.branchRepo.updateBranch(branchId, branchInfo);
+    }
+
+    async getBranch(branchId: string): Promise<Branch> {
+        return await this.branchRepo.getBranch(branchId);
+    }
+
+    async getBusinessBranches(businessId: string): Promise<Branch[]> {
+        return await this.branchRepo.getBusinessBranches(businessId);
     }
 
 }
