@@ -3,10 +3,12 @@ import { BranchService } from './usecase/branch.service';
 import { BranchRepository } from './repo/branch.repository';
 import { BranchResolver } from './branch.resolver';
 import { BusinessModule } from '../business/business.module';
+import { ProductModule } from '../product/product.module';
 
 @Module({
     imports: [
-        BusinessModule
+        BusinessModule,
+        ProductModule
     ],
     providers: [
         { provide: BranchRepository.injectName, useClass: BranchRepository },
@@ -16,7 +18,8 @@ import { BusinessModule } from '../business/business.module';
     exports: [
         BranchRepository.injectName,
         BranchService,
-        BranchResolver
+        BranchResolver,
+
     ]
 })
 export class BranchModule { }

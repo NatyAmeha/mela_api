@@ -6,6 +6,7 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 
 export interface IBranchRepository {
     addBranchToBusiness(businessId: string, branchData: Branch): Promise<Branch>;
+    getBranch(branchId: string): Promise<Branch>;
     updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch>;
 }
 
@@ -33,6 +34,18 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
             return branch;
         })
         return new Branch({ ...result });
+    }
+
+    async getBranch(branchId: string): Promise<Branch> {
+        try {
+            const result = await this.branch.findUnique({ where: { id: branchId } });
+            if (!result) {
+                throw new RequestValidationException({ message: "Branch not found" });
+            }
+            return new Branch({ ...result });
+        } catch (error) {
+            throw new PrismaException({ source: "Get branch", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
+        }
     }
 
     async updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch> {

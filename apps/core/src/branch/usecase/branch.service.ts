@@ -7,6 +7,10 @@ import { CreateBranchInput } from "../dto/branch.input";
 export class BranchService {
     constructor(@Inject(BranchRepository.injectName) private branchRepo: IBranchRepository) {
     }
+
+    async getBranch(branchId: string): Promise<Branch> {
+        return await this.branchRepo.getBranch(branchId);
+    }
     async addBranchToBusiness(businessId: string, branchInfo: CreateBranchInput) {
         var fullBranchInfo = branchInfo.toBranch();
         return await this.branchRepo.addBranchToBusiness(businessId, fullBranchInfo);

@@ -6,8 +6,10 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
     updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product>;
+
     addProductToBranch(productId: string[], branchId: string[]): Promise<Product[]>;
     removeProductFromBranch(productId: string[], branchId: string[]): Promise<Product[]>;
+    getBranchProducts(branchId: string): Promise<Product[]>;
 
 }
 
@@ -92,6 +94,23 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
             return updatedProducts.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Remove product from branch", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getBranchProducts(branchId: string): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: {
+                    branches: {
+                        some: {
+                            id: branchId
+                        }
+                    }
+                }
+            });
+            return products.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get branch products", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

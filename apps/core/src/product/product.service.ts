@@ -22,4 +22,8 @@ export class ProductService {
     async removeProductFromBranch(productId: string[], branchId: string[]): Promise<Product[]> {
         return await this.productRepository.removeProductFromBranch(productId, branchId);
     }
+
+    async getBranchProducts(branchId: string): Promise<Product[]> {
+        return await this.productRepository.getBranchProducts(branchId);
+    }
 }
