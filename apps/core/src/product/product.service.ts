@@ -15,4 +15,11 @@ export class ProductService {
         return this.productRepository.updateProduct(productId, productInfo);
     }
 
+    async addProductToBranch(productId: string[], branchId: string[]): Promise<Product[]> {
+        return await this.productRepository.addProductToBranch(productId, branchId);
+    }
+
+    async removeProductFromBranch(productId: string[], branchId: string[]): Promise<Product[]> {
+        return await this.productRepository.removeProductFromBranch(productId, branchId);
+    }
 }

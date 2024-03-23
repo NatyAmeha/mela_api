@@ -6,4 +6,6 @@ import { Field, ObjectType } from "@nestjs/graphql";
 export class ProductResponse extends BaseResponse {
     @Field(type => Product)
     product?: Product;
+    @Field(type => [Product])
+    products?: Product[];
 }

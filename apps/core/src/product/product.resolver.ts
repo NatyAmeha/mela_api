@@ -26,4 +26,22 @@ export class ProductResolver {
             product: productResult
         }
     }
+
+    @Mutation(returns => ProductResponse)
+    async addProductToBranch(@Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
+        var updatedProducts = await this.productService.addProductToBranch(productId, branchId);
+        return {
+            success: true,
+            products: updatedProducts
+        }
+    }
+
+    @Mutation(returns => ProductResponse)
+    async removeProductFromBranch(@Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
+        var updatedProducts = await this.productService.removeProductFromBranch(productId, branchId);
+        return {
+            success: true,
+            products: updatedProducts
+        }
+    }
 }
