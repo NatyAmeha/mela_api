@@ -13,6 +13,7 @@ export interface IProductRepository {
     getBranchProducts(branchId: string): Promise<Product[]>;
     getBusinessProducts(businessId: string): Promise<Product[]>;
 
+
 }
 
 @Injectable()

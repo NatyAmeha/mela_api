@@ -7,6 +7,8 @@ export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
     updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business>;
+
+    getProductBusiness(productId: string): Promise<Business>;
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -40,6 +42,22 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
         }
         catch (error) {
             throw new PrismaException({ source: "Update business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getProductBusiness(productId: string): Promise<Business> {
+        try {
+            const product = await this.product.findUnique({ where: { id: productId } });
+            if (!product) {
+                throw new RequestValidationException({ message: "Product not found" });
+            }
+            const business = await this.business.findUnique({ where: { id: product.businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: "Business not found" });
+            }
+            return business as Business;
+        } catch (error) {
+            throw new PrismaException({ source: "Get product business", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

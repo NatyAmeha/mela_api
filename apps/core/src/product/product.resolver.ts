@@ -1,12 +1,16 @@
-import { Args, Mutation, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql";
 import { Product } from "./model/product.model";
 import { ProductService } from "./product.service";
 import { CreateProductInput, UpdateProductInput } from "./dto/product.input";
 import { ProductResponse } from "./model/product.response";
+import { Branch } from "../branch/model/branch.model";
+import { BranchService } from "../branch/usecase/branch.service";
+import { BusinessService } from "../business/usecase/business.service";
+import { Business } from "../business/model/business.model";
 
 @Resolver(of => Product)
 export class ProductResolver {
-    constructor(private productService: ProductService) {
+    constructor(private productService: ProductService, private businessService: BusinessService, private branchService: BranchService) {
     }
 
     @Mutation(returns => ProductResponse)
@@ -44,4 +48,20 @@ export class ProductResolver {
             products: updatedProducts
         }
     }
+
+    // ------------------ Nested Queries ------------------
+
+    // responsd for nested query of business from product type
+    @ResolveField('business', returns => Business)
+    async getBusinessForProduct(@Parent() product: Product): Promise<Business> {
+        return await this.businessService.getProductBusiness(product.id);
+    }
+
+    // responsd for nested query of branches for product  from product type
+    @ResolveField('branches', returns => [Branch])
+    async branches(@Parent() product: Product): Promise<Branch[]> {
+        return await this.branchService.getProductBranchs(product.id);
+    }
+
+
 }

@@ -18,11 +18,14 @@ export class BusinessService {
 
     async updateBusinessInfo(businessId: string, data: Partial<Business>) {
         return await this.businessRepo.updateBusiness(businessId, data);
-
     }
 
     async updateBusienssRegistrationStage(businessId: string, stage: string) {
         await this.businessRepo.updateBusiness(businessId, { stage: stage });
         return true;
+    }
+
+    async getProductBusiness(productId: string): Promise<Business> {
+        return await this.businessRepo.getProductBusiness(productId);
     }
 }

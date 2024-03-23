@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { BranchModule } from '../branch/branch.module';
 import { BusinessModule } from '../business/business.module';
@@ -7,7 +7,7 @@ import { ProductResolver } from './product.resolver';
 
 
 @Module({
-    imports: [],
+    imports: [BranchModule, forwardRef(() => BusinessModule)],
     providers: [
         { provide: ProductRepository.injectName, useClass: ProductRepository },
         ProductService, ProductResolver

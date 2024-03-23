@@ -10,6 +10,7 @@ export interface IBranchRepository {
     updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch>;
 
     getBusinessBranches(businessId: string): Promise<Branch[]>;
+    getProductBranchs(productId: string): Promise<Branch[]>;
 }
 
 @Injectable()
@@ -69,6 +70,15 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
             return new Branch({ ...result });
         } catch (error) {
             throw new PrismaException({ source: "Update branch", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
+        }
+    }
+
+    async getProductBranchs(productId: string): Promise<Branch[]> {
+        try {
+            const result = await this.product.findUnique({ where: { id: productId } }).branches();
+            return result.map((branch) => new Branch({ ...branch }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get product branches", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
 
