@@ -10,6 +10,7 @@ import { ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
 
 import { BusinessModule } from './business/business.module';
 import { BranchModule } from './branch/branch.module';
+import { ProductModule } from './product/product.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BranchModule } from './branch/branch.module';
     }),
     BusinessModule,
     BranchModule,
+    ProductModule,
     RmqModule,
     LoggerModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({

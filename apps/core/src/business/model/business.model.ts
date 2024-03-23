@@ -5,6 +5,7 @@ import { LocalizedData } from "@app/common/model/localized_model";
 import { Gallery } from "./gallery.model";
 import { Address } from "./address.model";
 import { Branch } from "../../branch/model/branch.model";
+import { Product } from "../../product/model/product.model";
 
 @ObjectType()
 @InputType("BusinessInput")
@@ -42,8 +43,15 @@ export class Business {
 
     @Field(types => OpeningStatus)
     openingStatus: OpeningStatus;
+
     @Field(types => [ProductGroup])
     group?: ProductGroup[];
+
+    @Field(types => [String])
+    productIds?: string[];
+
+    @Field(types => [Product])
+    products?: Product[]
 
     @Field(types => Address)
     mainAddress: Address;

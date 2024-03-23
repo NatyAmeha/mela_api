@@ -27,8 +27,8 @@ model Product {
     tag              String[]
     gallery          Gallery
     loyaltyPoint     Int             @default(0)
-    businessId       String          @db.ObjectId
     business         Business        @relation(fields: [businessId], references: [id])
+    businessId       String          @db.ObjectId
     productGroupId   String[]
     isActive         Boolean         @default(false)
     category         String[]
@@ -39,9 +39,9 @@ model Product {
     canOrderOnline   Boolean         @default(false)
     unit             String?
     reviewTopics     String[]
-    callToAction     String?
+    callToAction     String?         @default("Order Now")
     subscriptionPlan Json[]
-    deliveryInfo     Json?
+    deliveryInfo     DeliveryInfo?
     branchIds        String[]        @default([]) @db.ObjectId
     branches         Branch[]        @relation(fields: [branchIds], references: [id])
 }
@@ -59,7 +59,7 @@ model Business {
     creator       String
     customersId   String[]        @default([]) @db.ObjectId
     customers     Customer[]
-    productsId    String[]        @default([]) @db.ObjectId
+    productIds    String[]        @default([]) @db.ObjectId
     products      Product[]
     openingStatus String?
     group         ProductGroup[]
@@ -129,6 +129,16 @@ type Address {
     location  String?
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now())
+}
+
+type DeliveryInfo {
+    id                String   @default(uuid())
+    deliveryAvailable Boolean? @default(false)
+    price             Float?   @default(0)
+    deliveryTime      Int      @default(2)
+    timeToPrepare     Int?     @default(1)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @default(now())
 }
 
 type ProductGroup {

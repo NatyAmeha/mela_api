@@ -6,6 +6,8 @@ import { LocalizedData } from "@app/common/model/localized_model";
 import { Branch } from "../../branch/model/branch.model";
 import { Customer } from "../../customer/model/customer.model";
 import { Gallery } from "../../business/model/gallery.model";
+import { Type } from "class-transformer";
+import { ValidateNested } from "class-validator";
 @ObjectType()
 @InputType('ProductInput')
 export class Product {
@@ -13,15 +15,18 @@ export class Product {
     id?: string;
 
     @Field(types => [LocalizedData])
+    @Type(() => LocalizedData)
     name: LocalizedData[];
 
     @Field(types => [LocalizedData])
+    @Type(() => LocalizedData)
     description: LocalizedData[];
 
     @Field(types => [String])
     tag?: string[];
 
     @Field(types => Gallery)
+    @Type(() => Gallery)
     gallery: Gallery;
 
     @Field(types => Int, { defaultValue: 0 })
@@ -31,6 +36,7 @@ export class Product {
     businessId: string;
 
     @Field(types => Business)
+    @Type(() => Business)
     business: Business
 
     @Field(types => [String])
@@ -70,11 +76,15 @@ export class Product {
     // subscriptionPlan?: { planId: string }[];
 
     @Field(types => DeliveryInfo)
+    @Type(() => DeliveryInfo)
+    @ValidateNested()
     deliveryInfo?: DeliveryInfo;
 
     @Field(types => [String])
     branchIds?: string[];
+
     @Field(types => [Branch])
+    @Type(() => Branch)
     branches?: Branch[];
 
 
