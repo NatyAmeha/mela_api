@@ -69,6 +69,8 @@ model Business {
     website       String?
     branchIds     String[]        @default([]) @db.ObjectId
     branches      Branch[]
+    staffsId      String[]        @default([]) @db.ObjectId
+    staffs        Staff[]
     stage         String          @default("CREATED")
 }
 
@@ -95,15 +97,17 @@ model Branch {
 
 // staff.model.ts
 model Staff {
-    id        String   @id @default(auto()) @map("_id") @db.ObjectId
-    name      String
-    pin       Int
-    roles     String[]
-    branchId  String?  @db.ObjectId
-    branch    Branch?  @relation(fields: [branchId], references: [id])
-    isActive  Boolean  @default(false)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id         String    @id @default(auto()) @map("_id") @db.ObjectId
+    name       String
+    pin        Int
+    roles      String[]
+    branchId   String?   @db.ObjectId
+    branch     Branch?   @relation(fields: [branchId], references: [id])
+    businessId String?   @db.ObjectId
+    business   Business? @relation(fields: [businessId], references: [id])
+    isActive   Boolean   @default(false)
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
 }
 
 type LocalizedData {

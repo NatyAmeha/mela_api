@@ -6,6 +6,7 @@ import { Gallery } from "./gallery.model";
 import { Address } from "./address.model";
 import { Branch } from "../../branch/model/branch.model";
 import { Product } from "../../product/model/product.model";
+import { Staff } from "../../staff/model/staff.model";
 
 @ObjectType()
 @InputType("BusinessInput")
@@ -67,6 +68,9 @@ export class Business {
     branches?: Branch[];
     @Field(types => BusinessRegistrationStage)
     stage: string
+
+    @Field()
+    staffs?: Staff[]
 
     constructor(partial?: Partial<Business>) {
         Object.assign(this, partial);

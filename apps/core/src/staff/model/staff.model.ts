@@ -1,5 +1,6 @@
 import { ObjectType, Field, Int, ID, InputType } from '@nestjs/graphql';
 import { Branch } from '../../branch/model/branch.model';
+import { Business } from '../../business/model/business.model';
 
 @ObjectType()
 @InputType('StaffInput')
@@ -19,9 +20,14 @@ export class Staff {
     branchId?: string;
     @Field(types => Branch)
     branch?: Branch
+    @Field()
+    businessId?: string;
+    @Field(types => Business)
+    business?: Business
 
     @Field()
     isActive: boolean;
+
     @Field()
     createdAt?: Date;
     @Field()

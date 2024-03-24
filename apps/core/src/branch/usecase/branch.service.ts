@@ -29,4 +29,8 @@ export class BranchService {
         return await this.branchRepo.getProductBranchs(productId);
     }
 
+    async getBranchInfoForStaff(staffId: string): Promise<Branch> {
+        return await this.branchRepo.getBranchInfoForStaff(staffId);
+    }
+
 }

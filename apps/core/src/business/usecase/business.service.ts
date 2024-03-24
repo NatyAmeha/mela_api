@@ -28,4 +28,8 @@ export class BusinessService {
     async getProductBusiness(productId: string): Promise<Business> {
         return await this.businessRepo.getProductBusiness(productId);
     }
+
+    async getBusinessInfoForStaff(staffId: string): Promise<Business> {
+        return await this.businessRepo.getBusinessInfoForStaff(staffId);
+    }
 }

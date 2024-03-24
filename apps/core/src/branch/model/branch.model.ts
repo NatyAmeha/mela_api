@@ -1,7 +1,7 @@
 import { Product } from "../../product/model/product.model";
 import { Address } from "../../business/model/address.model";
 import { Business } from "../../business/model/business.model";
-import { Staff } from "../../business/model/staff.model";
+import { Staff } from "../../staff/model/staff.model";
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 import { LocalizedData } from "@app/common/model/localized_model";
 

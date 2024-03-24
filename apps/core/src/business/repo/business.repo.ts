@@ -9,6 +9,8 @@ export interface IBusinessRepository {
     updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business>;
 
     getProductBusiness(productId: string): Promise<Business>;
+    getBusinessInfoForStaff(staffId: string): Promise<Business>;
+
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -17,7 +19,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
         super();
     }
     async createBusiness(data: Business): Promise<Business> {
-        const { customers, branches, products, ...businessData } = data;
+        const { customers, branches, staffs, products, ...businessData } = data;
         var result = await this.business.create({ data: { ...businessData } });
         return result as Business;
     }
@@ -36,7 +38,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            const { customers, branches, products, ...businessData } = updatedBusinessData;
+            const { customers, branches, products, staffs, ...businessData } = updatedBusinessData;
             var result = await this.business.update({ where: { id: businessId }, data: { ...businessData } });
             return result as Business;
         }
@@ -58,6 +60,22 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             return business as Business;
         } catch (error) {
             throw new PrismaException({ source: "Get product business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getBusinessInfoForStaff(staffId: string): Promise<Business> {
+        try {
+            const staff = await this.staff.findUnique({ where: { id: staffId } });
+            if (!staff) {
+                throw new RequestValidationException({ message: "Staff not found", statusCode: 404 });
+            }
+            const business = await this.business.findUnique({ where: { id: staff.businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: "Business not found", statusCode: 404 });
+            }
+            return business as Business;
+        } catch (error) {
+            throw new PrismaException({ source: "Get business info for staff", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 
