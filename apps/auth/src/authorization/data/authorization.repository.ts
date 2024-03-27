@@ -3,77 +3,67 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { ErrorTypes } from "@app/common/errors/error_types";
 import { find, includes, map, pull, remove } from "lodash";
 import { PrismaClient } from "apps/auth/prisma/generated/prisma_auth_client";
+import { AccessResponse } from "../model/acces.response";
+import { PrismaException } from "@app/common/errors/prisma_exception";
 
 export interface IAuthorizationRepo {
-    addAccessToUser(userId: string, accesses: Access[]): Promise<Access[]>
-    removeAccessFromUser(userId: string, accessId: string[]): Promise<boolean>
-    addPermissionToAccess(userId: string, accessId: string, permissions: Permission[]): Promise<Permission[]>
-    removePermissionsFromAccess(userId: string, accessId: string, permissionsId: string[]): Promise<boolean>
-    getAccessByResourceId(resourceId: string): Promise<Access>
-    // getUserGrantedAccess(userId: string): Promise<Access[]>
-    addPlatformServiceAccessToBusiness(accesses: Access[]): Promise<boolean>
+    addPermissionAccess(accesses: Access[]): Promise<AccessResponse>;
+    removeAccess(accessId: string): Promise<AccessResponse>
+    addPermissionToAccess(accessId: string, permissions: Permission[]): Promise<Permission[]>
+    removePermissionsFromAccess(accessId: string, permissionsId: string[]): Promise<boolean>
 }
 
 export class AuthorizationRepo extends PrismaClient implements IAuthorizationRepo {
-
-    async addPlatformServiceAccessToBusiness(accesses: Access[]): Promise<boolean> {
-        var txResult = await this.$transaction(async (tx) => {
-            let result = await tx.access.createMany({ data: accesses });
-            return result.count > 0
-        })
-        return txResult;
-    }
     static injectName = "AUTHORIZATION_REPOSITORY"
-    async addAccessToUser(userId: string, accesses: Access[]): Promise<Access[]> {
-        return this.$transaction(async (tx) => {
-            var createAccessResult = await tx.user.update({
-                where: { id: userId },
-                data: {
-                    accesses: {
-                        createMany: {
-                            data: accesses,
-                        }
-                    },
-                },
-                include: {
-                    accesses: true
-                }
-            });
-            var accessIds = createAccessResult.accesses.map(acc => acc.id)
-            var update = await tx.user.update({
-                where: { id: userId },
-                data: { accessIds: { set: accessIds } },
 
+
+    async addPermissionAccess(accesses: Access[]): Promise<AccessResponse> {
+        try {
+            let txResult = await this.$transaction(async (tx) => {
+                let result = await Promise.all(accesses.map(async (access) => {
+                    let createdAccess = await tx.access.create({ data: access });
+                    return createdAccess;
+                }));
+                return result;
             })
-            return tx.access.findMany({ where: { id: accessIds[accessIds.length - 1] } })
-        })
+            var accesssResult = txResult.map(access => new Access({ ...access }));
+            return {
+                success: true,
+                accesses: accesssResult
+            }
+        } catch (error) {
+            console.log("error", error)
+            return {
+                success: false,
+                message: error.message,
+                code: 400
+            }
+        }
 
     }
 
-    async removeAccessFromUser(userId: string, accessId: string[]): Promise<boolean> {
+    async removeAccess(accessId: string): Promise<AccessResponse> {
         try {
-            var user = await this.user.findFirstOrThrow({ where: { id: userId }, include: { accesses: true } })
-            var userAccessIds = map(user.accesses, access => access.id)
-            var newAccessIds = pull(userAccessIds, ...accessId)
-            var result = await this.user.update({
-                where: { id: userId }, data: {
-                    accessIds: newAccessIds,
-                    accesses: {
-                        deleteMany: {
-                            id: { in: accessId }
-                        }
-                    }
-                },
-            })
-            return true
+            var access = await this.access.findFirst({ where: { id: accessId }, include: { permissions: true } })
+            if (!access) {
+                return {
+                    success: false,
+                    message: "Access not found with this id"
+                }
+            }
+            var result = await this.access.delete({ where: { id: accessId } })
+            return {
+                success: true,
+                accesses: [new Access({ ...access })]
+            }
         } catch (error) {
-            return false
+            throw new PrismaException({ source: "Remove Access", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
 
-    async addPermissionToAccess(userId: string, accessId: string, permissions: Permission[]): Promise<Permission[]> {
+    async addPermissionToAccess(accessId: string, permissions: Permission[]): Promise<Permission[]> {
         var result = await this.access.update({
-            where: { id: accessId, userId: userId },
+            where: { id: accessId },
             data: {
                 permissions: {
                     push: [...permissions]
@@ -82,9 +72,9 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
         })
         return result.permissions as Permission[]
     }
-    async removePermissionsFromAccess(userId: string, accessId: string, permissionsId: string[]): Promise<boolean> {
+    async removePermissionsFromAccess(accessId: string, permissionsId: string[]): Promise<boolean> {
         var result = await this.access.update({
-            where: { id: accessId, userId: userId },
+            where: { id: accessId },
             data: {
                 permissions: {
                     deleteMany: {
@@ -97,12 +87,5 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
         return true;
     }
 
-    async getAccessByResourceId(resourceId: string): Promise<Access> {
-        var accessResult = await this.access.findFirst({ where: { resourceId: resourceId } })
-        if (!accessResult.id) {
-            throw new RequestValidationException({ message: "Access not found with this resource id", errorType: ErrorTypes.ACCESS_NOT_FOUND })
-        }
-        return new Access({ ...accessResult })
-    }
 
 }

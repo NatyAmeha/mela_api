@@ -10,6 +10,7 @@ import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { AuthorizationService } from "./authorization";
 import { Subscription } from "apps/subscription/src/model/subscription.model";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
+import { Access } from "../prisma/generated/prisma_auth_client";
 
 export interface IAuthServiceMsgBrocker {
 
@@ -36,16 +37,8 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
 
     async listenAuthServiceRequestAndReply() {
         this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (messageResult) => {
-            if (messageResult.properties.correlationId == AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION) {
-                console.log("message received from subscription")
-                await this.createPlatformAccessandReply(messageResult, AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION)
-            }
-            else {
-                console.log("default message received")
-                var sendResult = await this.sendMessage(messageResult.properties.replyTo, messageResult, AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION)
-            }
+            this.respondToMessage(messageResult)
         })
-
     }
 
     async listenAuthEvents() {
@@ -59,15 +52,23 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
         }
     }
 
-    async createPlatformAccessandReply(messageInfo: ConsumeMessage, coorelationId: string) {
-        let subscriptionMessage = JSON.parse(messageInfo.content.toString()) as Subscription;
-        var subscriptionInfo = new Subscription({ ...subscriptionMessage })
-        let createResult = await this.authorizationService.createPlatformServiceAccessPermissionForBusinesses(subscriptionInfo)
-        let messageResult: IMessageBrockerResponse<any> = {
-            success: createResult
+    async respondToMessage(messageInfo: ConsumeMessage) {
+        var replyResponse: IMessageBrockerResponse<any> = { success: false }
+        var replyCoorelationId = messageInfo.properties.correlationId;
+        try {
+            var messageContent = JSON.parse(messageInfo.content.toString())
+            if (messageInfo.properties.correlationId == AuthServiceMessageType.CREATE_ACCESS_PERMISSION) {
+                let accesses = messageContent as Access[];
+                let createResult = await this.authorizationService.createAccess(accesses)
+                replyResponse.success = createResult.success;
+            }
+        } catch (error) {
+
         }
-        var sendResult = await this.sendMessage(messageInfo.properties.replyTo, messageResult, coorelationId)
-        this.channel.ack(messageInfo)
+        finally {
+            this.channel.ack(messageInfo);
+            var sendResult = await this.sendMessage(messageInfo.properties.replyTo, replyResponse, replyCoorelationId)
+        }
     }
 
 

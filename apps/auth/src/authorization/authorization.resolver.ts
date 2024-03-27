@@ -15,20 +15,8 @@ export class AuthorizationResolver {
     constructor(private authorizationService: AuthorizationService) {
 
     }
-    @UseGuards(JwtGuard)
-    @Mutation(returns => [Access])
-    async addAuthorizationAccess(@Args("user") userId: string, @Args({ name: "accesses", type: () => [CreateAccessInput] }, new ParseArrayPipe({ items: CreateAccessInput })) accesses: CreateAccessInput[]): Promise<Access[]> {
-        var accessList = Access.getAccessInfoFromAccessInput(accesses)
-        var result = await this.authorizationService.creatNewAccessForUser(userId, accessList)
-        return result;
-    }
 
-    @UseGuards(JwtGuard)
-    @Mutation(returns => Boolean)
-    async removeAccessFromUser(@Args("user") user: string, @Args({ name: "accesses", type: () => [String] }) accesses: string[]): Promise<boolean> {
-        var removeAccessResult = await this.authorizationService.removeAccessFromUser(user, accesses)
-        return removeAccessResult;
-    }
+
 
     @UseGuards(JwtGuard)
     @Mutation(returns => [Permission])

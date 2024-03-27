@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "@nestjs/graphql";
+import { Field, Int, ObjectType } from "@nestjs/graphql";
 
 @ObjectType()
 export class BaseResponse {
@@ -6,4 +6,6 @@ export class BaseResponse {
     success: boolean
     @Field(type => String)
     message?: string
-}
+    @Field(type => Int)
+    code?: number
+} 

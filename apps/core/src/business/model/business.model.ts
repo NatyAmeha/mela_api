@@ -7,6 +7,12 @@ import { Address } from "./address.model";
 import { Branch } from "../../branch/model/branch.model";
 import { Product } from "../../product/model/product.model";
 import { Staff } from "../../staff/model/staff.model";
+import { Access, AccessOwnerType, AppResources, DefaultRoles, Permission } from "apps/auth/src/authorization/model/access.model";
+import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
+import { IMessageBrocker } from "libs/rmq/message_brocker";
+import { AuthServiceMessageType } from "libs/rmq/app_message_type";
+import { AppMsgQueues } from "libs/rmq/constants";
+import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 
 @ObjectType()
 @InputType("BusinessInput")
@@ -43,7 +49,7 @@ export class Business {
     customers?: Customer[];
 
     @Field(types => OpeningStatus)
-    openingStatus: OpeningStatus;
+    openingStatus: string;
 
     @Field(types => [ProductGroup])
     group?: ProductGroup[];
@@ -75,6 +81,24 @@ export class Business {
     constructor(partial?: Partial<Business>) {
         Object.assign(this, partial);
     }
+
+
+
+    generateDefaultBusinessOwnerPermission(): Access[] {
+        let manageBusinessPermission = new Access({
+            role: DefaultRoles.BUSINESS_OWNER,
+            owner: this.creator,
+            ownerType: AccessOwnerType.USER,
+            permissionType: PermissionType.PLATFORM_PERMISSION,
+            permissions: [
+                new Permission({ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourceTarget: this.id }),
+            ]
+        })
+        return [manageBusinessPermission]
+    }
+
+
+
 }
 
 enum OpeningStatus {

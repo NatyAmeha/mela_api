@@ -1,5 +1,5 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { Field, ID, InputType, ObjectType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
+import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
 import { CreateAccessInput } from "../dto/access.input";
 import { IsArray, IsOptional } from "class-validator";
 import { CreatePermissionInput, PermissionGroupInput } from "../dto/permission.input";
@@ -18,11 +18,9 @@ export class Access extends BaseModel {
     @Field(type => [Permission])
     permissions?: Permission[]
     @Field()
-    userId?: string
-    @Field(type => User)
-    user?: User
-    @Field()
-    businessId?: string
+    owner: string
+    @Field(types => AccessOwnerType)
+    ownerType: string
     @Field()
     dateCreated?: Date
     @Field()
@@ -59,7 +57,7 @@ export class Permission {
     @Field(type => [PermissionGroup])
     groups?: PermissionGroup[]
     @Field()
-    userGenerated?: boolean
+    userGenerated?: boolean = false
 
 
     constructor(data: Partial<Permission>) {
@@ -86,5 +84,29 @@ export class PermissionGroup {
     static getPermissionGroupFromInput(inputs: PermissionGroupInput[]): PermissionGroup[] {
         return inputs.map(grp => new PermissionGroup({ name: grp.name as LocalizedData[], key: grp.key }))
     }
+}
+
+export enum AccessOwnerType {
+    USER = 'USER',
+    BUSINESS = 'BUSINESS',
+    PLATFORM = 'PLATFORM'
+}
+registerEnumType(AccessOwnerType, { name: 'AccessOwnerType' })
+
+export enum AppResources {
+    BUSINESS = 'BUSINESS',
+    BRANCH = 'BRANCH',
+    STAFF = 'STAFF',
+    CUSTOMER = 'CUSTOMER',
+    USER = 'USER',
+    PLATFORM_SERVICES = 'PLATFORM_SERVICES',
+}
+
+export enum DefaultRoles {
+    ADMIN = 'ADMIN',
+    BUSINESS_OWNER = 'BUSINESS_OWNER',
+    MANAGER = 'MANAGER',
+    STAFF = 'STAFF',
+
 }
 

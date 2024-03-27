@@ -2,16 +2,18 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import { ConsumeMessage } from "amqplib";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
-import { CoreServiceMessageType } from "libs/rmq/app_message_type";
-import { ExchangeNames, RoutingKey } from "libs/rmq/constants";
+import { AuthServiceMessageType, CoreServiceMessageType } from "libs/rmq/app_message_type";
+import { AppMsgQueues, ExchangeNames, RoutingKey } from "libs/rmq/constants";
 import { IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { BusinessService } from "./business/usecase/business.service";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Business } from "../prisma/generated/prisma_auth_client";
+import { Access } from "apps/auth/src/authorization/model/access.model";
+
 
 export interface ICoreServiceMsgBrocker {
-
+    createMessageForAuthServiceToCreateAccess(access: Access[]): IMessageBrocker<Access[]>
 }
 
 @Injectable()
@@ -52,6 +54,17 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
         var data = messageResult.content.toString();
         if (data) {
         }
+    }
+
+    createMessageForAuthServiceToCreateAccess(access: Access[]): IMessageBrocker<Access[]> {
+        var messageInfo: IMessageBrocker<Access[]> = {
+            data: access,
+            coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
+            replyQueue: AppMsgQueues.CORE_SERVICE_REPLY_QUEUE,
+            expirationInSecond: 60 * 1,
+            persistMessage: true,
+        }
+        return messageInfo;
     }
 
     async updateBusinessRegistrationStage(messageInfo: ConsumeMessage, coorelationId: string) {

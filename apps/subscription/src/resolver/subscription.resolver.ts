@@ -76,7 +76,7 @@ export class SubscriptionResolver {
     // create access permission for business on auth servcie
     var messageInfo: IMessageBrocker<Subscription> = {
       data: response.createdSubscription,
-      coorelationId: AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION,
+      coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
       replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
       expirationInSecond: 60 * 1,
       persistMessage: true,
@@ -103,7 +103,7 @@ export class SubscriptionResolver {
     var messageInfo: IMessageBrocker<Subscription> = {
       // only send the new platform service info to create access permission
       data: { ...response.createdSubscription, platformServices: response.addedPlatformServices } as Subscription,
-      coorelationId: AuthServiceMessageType.CREATE_PLATFORM_ACCESS_PERMISSION,
+      coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
       replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
       expirationInSecond: 60 * 1,
       persistMessage: true,

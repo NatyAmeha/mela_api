@@ -3,7 +3,7 @@ import { Field, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { SubscriptionType } from "./subscription_type.enum";
 import { types } from "joi";
-import { Access, Permission } from "apps/auth/src/authorization/model/access.model";
+import { Access, AccessOwnerType, Permission } from "apps/auth/src/authorization/model/access.model";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { includes } from "lodash";
@@ -55,7 +55,7 @@ export class Subscription extends BaseModel {
                 return new Permission({ resourceType: PermissionType.PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION, resourceTarget: id })
             });
             permissions.push(...customizationPermissions)
-            var accessInfo = new Access({ permissionType: PermissionType.PLATFORM_PERMISSION, businessId: this.owner, permissions: permissions })
+            var accessInfo = new Access({ permissionType: PermissionType.PLATFORM_PERMISSION, owner: this.owner, ownerType: AccessOwnerType.BUSINESS, permissions: permissions })
             accesses.push(accessInfo)
         })
         return accesses;

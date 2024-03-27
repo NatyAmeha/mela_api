@@ -94,7 +94,6 @@ export class SubscriptionService {
     let existingSubscriptionInfo = await this.subscriptionRepo.getSubscriptionInfo(subscriptionId)
     var existingPlatformServiceInSubscription = existingSubscriptionInfo.getPlatformServiceAlreadyInSubscriptioin(newPlatformServiceInfo)
     if (existingPlatformServiceInSubscription.length > 0) {
-      console.log("existing result ", existingPlatformServiceInSubscription.length)
       return <SubscriptionResponse>{
         success: false,
         message: "Platform service is already in subscription, check existing services field",

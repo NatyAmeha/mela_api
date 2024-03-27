@@ -21,7 +21,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     async createBusiness(data: Business): Promise<Business> {
         const { customers, branches, staffs, products, ...businessData } = data;
         var result = await this.business.create({ data: { ...businessData } });
-        return result as Business;
+        return new Business({ ...result })
     }
 
     async getBusiness(businessId: string): Promise<Business> {
@@ -29,7 +29,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
         if (!businessInfo) {
             throw new RequestValidationException({ message: "Business not found" });
         }
-        return businessInfo as Business;
+        return new Business({ ...businessInfo });
     }
 
     async updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business> {
@@ -40,7 +40,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             }
             const { customers, branches, products, staffs, ...businessData } = updatedBusinessData;
             var result = await this.business.update({ where: { id: businessId }, data: { ...businessData } });
-            return result as Business;
+            return new Business({ ...result });
         }
         catch (error) {
             throw new PrismaException({ source: "Update business", statusCode: 400, code: error.code, meta: error.meta });
@@ -57,7 +57,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             if (!business) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            return business as Business;
+            return new Business({ ...business });
         } catch (error) {
             throw new PrismaException({ source: "Get product business", statusCode: 400, code: error.code, meta: error.meta });
         }
@@ -73,7 +73,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             if (!business) {
                 throw new RequestValidationException({ message: "Business not found", statusCode: 404 });
             }
-            return business as Business;
+            return new Business({ ...business });
         } catch (error) {
             throw new PrismaException({ source: "Get business info for staff", statusCode: 400, code: error.code, meta: error.meta });
         }

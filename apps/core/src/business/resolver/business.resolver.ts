@@ -7,11 +7,22 @@ import { ProductService } from "../../product/product.service";
 import { BranchService } from "../../branch/usecase/branch.service";
 import { Product } from "../../product/model/product.model";
 import { Branch } from "../../branch/model/branch.model";
+import { CoreServiceMsgBrockerClient } from "../../core_service_msg_brocker";
+import { AppMsgQueues } from "libs/rmq/constants";
+import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
+import { Access } from "apps/auth/src/authorization/model/access.model";
+import { UseGuards } from "@nestjs/common";
+import { AuthzGuard } from "libs/common/authorization.guard";
 
 
 @Resolver(of => Business)
 export class BusinessResolver {
-    constructor(private businessService: BusinessService, private productService: ProductService, private branchService: BranchService) {
+    constructor(
+        private businessService: BusinessService,
+        private productService: ProductService,
+        private branchService: BranchService,
+        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient
+    ) {
     }
     @Query(returns => BusinessResponse)
     async getBusinessDetails(@Args("id") id: string): Promise<BusinessResponse> {
@@ -25,10 +36,15 @@ export class BusinessResolver {
             branches: businessBranches
         }
     }
-
+    // @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
     async createBusiness(@Args('data') data: CreateBusinessInput): Promise<BusinessResponse> {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());
+        var businessOwnerAccess = createdBusiness.generateDefaultBusinessOwnerPermission();
+
+        var messageInfo = this.coreServiceMsgBrocker.createMessageForAuthServiceToCreateAccess(businessOwnerAccess);
+        var reply = await this.coreServiceMsgBrocker.sendMessageGetReply<Access[], IMessageBrockerResponse>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        console.log("reply", reply)
         return {
             success: true,
             business: createdBusiness

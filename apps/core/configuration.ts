@@ -10,9 +10,9 @@ export const configuration = () => ({
     rmq: {
         rmq_config: {  // host.docker.internal
             url: "amqp://localhost:5672",
-            queue: AppMsgQueues.AUTH_SERVICE_QUEUE,
-            requestQueue: AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE,
-            replyQueue: AppMsgQueues.AUTH_SERVICE_REPLY_QUEUE,
+            queue: AppMsgQueues.CORE_SERVICE_QUEUE,
+            requestQueue: AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE,
+            replyQueue: AppMsgQueues.CORE_SERVICE_REPLY_QUEUE,
             noAck: false,
             prefetchCount: 1,
             queueOptions: {

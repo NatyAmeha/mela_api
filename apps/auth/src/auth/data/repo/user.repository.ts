@@ -27,12 +27,12 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
         return result?.id != undefined;
     }
     async createUser(userInfo: User): Promise<User> {
-        var userResult = await this.user.create({ data: { ...userInfo, accesses: {} } });
+        var userResult = await this.user.create({ data: { ...userInfo } });
         return new User({ ...userResult })
     }
 
     async getUser(userQuery: Partial<User>): Promise<User | undefined> {
-        var userInfo = await this.user.findFirst({ where: { ...userQuery as any }, include: { accesses: true } })
+        var userInfo = await this.user.findFirst({ where: { ...userQuery as any } })
         if (!userInfo.id) {
             throw new RequestValidationException({ message: "Incorrect query data provided" })
         }
@@ -40,7 +40,7 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
     }
 
     async updateUserInfo(userId: string, userInfo: Partial<User>): Promise<boolean> {
-        await this.user.update({ where: { id: userId }, data: { ...userInfo, accesses: {} } })
+        await this.user.update({ where: { id: userId }, data: { ...userInfo } })
         return true;
     }
 
