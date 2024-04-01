@@ -1,6 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { BusinessRepository, IBusinessRepository } from "../repo/business.repo";
-import { Business } from "../model/business.model";
+import { Business, BusinessRegistrationStage } from "../model/business.model";
+import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 
 @Injectable()
 export class BusinessService {
@@ -20,8 +22,17 @@ export class BusinessService {
         return await this.businessRepo.updateBusiness(businessId, data);
     }
 
-    async updateBusienssRegistrationStage(businessId: string, stage: string) {
-        await this.businessRepo.updateBusiness(businessId, { stage: stage });
+    async updateBusienssRegistrationToPaymentStage(subscriptionInfo: SubscriptionResponse,) {
+        let businessId = subscriptionInfo.createdSubscription.owner
+        var businessInfo = await this.businessRepo.getBusiness(businessId);
+        if (!businessInfo) {
+            throw new RequestValidationException({ message: "Business not found" });
+        }
+        await this.businessRepo.updateBusiness(businessId, {
+            stage: BusinessRegistrationStage.PAYMENT_STAGE,
+            trialPeriodUsedServiceIds: [...businessInfo.trialPeriodUsedServiceIds, ...subscriptionInfo.platformServicehavingFreeTrial],
+            subscriptionIds: [...subscriptionInfo.createdSubscription.id, ...businessInfo.subscriptionIds]
+        });
         return true;
     }
 

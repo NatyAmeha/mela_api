@@ -42,7 +42,7 @@ export class BusinessResolver {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());
         var businessOwnerAccess = createdBusiness.generateDefaultBusinessOwnerPermission();
 
-        var messageInfo = this.coreServiceMsgBrocker.createMessageForAuthServiceToCreateAccess(businessOwnerAccess);
+        var messageInfo = this.coreServiceMsgBrocker.generateMessageInfoToCreateAccessPermission(businessOwnerAccess, AppMsgQueues.CORE_SERVICE_REPLY_QUEUE);
         var reply = await this.coreServiceMsgBrocker.sendMessageGetReply<Access[], IMessageBrockerResponse>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         console.log("reply", reply)
         return {
@@ -60,14 +60,14 @@ export class BusinessResolver {
         }
     }
 
-    @Mutation(returns => BusinessResponse)
-    async updateBusinessRegistrationStage(@Args('businessId') businessId: string, @Args('stage') stage: string): Promise<BusinessResponse> {
-        await this.businessService.updateBusienssRegistrationStage(businessId, stage);
-        return {
-            success: true,
-            business: null
-        }
-    }
+    // @Mutation(returns => BusinessResponse)
+    // async updateBusinessRegistrationStage(@Args('businessId') businessId: string, @Args('stage') stage: string): Promise<BusinessResponse> {
+    //     await this.businessService.updateBusienssRegistrationStage(businessId, stage);
+    //     return {
+    //         success: true,
+    //         business: null
+    //     }
+    // }
 
 
     // ------------------ Nested Queries ------------------

@@ -7,12 +7,15 @@ import { PlatfromServiceSubscription, Subscription } from '../model/subscription
 import { SubscriptionResponse } from '../model/subscription.response';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { IPlatformServiceRepo, PlatformServiceRepository } from '../repo/platform_service.repo';
+import { SubscriptionHelper } from '../utils/subscription.helper';
 
 @Injectable()
 export class SubscriptionService {
   constructor(
     @Inject(SubscriptionRepository.InjectName) private subscriptionRepo: ISubscritpionRepository,
-    @Inject(PlatformServiceRepository.InjectName) private platformServcieRepo: IPlatformServiceRepo) {
+    @Inject(PlatformServiceRepository.InjectName) private platformServcieRepo: IPlatformServiceRepo,
+    private subscriptionHelper: SubscriptionHelper,
+  ) {
 
   }
   async createSubscriptionPlan(planInfo: SubscriptionPlan) {
@@ -56,11 +59,13 @@ export class SubscriptionService {
   async subscribeToPlan(info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
     let subscriptionInfo: Subscription
     if (info.type == SubscriptionType.PLATFORM) {
-      subscriptionInfo = await info.getSubscriptionInfoForPlatformService(this.platformServcieRepo)
+      subscriptionInfo = await this.subscriptionHelper.getSubscriptionInfoForPlatformService(info)
+      var serviceIdsHavingTrialPeriod = this.subscriptionHelper.getPlatformServicesHavingFreeTier(subscriptionInfo)
       let result = await this.subscriptionRepo.createSubscription(subscriptionInfo)
       return {
         success: true,
         createdSubscription: result,
+        platformServicehavingFreeTrial: serviceIdsHavingTrialPeriod
       }
     }
     else {

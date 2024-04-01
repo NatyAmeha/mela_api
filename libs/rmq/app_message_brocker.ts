@@ -1,14 +1,19 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ChannelWrapper } from "amqp-connection-manager";
+import { Access } from "apps/auth/src/authorization/model/access.model";
 import { ExchangeNames, RoutingKey } from "libs/rmq/constants";
 import { IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
+import { AuthServiceMessageType } from "./app_message_type";
 
 export interface IAppMessageBrocker {
     connectMessageBrocker(): Promise<void>
     sendMessage<T, K>(queue: string, message: T, messageId: string): Promise<boolean>
     sendMessageGetReply<T, K>(queue: string, message: T, messageId: string, replyQueue: string): Promise<K>
+
+    // common message brocker methods
+    generateMessageInfoToCreateAccessPermission(access: Access[], replyQueue: string): IMessageBrocker<Access[]>
 }
 
 @Injectable()
@@ -55,6 +60,17 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         } finally {
             await this.channel.close();
         }
+    }
+
+    generateMessageInfoToCreateAccessPermission(accesses: Access[], replyQueue: string): IMessageBrocker<Access[]> {
+        var messageInfo: IMessageBrocker<Access[]> = {
+            data: accesses,
+            coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
+            replyQueue: replyQueue,
+            expirationInSecond: 60 * 1,
+            persistMessage: true,
+        }
+        return messageInfo;
     }
 
 

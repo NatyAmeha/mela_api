@@ -4,7 +4,7 @@ import amqp, { Channel, ChannelWrapper } from 'amqp-connection-manager';
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { ConsumeMessage } from "amqplib";
 import { Injectable } from "@nestjs/common";
-import { Observable } from "rxjs";
+import { Observable, from, switchMap } from "rxjs";
 
 export interface IRMQService {
     connect(url: string[], queues: string[]): Promise<ChannelWrapper>
@@ -13,7 +13,7 @@ export interface IRMQService {
     listenMessage(channel: ChannelWrapper, queue: string, messageType?: string): Promise<ConsumeMessage>
     listenMessageBeta(channel: ChannelWrapper, queue: string, messageType?: string): Observable<ConsumeMessage>
     publishMessage<T>(channel: ChannelWrapper, messageInfo: IMessageBrocker<T>): Promise<boolean>
-    subscribeToMessage(channel: ChannelWrapper, messageInfo: IMessageBrocker<any>, fromQueue: string): Promise<ConsumeMessage | undefined>
+    subscribeToMessage(channel: ChannelWrapper, messageInfo: IMessageBrocker<any>, fromQueue: string): Observable<ConsumeMessage>
 }
 
 @Injectable()
@@ -103,21 +103,27 @@ export class RMQService implements IRMQService {
 
         }
     }
-    async subscribeToMessage(channel: ChannelWrapper, messageInfo: Partial<IMessageBrocker<any>>, fromQueue: string): Promise<ConsumeMessage | undefined> {
+    subscribeToMessage(channel: ChannelWrapper, messageInfo: Partial<IMessageBrocker<any>>, fromQueue: string): Observable<ConsumeMessage> {
         try {
-            channel.assertExchange(messageInfo.exchange, messageInfo.exchangeType, { durable: false })
-            const queue = await channel.assertQueue(fromQueue, { exclusive: true });
-            await channel.bindQueue(queue.queue, messageInfo.exchange, messageInfo.routingKey);
-            return new Promise((resolve: (value: ConsumeMessage) => void, reject: (error: Error) => void) => {
+            return from(
+                channel.assertExchange(messageInfo.exchange, messageInfo.exchangeType, { durable: false })
+            ).pipe(
+                switchMap(() => channel.assertQueue(fromQueue, { exclusive: true })),
+                switchMap(queue => {
+                    channel.bindQueue(queue.queue, messageInfo.exchange, messageInfo.routingKey);
+                    return new Observable<ConsumeMessage>(observer => {
+                        channel.consume(
+                            queue.queue,
+                            (msg) => {
+                                observer.next(msg)
+                            },
+                            { noAck: true },
+                        );
+                    });
+                })
+            );
 
-                channel.consume(
-                    queue.queue,
-                    (msg) => {
-                        resolve(msg)
-                    },
-                    { noAck: true },
-                );
-            })
+
         } catch (error) {
         }
     }

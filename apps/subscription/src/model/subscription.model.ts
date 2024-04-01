@@ -7,6 +7,7 @@ import { Access, AccessOwnerType, Permission } from "apps/auth/src/authorization
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { includes } from "lodash";
+import { LanguageKey } from "@app/common/model/localized_model";
 
 
 @ObjectType()
@@ -45,21 +46,7 @@ export class Subscription extends BaseModel {
         Object.assign(this, data)
     }
 
-    generatePlatformAccessPermissionForBusiness(): Access[] {
-        let accesses: Access[] = []
-        this.platformServices?.forEach(subscriptionService => {
-            var permissions: Permission[] = []
-            let serviceLevelPermission = new Permission({ resourceType: subscriptionService.serviceName, resourceTarget: subscriptionService.serviceId, })
-            permissions.push(serviceLevelPermission)
-            let customizationPermissions = subscriptionService.selectedCustomizationId.map(id => {
-                return new Permission({ resourceType: PermissionType.PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION, resourceTarget: id })
-            });
-            permissions.push(...customizationPermissions)
-            var accessInfo = new Access({ permissionType: PermissionType.PLATFORM_PERMISSION, owner: this.owner, ownerType: AccessOwnerType.BUSINESS, permissions: permissions })
-            accesses.push(accessInfo)
-        })
-        return accesses;
-    }
+
 
     changeSubscriptionStatus(status: boolean) {
         this.isActive = status;
@@ -73,6 +60,9 @@ export class Subscription extends BaseModel {
         return result
     }
 
+    getPlatformServicesHavingFreeTier(): PlatfromServiceSubscription[] {
+        return this.platformServices.filter(service => service.isTrialPeriod)
+    }
 }
 
 @ObjectType()

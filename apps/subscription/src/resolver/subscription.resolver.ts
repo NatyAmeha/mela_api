@@ -16,6 +16,8 @@ import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'apps/auth/src/auth/service/guard/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
 import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
+import { Access } from 'apps/auth/src/authorization/model/access.model';
+import { SubscriptionHelper } from '../utils/subscription.helper';
 
 
 
@@ -24,6 +26,7 @@ export class SubscriptionResolver {
   constructor(
     @Inject(SubscriptionMessageBrocker.InjectName) private subscriptionBroker: SubscriptionMessageBrocker,
     private readonly subscriptionService: SubscriptionService,
+    private subscriptionHelper: SubscriptionHelper
   ) { }
 
   // @UseGuards(AuthzGuard)
@@ -70,23 +73,18 @@ export class SubscriptionResolver {
     // validate the input
     // create subscription info
     var response = await this.subscriptionService.subscribeToPlan(planInput);
+    var result = await this.subscriptionBroker.sendSubscriptionCreatedEventToCoreService(response)
     if (!response.success) {
       return response
     }
     // create access permission for business on auth servcie
-    var messageInfo: IMessageBrocker<Subscription> = {
-      data: response.createdSubscription,
-      coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
-      replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
-      expirationInSecond: 60 * 1,
-      persistMessage: true,
-
-    }
-    var reply = await this.subscriptionBroker.sendMessageGetReply<SubscriptionPlan, IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+    var platformAccesses = this.subscriptionHelper.generatePlatformAccessPermissionForBusiness(response.createdSubscription)
+    var reply = await this.subscriptionBroker.createPlatformAccessPermission(platformAccesses);
     if (reply.success) {
       var updateResult = await this.subscriptionService.updateSubscriptionStatus(response.createdSubscription!.id!, true)
-      console.log("subscritpion status update", updateResult)
       response.createdSubscription.isActive = updateResult
+      var sendResult = await this.subscriptionBroker.sendSubscriptionCreatedEventToCoreService(response)
+      console.log("subscritpion status update", updateResult, sendResult)
     }
     // update subscription status
     return response
