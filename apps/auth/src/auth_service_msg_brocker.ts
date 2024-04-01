@@ -46,10 +46,10 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
             routingKey: RoutingKey.AUTH_SERVICE_ROUTING_KEY,
             exchange: ExchangeNames.AUTH_DIRECT_EXCHANGE
         }
-        var messageResult = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue)
-        var data = messageResult.content.toString();
-        if (data) {
-        }
+        var messageResult = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
+
+        })
+
     }
 
     async respondToMessage(messageInfo: ConsumeMessage) {

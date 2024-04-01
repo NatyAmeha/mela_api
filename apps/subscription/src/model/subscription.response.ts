@@ -17,5 +17,7 @@ export class SubscriptionResponse extends BaseResponse {
     addedPlatformServices?: PlatfromServiceSubscription[]
     @Field(type => [PlatfromServiceSubscription])
     existingPlatformService?: PlatfromServiceSubscription[]
+    @Field(type => [String])
+    platformServicehavingFreeTrial?: string[]
 
 }

@@ -31,38 +31,7 @@ export class CreateSubscriptionInput extends PickType(Subscription, ["owner", "t
         })
     }
 
-    async getSubscriptionInfoForPlatformService(platfromServiceRepo: IPlatformServiceRepo) {
-        if (!this.selectedPlatformServices || isEmpty(this.selectedPlatformServices)) {
-            throw new RequestValidationException({ message: "platform service must be selected" })
-        }
-        var startDate = new Date(Date.now())
 
-        var serviceSubscriptionInfo = await Promise.all(this.selectedPlatformServices.map(async service => {
-            var serviceInfo = await platfromServiceRepo.getPlatformService(service.serviceId)
-            if (serviceInfo) {
-                var endDate = new Date(Date.now())
-                endDate.setDate(endDate.getDate() + serviceInfo.duration)
-                return <PlatfromServiceSubscription>{
-                    serviceId: serviceInfo.id,
-                    serviceName: service.serviceName,
-                    selectedCustomizationId: service.selectedCustomizationId,
-                    startDate: startDate,
-                    endDate: endDate,
-                    createdAt: new Date(Date.now()),
-                    updatedAt: new Date(Date.now()),
-                    isTrialPeriod: serviceInfo.hasTrialPeriod()
-                }
-            }
-        }))
-        return new Subscription({
-            type: SubscriptionType.PLATFORM,
-            owner: this.owner,
-            createdAt: startDate,
-            updatedAt: startDate,
-            platformServices: serviceSubscriptionInfo,
-            isActive: false
-        })
-    }
 }
 
 @InputType()

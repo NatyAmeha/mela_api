@@ -11,6 +11,8 @@ import { LocalizedData } from "@app/common/model/localized_model";
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
+    @Field(type => [LocalizedData])
+    name?: LocalizedData[]
     @Field()
     resourceId?: string
     @Field()
@@ -46,6 +48,8 @@ export class Access extends BaseModel {
 export class Permission {
     @Field(type => ID)
     id?: string
+    @Field(type => [LocalizedData])
+    name: LocalizedData[]
     @Field()
     action: string = PERMISSIONACTION.ANY.toString()
     @Field()

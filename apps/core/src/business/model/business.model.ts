@@ -77,6 +77,10 @@ export class Business {
 
     @Field()
     staffs?: Staff[]
+    @Field(types => [String])
+    subscriptionIds?: string[];
+    @Field(types => [String])
+    trialPeriodUsedServiceIds?: string[];
 
     constructor(partial?: Partial<Business>) {
         Object.assign(this, partial);
