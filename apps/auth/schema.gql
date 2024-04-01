@@ -3,41 +3,32 @@
 # ------------------------------------------------------
 
 type Access {
-  businessId: String
   dateCreated: DateTime
   dateUpdated: DateTime
   id: ID
+  name: [LocalizedData!]
+  owner: String!
+  ownerType: AccessOwnerType!
   permissionType: PermissionType!
   permissions: [Permission!]
   resourceId: String
   role: String
-  user: User
-  userId: String
+}
+
+enum AccessOwnerType {
+  BUSINESS
+  PLATFORM
+  USER
 }
 
 type AuthResponse {
   accessToken: String
+  code: Int
   isNewUser: Boolean
   message: String
   refreshToken: String
   success: Boolean!
   user: User
-}
-
-type BenefitInfo {
-  descriptions: [LocalizedData!]!
-  tags: [String!]
-}
-
-input BenefitInput {
-  descriptions: [LocalizedDataInput!]!
-  tags: [String!]
-}
-
-input CreateAccessInput {
-  permissions: [CreatePermissionInput!]!
-  resourceId: String
-  role: String!
 }
 
 input CreatePermissionInput {
@@ -72,11 +63,9 @@ input LocalizedDataInput {
 }
 
 type Mutation {
-  addAuthorizationAccess(accesses: [CreateAccessInput!]!, user: String!): [Access!]!
   addPermissionToUserAccess(access: String!, permissions: [CreatePermissionInput!]!, user: String!): [Permission!]!
   createUserAccountUsingEmailPassword(signup: SignupInput!): AuthResponse!
   logout: Boolean!
-  removeAccessFromUser(accesses: [String!]!, user: String!): Boolean!
   removePermissionFromUserAccess(access: String!, permissions: [String!]!, user: String!): Boolean!
   signInWithEmailAndPassword(email: String!, password: String!): AuthResponse!
   signInWithPhoneNumber(phone: String!): AuthResponse!
@@ -93,6 +82,7 @@ type Permission {
   effect: String!
   groups: [PermissionGroup!]
   id: ID
+  name: [LocalizedData!]!
   resourceTarget: String!
   resourceType: String!
   userGenerated: Boolean
@@ -114,28 +104,6 @@ enum PermissionType {
   PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION
 }
 
-input PlatformServiceSubscriptionInput {
-  createdAt: DateTime
-  endDate: DateTime!
-  isTrialPeriod: Boolean
-  selectedCustomizationId: [String!]!
-  serviceId: ID!
-  serviceName: String!
-  startDate: DateTime!
-  updatedAt: DateTime!
-}
-
-type PlatfromServiceSubscription {
-  createdAt: DateTime
-  endDate: DateTime!
-  isTrialPeriod: Boolean
-  selectedCustomizationId: [String!]!
-  serviceId: ID!
-  serviceName: String!
-  startDate: DateTime!
-  updatedAt: DateTime!
-}
-
 type Query {
   check: String!
   me: UserResponse!
@@ -150,84 +118,6 @@ input SignupInput {
   password: String
   phoneNumber: String!
   profileImageUrl: String
-}
-
-type Subscription {
-  createdAt: DateTime
-  endDate: DateTime!
-  id: ID
-  isActive: Boolean
-  isTrialPeriod: Boolean!
-
-  """owner can be business id, service id, product id"""
-  owner: String
-  plan: SubscriptionPlan
-  platformServices: [PlatfromServiceSubscription!]
-  startDate: DateTime!
-  subscriptioinPlanId: String
-  type: SubscriptionType!
-  updatedAt: DateTime!
-}
-
-input SubscriptionInput {
-  createdAt: DateTime
-  endDate: DateTime!
-  id: ID
-  isActive: Boolean
-  isTrialPeriod: Boolean!
-
-  """owner can be business id, service id, product id"""
-  owner: String
-  plan: SubscriptionPlanInput
-  platformServices: [PlatformServiceSubscriptionInput!]
-  startDate: DateTime!
-  subscriptioinPlanId: String
-  type: SubscriptionType!
-  updatedAt: DateTime!
-}
-
-type SubscriptionPlan {
-  benefits: [BenefitInfo!]
-  category: [String!]
-  createdAt: DateTime
-  description: [LocalizedData!]
-  duration: Int
-  id: ID
-  isActive: Boolean
-  name: [LocalizedData!]
-  owner: String
-  price: Float
-  subscriptions: [Subscription!]
-  trialPeriod: Int
-
-  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
-  type: SubscriptionType
-  updatedAt: DateTime
-}
-
-input SubscriptionPlanInput {
-  benefits: [BenefitInput!]
-  category: [String!]
-  createdAt: DateTime
-  description: [LocalizedDataInput!]
-  duration: Int
-  id: ID
-  isActive: Boolean
-  name: [LocalizedDataInput!]
-  owner: String
-  price: Float
-  subscriptions: [SubscriptionInput!]
-  trialPeriod: Int
-
-  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
-  type: SubscriptionType
-  updatedAt: DateTime
-}
-
-enum SubscriptionType {
-  BUSINESS
-  PLATFORM
-  PRODUCT
 }
 
 input UpdateUserInput {
