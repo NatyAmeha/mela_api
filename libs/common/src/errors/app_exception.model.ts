@@ -1,7 +1,7 @@
 import { ErrorResponse } from "./error_response";
 
 export class AppException extends Error {
-    source?: String;
+    source?: string;
     message: string
     statusCode?: number
     errorType?: number;

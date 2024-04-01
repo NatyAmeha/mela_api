@@ -1,20 +1,31 @@
 import { ErrorResponse } from "./error_response";
 import { AppException } from "./app_exception.model";
+import { ValidationError } from "class-validator";
+import _, { get, mapValues, values } from "lodash";
 
 export class RequestValidationException implements AppException {
-    source?: String;
+    source?: string;
     message: string;
     statusCode?: number;
     errorType?: number;
     exception?: any;
     name: string;
+    validationErrors?: ValidationError[]
 
     constructor(data: Partial<RequestValidationException>) {
         Object.assign(this, data);
     }
 
     serializeError(): ErrorResponse {
-        return new ErrorResponse([<AppException>{ message: `${this.message}` }])
+        var validationErrorMsg = []
+        this.validationErrors?.forEach(e => {
+            var errors = e.children?.forEach(c => {
+                var errors = values(c.constraints)
+                validationErrorMsg.push(...errors)
+            })
+        })
+        var finalMessage = validationErrorMsg.length > 0 ? `${validationErrorMsg.join(", ")}` : this.message;
+        return new ErrorResponse([<AppException>{ message: finalMessage }])
     }
 
 

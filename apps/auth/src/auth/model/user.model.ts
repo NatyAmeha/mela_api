@@ -1,8 +1,9 @@
-import { BaseModel } from "@app/common/base.model";
+import { BaseModel } from "@app/common/model/base.model";
 import { Field, ID, Int, InterfaceType, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { SignupInput } from "../dto/signup.input";
 import { AccountStatus } from "./account_status.enum";
 import { JwtPayload } from "./jwt_payload.model";
+import { Access } from "../../authorization/model/access.model";
 
 @ObjectType()
 export class User extends BaseModel {
@@ -14,6 +15,7 @@ export class User extends BaseModel {
     phoneNumber?: string
     @Field()
     username?: string
+    isUsernamePlaceholder?: boolean
     @Field()
     password?: string
     @Field()
@@ -28,6 +30,16 @@ export class User extends BaseModel {
     accountStatus?: string
     @Field()
     isEmailPlaceholder?: boolean = false
+    @Field()
+    emailVerified?: boolean = false
+    @Field()
+    phoneVerified?: boolean = false
+    @Field(type => [Access])
+    accesses?: Access[]
+    @Field(type => [String])
+    accessIds?: string[]
+
+
 
     constructor(data: Partial<User>) {
         super();
@@ -52,7 +64,9 @@ export class User extends BaseModel {
     getTokenPayloadFromUser(): JwtPayload {
         return {
             sub: this.id,
-            username: this.email
+            username: this.email,
+            accesses: this.accesses,
+            email: this.email
         }
     }
 }

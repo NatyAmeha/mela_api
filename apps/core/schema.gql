@@ -1,0 +1,474 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Address {
+  address: String
+  city: String!
+  id: ID
+  location: String
+}
+
+input AddressInput {
+  address: String
+  city: String!
+  id: ID
+  location: String
+}
+
+type Branch {
+  address: Address!
+  business: Business
+  businessId: String!
+  createdAt: DateTime
+  email: String
+  id: ID
+  isActive: Boolean
+  name: [LocalizedData!]!
+  phoneNumber: String!
+  productIds: [String!]
+  products: [Product!]
+  staffs: [Staff!]
+  staffsId: [String!]
+  updatedAt: DateTime
+  website: String
+}
+
+input BranchInput {
+  address: AddressInput!
+  business: BusinessInput
+  businessId: String!
+  createdAt: DateTime
+  email: String
+  id: ID
+  isActive: Boolean
+  name: [LocalizedDataInput!]!
+  phoneNumber: String!
+  productIds: [String!] = []
+  products: [ProductInput!] = []
+  staffs: [StaffInput!]
+  staffsId: [String!] = []
+  updatedAt: DateTime
+  website: String
+}
+
+type BranchResponse {
+  branch: Branch
+  branches: [Branch!]
+  code: Int
+  message: String
+  products: [Product!]
+  success: Boolean!
+}
+
+type Business {
+  branchIds: [String!]
+  branches: [Branch!]!
+  categories: [String!]!
+  createdAt: DateTime
+  creator: String!
+  customers: [Customer!]
+  customersId: [String!]
+  description: [LocalizedData!]
+  email: String
+  gallery: Gallery!
+  group: [ProductGroup!]
+  id: ID
+  isActive: Boolean
+  mainAddress: Address!
+  name: [LocalizedData!]!
+  openingStatus: OpeningStatus!
+  phoneNumber: String!
+  productIds: [String!]
+  products: [Product!]!
+  staffs: [Staff!]
+  stage: BusinessRegistrationStage!
+  subscriptionIds: [String!]
+  trialPeriodUsedServiceIds: [String!]
+  updatedAt: DateTime
+  website: String
+}
+
+input BusinessInput {
+  branchIds: [String!] = []
+  branches: [BranchInput!]
+  categories: [String!]!
+  createdAt: DateTime
+  creator: String!
+  customers: [CustomerInput!]
+  customersId: [String!]
+  description: [LocalizedDataInput!]
+  email: String
+  gallery: GalleryInput!
+  group: [ProductGroupInput!]
+  id: ID
+  isActive: Boolean
+  mainAddress: AddressInput!
+  name: [LocalizedDataInput!]!
+  openingStatus: OpeningStatus!
+  phoneNumber: String!
+  productIds: [String!]
+  products: [ProductInput!]
+  staffs: [StaffInput!]
+  stage: BusinessRegistrationStage!
+  subscriptionIds: [String!]
+  trialPeriodUsedServiceIds: [String!]
+  updatedAt: DateTime
+  website: String
+}
+
+enum BusinessRegistrationStage {
+  BUSINESS_CREATED
+  COMPLETED
+  PAYMENT_STAGE
+  PRODUCT_SELECTED
+}
+
+type BusinessResponse {
+  branchAdded: [Branch!]
+  branchUpdated: [Branch!]
+  branches: [Branch!]
+  business: Business
+  code: Int
+  message: String
+  products: [Product!]
+  success: Boolean!
+}
+
+input CreateBranchInput {
+  address: AddressInput!
+  businessId: String!
+  email: String
+  name: [LocalizedDataInput!]!
+  phoneNumber: String!
+}
+
+input CreateBusinessInput {
+  categories: [String!]!
+  creator: String!
+  customers: [CustomerInput!]
+  customersId: [String!]
+  description: [LocalizedDataInput!]
+  email: String
+  gallery: GalleryInput!
+  group: [ProductGroupInput!]
+  mainAddress: AddressInput!
+  name: [LocalizedDataInput!]!
+  phoneNumber: String!
+  productIds: [String!]
+  products: [ProductInput!]
+  staffs: [StaffInput!]
+  subscriptionIds: [String!]
+  trialPeriodUsedServiceIds: [String!]
+  website: String
+}
+
+input CreateProductInput {
+  branchIds: [String!]
+  businessId: String!
+  callToAction: String
+  canOrderOnline: Boolean! = false
+  category: [String!]!
+  deliveryInfo: DeliveryInfoInput
+  description: [LocalizedDataInput!]!
+  gallery: GalleryInput!
+  loyaltyPoint: Int! = 0
+  name: [LocalizedDataInput!]!
+  price: Float!
+  productGroupId: [String!]
+  reviewTopics: [String!]
+  tag: [String!]
+  type: ProductType!
+  unit: String
+}
+
+type Customer {
+  branches: [Branch!]
+  branchesId: [String!]
+  id: ID
+  userId: String!
+}
+
+input CustomerInput {
+  branches: [BranchInput!] = []
+  branchesId: [String!] = []
+  id: ID
+  userId: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type DeliveryInfo {
+  createdAt: DateTime
+  deliveryAvailable: Boolean!
+
+  """Number of hour to finish the delivery"""
+  deliveryTime: Int
+  price: Float
+
+  """Number of hour to prepare the delivery."""
+  timeToPrepare: Int
+  updatedAt: DateTime
+}
+
+input DeliveryInfoInput {
+  createdAt: DateTime
+  deliveryAvailable: Boolean! = false
+
+  """Number of hour to finish the delivery"""
+  deliveryTime: Int
+  price: Float
+
+  """Number of hour to prepare the delivery."""
+  timeToPrepare: Int
+  updatedAt: DateTime
+}
+
+type Gallery {
+  """The cover image of the gallery"""
+  coverImage: String
+
+  """The images in the gallery"""
+  images: [GalleryData!]
+
+  """The logo image of the gallery"""
+  logoImage: String
+
+  """The videos in the gallery"""
+  videos: [GalleryData!]
+}
+
+type GalleryData {
+  featured: Boolean
+  url: ID!
+}
+
+input GalleryDataInput {
+  featured: Boolean
+  url: ID!
+}
+
+input GalleryInput {
+  """The cover image of the gallery"""
+  coverImage: String
+
+  """The images in the gallery"""
+  images: [GalleryDataInput!]
+
+  """The logo image of the gallery"""
+  logoImage: String
+
+  """The videos in the gallery"""
+  videos: [GalleryDataInput!]
+}
+
+enum LanguageKey {
+  AMHARIC
+  ENGLISH
+  OROMIC
+}
+
+type LocalizedData {
+  """the name of the language, ex. english, amharic"""
+  key: LanguageKey!
+  value: String!
+}
+
+input LocalizedDataInput {
+  """the name of the language, ex. english, amharic"""
+  key: LanguageKey!
+  value: String!
+}
+
+type Mutation {
+  addProductToBranch(branchIds: [String!]!, productIds: [String!]!): ProductResponse!
+  createBranch(branchInfo: CreateBranchInput!): BusinessResponse!
+  createBusiness(data: CreateBusinessInput!): BusinessResponse!
+  createProduct(product: CreateProductInput!): ProductResponse!
+  removeProductFromBranch(branchIds: [String!]!, productIds: [String!]!): ProductResponse!
+  updateBranchInfo(branchId: String!, branchInfo: UpdateBranchInput!): BusinessResponse!
+  updateBusinessInfo(businessId: String!, data: UpdateBusinessInput!): BusinessResponse!
+  updateProduct(product: UpdateProductInput!, productId: String!): ProductResponse!
+}
+
+enum OpeningStatus {
+  CLOSED
+  OPEN
+  TEMPORARILY_CLOSED
+}
+
+type Permission {
+  action: String!
+  effect: String!
+  groups: [PermissionGroup!]
+  id: ID
+  name: [LocalizedData!]!
+  resourceTarget: String!
+  resourceType: String!
+  userGenerated: Boolean
+}
+
+type PermissionGroup {
+  id: String!
+  key: String!
+  name: [LocalizedData!]!
+}
+
+type Product {
+  branchIds: [String!]
+  branches: [Branch!]
+  business: Business!
+  businessId: String!
+  callToAction: String
+  canOrderOnline: Boolean!
+  category: [String!]!
+  createdAt: DateTime
+  deliveryInfo: DeliveryInfo
+  description: [LocalizedData!]!
+  gallery: Gallery!
+  id: String
+  isActive: Boolean!
+  loyaltyPoint: Int!
+  name: [LocalizedData!]!
+  price: Float!
+  productGroupId: [String!]
+  reviewTopics: [String!]
+  tag: [String!]
+  type: ProductType!
+  unit: String
+  updatedAt: DateTime
+}
+
+type ProductGroup {
+  description: String
+  id: String!
+  images: [String!]
+  name: String!
+}
+
+input ProductGroupInput {
+  description: String
+  id: String!
+  images: [String!]
+  name: String!
+}
+
+input ProductInput {
+  branchIds: [String!]
+  branches: [BranchInput!]
+  business: BusinessInput!
+  businessId: String!
+  callToAction: String
+  canOrderOnline: Boolean! = false
+  category: [String!]!
+  createdAt: DateTime
+  deliveryInfo: DeliveryInfoInput
+  description: [LocalizedDataInput!]!
+  gallery: GalleryInput!
+  id: String
+  isActive: Boolean! = false
+  loyaltyPoint: Int! = 0
+  name: [LocalizedDataInput!]!
+  price: Float!
+  productGroupId: [String!]
+  reviewTopics: [String!]
+  tag: [String!]
+  type: ProductType!
+  unit: String
+  updatedAt: DateTime
+}
+
+type ProductResponse {
+  code: Int
+  message: String
+  product: Product
+  products: [Product!]
+  success: Boolean!
+}
+
+enum ProductType {
+  GIFT_CARD
+  MEMBERSHIP
+  PRODUCT
+  SERVICE
+}
+
+type Query {
+  getBranchDetails(branchId: String!): BranchResponse!
+  getBusinessDetails(id: String!): BusinessResponse!
+}
+
+type Staff {
+  branch: Branch
+  branchId: String
+  business: Business
+  businessId: String
+  createdAt: DateTime
+  id: ID
+  isActive: Boolean!
+  name: String!
+  pin: Int!
+  roles: [String!]!
+  updatedAt: DateTime
+}
+
+input StaffInput {
+  branch: BranchInput
+  branchId: String
+  business: BusinessInput
+  businessId: String
+  createdAt: DateTime
+  id: ID
+  isActive: Boolean!
+  name: String!
+  pin: Int!
+  roles: [String!]!
+  updatedAt: DateTime
+}
+
+input UpdateBranchInput {
+  address: AddressInput
+  email: String
+  name: [LocalizedDataInput!]
+  phoneNumber: String
+}
+
+input UpdateBusinessInput {
+  categories: [String!]
+  creator: String
+  customers: [CustomerInput!]
+  customersId: [String!]
+  description: [LocalizedDataInput!]
+  email: String
+  gallery: GalleryInput
+  group: [ProductGroupInput!]
+  mainAddress: AddressInput
+  name: [LocalizedDataInput!]
+  phoneNumber: String
+  productIds: [String!]
+  products: [ProductInput!]
+  staffs: [StaffInput!]
+  subscriptionIds: [String!]
+  trialPeriodUsedServiceIds: [String!]
+  website: String
+}
+
+input UpdateProductInput {
+  callToAction: String
+  canOrderOnline: Boolean = false
+  category: [String!]
+  deliveryInfo: DeliveryInfoInput
+  description: [LocalizedDataInput!]
+  gallery: GalleryInput
+  loyaltyPoint: Int = 0
+  name: [LocalizedDataInput!]
+  price: Float
+  productGroupId: [String!]
+  reviewTopics: [String!]
+  tag: [String!]
+  type: ProductType
+  unit: String
+}

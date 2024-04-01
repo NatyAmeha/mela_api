@@ -3,7 +3,7 @@ import { ErrorResponse } from "./error_response";
 import { AppException } from "./app_exception.model";
 
 export class SecurityException implements AppException {
-    source?: String;
+    source?: string;
     message: string;
     statusCode?: number;
     errorType?: number;

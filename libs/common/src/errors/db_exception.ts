@@ -7,7 +7,7 @@ export class DbException implements AppException {
     constructor(data: Partial<DbException>) {
         Object.assign(this, data);
     }
-    source?: String;
+    source?: string;
     message: string;
     statusCode?: number;
     errorType?: number;
