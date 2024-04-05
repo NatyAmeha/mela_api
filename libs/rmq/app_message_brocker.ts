@@ -13,7 +13,7 @@ export interface IAppMessageBrocker {
     sendMessageGetReply<T, K>(queue: string, message: T, messageId: string, replyQueue: string): Promise<K>
 
     // common message brocker methods
-    generateMessageInfoToCreateAccessPermission(access: Access[], replyQueue: string): IMessageBrocker<Access[]>
+    generateAccessMessageToSendToAuthService(access: Access[], replyQueue: string): IMessageBrocker<Access[]>
 }
 
 @Injectable()
@@ -62,7 +62,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         }
     }
 
-    generateMessageInfoToCreateAccessPermission(accesses: Access[], replyQueue: string): IMessageBrocker<Access[]> {
+    generateAccessMessageToSendToAuthService(accesses: Access[], replyQueue: string): IMessageBrocker<Access[]> {
         var messageInfo: IMessageBrocker<Access[]> = {
             data: accesses,
             coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
@@ -72,6 +72,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         }
         return messageInfo;
     }
+
 
 
 }

@@ -2,14 +2,17 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
 import { CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
-import { ExchangeNames, RoutingKey } from "libs/rmq/constants";
+import { AppMsgQueues, ExchangeNames, RoutingKey } from "libs/rmq/constants";
 import { IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { BusinessService } from "./business/usecase/business.service";
 import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
+import { Access } from "apps/auth/src/authorization/model/access.model";
+import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 
 
 export interface ICoreServiceMsgBrocker {
+    sendCreateAccessPermissionMessage(accessList: Access[]): Promise<IMessageBrockerResponse>
 }
 
 @Injectable()
@@ -17,6 +20,11 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
     static InjectName = "AUTH_MSG_BROCKER"
     constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService, private businessService: BusinessService) {
         super(rmqService, configService)
+    }
+    async sendCreateAccessPermissionMessage(accessList: Access[]): Promise<IMessageBrockerResponse> {
+        let messageInfo = this.generateAccessMessageToSendToAuthService(accessList, AppMsgQueues.CORE_SERVICE_REPLY_QUEUE);
+        let reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo);
+        return reply;
     }
 
     async onModuleInit() {

@@ -13,10 +13,11 @@ import { IMessageBrocker } from "libs/rmq/message_brocker";
 import { AuthServiceMessageType } from "libs/rmq/app_message_type";
 import { AppMsgQueues } from "libs/rmq/constants";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
+import { BaseModel } from "@app/common/model/base.model";
 
 @ObjectType()
 @InputType("BusinessInput")
-export class Business {
+export class Business extends BaseModel {
     @Field(types => ID)
     id?: string;
 
@@ -83,24 +84,9 @@ export class Business {
     trialPeriodUsedServiceIds?: string[];
 
     constructor(partial?: Partial<Business>) {
+        super();
         Object.assign(this, partial);
     }
-
-
-
-    generateDefaultBusinessOwnerPermission(): Access[] {
-        let manageBusinessPermission = new Access({
-            role: DefaultRoles.BUSINESS_OWNER,
-            owner: this.creator,
-            ownerType: AccessOwnerType.USER,
-            permissionType: PermissionType.PLATFORM_PERMISSION,
-            permissions: [
-                new Permission({ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourceTarget: this.id }),
-            ]
-        })
-        return [manageBusinessPermission]
-    }
-
 
 
 }

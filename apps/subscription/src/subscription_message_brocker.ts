@@ -33,7 +33,7 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
     }
 
     async createPlatformAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>> {
-        var messageInfo = this.generateMessageInfoToCreateAccessPermission(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
+        var messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
         var reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;
     }

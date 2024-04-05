@@ -10,9 +10,10 @@ import { Branch } from "../../branch/model/branch.model";
 import { CoreServiceMsgBrockerClient } from "../../core_service_msg_brocker";
 import { AppMsgQueues } from "libs/rmq/constants";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
-import { Access } from "apps/auth/src/authorization/model/access.model";
-import { UseGuards } from "@nestjs/common";
+import { Access, DefaultRoles } from "apps/auth/src/authorization/model/access.model";
+import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
+import { AccessFactory, IAccessFactory } from "../../access_factory.interface";
 
 
 @Resolver(of => Business)
@@ -21,7 +22,8 @@ export class BusinessResolver {
         private businessService: BusinessService,
         private productService: ProductService,
         private branchService: BranchService,
-        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient
+        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient,
+        @Inject(AccessFactory.injectName) private accessFactory: IAccessFactory
     ) {
     }
     @Query(returns => BusinessResponse)
@@ -40,10 +42,9 @@ export class BusinessResolver {
     @Mutation(returns => BusinessResponse)
     async createBusiness(@Args('data') data: CreateBusinessInput): Promise<BusinessResponse> {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());
-        var businessOwnerAccess = createdBusiness.generateDefaultBusinessOwnerPermission();
+        let businessOwnerAccess = await this.accessFactory.getBusinessAccessGenerator().createDefaultAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
 
-        var messageInfo = this.coreServiceMsgBrocker.generateMessageInfoToCreateAccessPermission(businessOwnerAccess, AppMsgQueues.CORE_SERVICE_REPLY_QUEUE);
-        var reply = await this.coreServiceMsgBrocker.sendMessageGetReply<Access[], IMessageBrockerResponse>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        let reply = await this.coreServiceMsgBrocker.sendCreateAccessPermissionMessage(businessOwnerAccess);
         console.log("reply", reply)
         return {
             success: true,
