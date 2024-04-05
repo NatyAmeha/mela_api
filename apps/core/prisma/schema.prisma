@@ -1,0 +1,163 @@
+generator client {
+    provider      = "prisma-client-js"
+    output        = "./generated/prisma_auth_client"
+    binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("CORE_SERVICE_DB_URL")
+}
+
+// customer.model.ts
+model Customer {
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId     String
+    branchesId String[] @default([]) @db.ObjectId
+    branches   Branch[] @relation(fields: [branchesId], references: [id])
+    businessId String   @db.ObjectId
+    business   Business @relation(fields: [businessId], references: [id])
+}
+
+// product.model.ts
+model Product {
+    id               String          @id @default(auto()) @map("_id") @db.ObjectId
+    name             LocalizedData[]
+    description      LocalizedData[]
+    tag              String[]
+    gallery          Gallery
+    loyaltyPoint     Int             @default(0)
+    business         Business        @relation(fields: [businessId], references: [id])
+    businessId       String          @db.ObjectId
+    productGroupId   String[]
+    isActive         Boolean         @default(false)
+    category         String[]
+    price            Float
+    type             String
+    createdAt        DateTime?       @default(now())
+    updatedAt        DateTime?       @updatedAt
+    canOrderOnline   Boolean         @default(false)
+    unit             String?
+    reviewTopics     String[]
+    callToAction     String?         @default("Order Now")
+    subscriptionPlan Json[]
+    deliveryInfo     DeliveryInfo?
+    branchIds        String[]        @default([]) @db.ObjectId
+    branches         Branch[]        @relation(fields: [branchIds], references: [id])
+}
+
+// business.model.ts
+model Business {
+    id                        String          @id @default(auto()) @map("_id") @db.ObjectId
+    name                      LocalizedData[]
+    description               LocalizedData[]
+    categories                String[]
+    isActive                  Boolean         @default(false)
+    gallery                   Gallery
+    createdAt                 DateTime?       @default(now())
+    updatedAt                 DateTime?       @updatedAt
+    creator                   String
+    customersId               String[]        @default([]) @db.ObjectId
+    customers                 Customer[]
+    productIds                String[]        @default([]) @db.ObjectId
+    products                  Product[]
+    openingStatus             String?
+    group                     ProductGroup[]
+    mainAddress               Address
+    phoneNumber               String
+    email                     String?
+    website                   String?
+    branchIds                 String[]        @default([]) @db.ObjectId
+    branches                  Branch[]
+    staffsId                  String[]        @default([]) @db.ObjectId
+    staffs                    Staff[]
+    stage                     String          @default("CREATED")
+    subscriptionIds           String[]        @default([]) @db.ObjectId
+    trialPeriodUsedServiceIds String[]        @default([]) @db.ObjectId
+}
+
+// branch.model.ts
+model Branch {
+    id          String          @id @default(auto()) @map("_id") @db.ObjectId
+    name        LocalizedData[]
+    address     Address
+    phoneNumber String
+    email       String?
+    website     String?
+    isActive    Boolean         @default(false)
+    businessId  String          @db.ObjectId
+    business    Business        @relation(fields: [businessId], references: [id])
+    customersId String[]        @default([]) @db.ObjectId
+    customers   Customer[]      @relation(fields: [customersId], references: [id])
+    productIds  String[]        @default([]) @db.ObjectId
+    products    Product[]       @relation(fields: [productIds], references: [id])
+    staffsId    String[]        @default([]) @db.ObjectId
+    staffs      Staff[]
+    createdAt   DateTime?       @default(now())
+    updatedAt   DateTime?       @updatedAt
+}
+
+// staff.model.ts
+model Staff {
+    id         String    @id @default(auto()) @map("_id") @db.ObjectId
+    name       String
+    pin        Int
+    roles      String[]
+    branchId   String?   @db.ObjectId
+    branch     Branch?   @relation(fields: [branchId], references: [id])
+    businessId String?   @db.ObjectId
+    business   Business? @relation(fields: [businessId], references: [id])
+    isActive   Boolean   @default(false)
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+}
+
+type LocalizedData {
+    key   String
+    value String
+}
+
+// gallery.type.ts
+type Gallery {
+    id         String        @default(uuid())
+    logoImage  String?
+    coverImage String?
+    images     GalleryData[]
+    videos     GalleryData[]
+    createdAt  DateTime      @default(now())
+    updatedAt  DateTime      @default(now())
+}
+
+type Address {
+    id        String   @default(uuid())
+    address   String?
+    city      String
+    location  String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+}
+
+type DeliveryInfo {
+    id                String   @default(uuid())
+    deliveryAvailable Boolean? @default(false)
+    price             Float?   @default(0)
+    deliveryTime      Int      @default(2)
+    timeToPrepare     Int?     @default(1)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @default(now())
+}
+
+type ProductGroup {
+    id          String   @default(uuid())
+    name        String
+    description String?
+    images      String[]
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @default(now())
+}
+
+type GalleryData {
+    id       String   @default(uuid())
+    url      String
+    featured Boolean?
+}

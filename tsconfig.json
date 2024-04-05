@@ -29,6 +29,18 @@
       ],
       "@app/logger/*": [
         "libs/logger/src/*"
+      ],
+      "@app/datasource": [
+        "libs/datasource/src"
+      ],
+      "@app/datasource/*": [
+        "libs/datasource/src/*"
+      ],
+      "@app/authorization": [
+        "libs/authorization/src"
+      ],
+      "@app/authorization/*": [
+        "libs/authorization/src/*"
       ]
     }
   }

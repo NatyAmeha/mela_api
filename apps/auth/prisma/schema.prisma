@@ -2,7 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  output        = "./generated/prisma_auth_client"
+  binaryTargets = ["native", "linux-musl"]
 }
 
 datasource db {
@@ -11,6 +13,58 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  userName String? @unique
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String?  @unique @default(uuid())
+  phoneNumber           String?  @unique @default(uuid())
+  username              String?  @unique @default(uuid())
+  firstName             String?
+  lastName              String?
+  password              String?
+  profileImageUrl       String?
+  refreshToken          String?
+  accountStatus         String?  @default("PENDING")
+  isEmailPlaceholder    Boolean? @default(false)
+  isUsernamePlaceholder Boolean? @default(false)
+  // accesses              Access[]
+  accessIds             String[]
+  emailVerified         Boolean? @default(false)
+  phoneVerified         Boolean? @default(false)
+  dateCreated           DateTime @default(now())
+  dateUpdated           DateTime @default(now())
+}
+
+model Access {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  name           LocalizedData[]
+  role           String?
+  resourceId     String?
+  permissions    Permission[]
+  owner          String
+  ownerType      String
+  businessId     String?         @db.ObjectId
+  dateCreated    DateTime        @default(now())
+  dateUpdated    DateTime        @default(now())
+  permissionType String
+}
+
+type Permission {
+  id             String            @default(uuid())
+  name           LocalizedData[]
+  action         String // CRUD, etc
+  resourceType   String // bueiness, subscription, product, service etc
+  resourceTarget String
+  effect         String // ALLOW, DENY,
+  userGenerated  Boolean           @default(false)
+  groups         PermissionGroup[]
+}
+
+type PermissionGroup {
+  id   String?         @default(uuid())
+  name LocalizedData[]
+  key  String?
+}
+
+type LocalizedData {
+  key   String
+  value String
 }

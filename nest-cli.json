@@ -6,7 +6,23 @@
   "root": "apps/mela_api",
   "compilerOptions": {
     "webpack": true,
-    "tsConfigPath": "apps/mela_api/tsconfig.app.json"
+    "tsConfigPath": "apps/mela_api/tsconfig.app.json",
+    "plugins": [
+      {
+        "name": "@nestjs/graphql",
+        "options": {
+          "typeFileNameSuffix": [
+            ".input.ts",
+            ".args.ts",
+            ".entity.ts",
+            ".model.ts",
+            ".response.ts",
+            ".resolver.ts"
+          ],
+          "introspectComments": true
+        }
+      }
+    ]
   },
   "projects": {
     "mela_api": {
@@ -43,6 +59,24 @@
       "sourceRoot": "libs/logger/src",
       "compilerOptions": {
         "tsConfigPath": "libs/logger/tsconfig.lib.json"
+      }
+    },
+    "subscription": {
+      "type": "application",
+      "root": "apps/subscription",
+      "entryFile": "main",
+      "sourceRoot": "apps/subscription/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/subscription/tsconfig.app.json"
+      }
+    },
+    "core": {
+      "type": "application",
+      "root": "apps/core",
+      "entryFile": "main",
+      "sourceRoot": "apps/core/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/core/tsconfig.app.json"
       }
     }
   }

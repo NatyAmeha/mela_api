@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+*.env.*
+*.gql
+
 # Logs
 logs
 *.log
@@ -10,6 +13,7 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+generated*
 
 # OS
 .DS_Store
@@ -37,6 +41,7 @@ lerna-debug.log*
 /.vscode
 /.env
 
-/prisma/generated/*
+
 /apps/*/prisma/generated/*
+
 

@@ -1,0 +1,93 @@
+generator client {
+    provider      = "prisma-client-js"
+    // output   = "./generated/prisma_subscription_client"
+    binaryTargets = ["native", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("SUBSCRIPTION_DB_URL")
+}
+
+model SubscriptionPlan {
+    id            String         @id @default(auto()) @map("_id") @db.ObjectId
+    name          NameType[]
+    description   NameType[]
+    price         Float
+    category      String[]
+    benefits      BenefitType[]
+    duration      Int
+    trialPeriod   Int?
+    type          String
+    subscriptions Subscription[]
+    owner         String?        @db.ObjectId
+    isActive      Boolean        @default(true)
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @default(now())
+}
+
+model Subscription {
+    id                  String                        @id @default(auto()) @map("_id") @db.ObjectId
+    startDate           DateTime?
+    endDate             DateTime?
+    subscriptioinPlanId String?                       @db.ObjectId
+    plan                SubscriptionPlan?             @relation(fields: [subscriptioinPlanId], references: [id])
+    isTrialPeriod       Boolean?
+    type                String
+    owner               String?                       @db.ObjectId
+    createdAt           DateTime                      @default(now())
+    updatedAt           DateTime                      @default(now())
+    platformServices    PlatfromServiceSubscription[]
+    isActive            Boolean                       @default(false)
+}
+
+model PlatformService {
+    id                      String                  @id @default(auto()) @map("_id") @db.ObjectId
+    name                    NameType[]
+    description             NameType[]
+    image                   String?
+    basePrice               Float
+    features                NameType[]
+    customizationCategories CustomizationCategory[]
+    relatedServicesId       String[]
+    trialPeriod             Int                     @default(30)
+    duration                Int                     @default(90)
+}
+
+type BenefitType {
+    tags         String[]
+    descriptions NameType[]
+}
+
+type PlatfromServiceSubscription {
+    serviceId               String    @db.ObjectId
+    serviceName             String?
+    startDate               DateTime?
+    endDate                 DateTime?
+    isTrialPeriod           Boolean?
+    createdAt               DateTime?
+    updatedAt               DateTime?
+    selectedCustomizationId String[]
+}
+
+type CustomizationCategory {
+    id                String          @default(uuid())
+    name              NameType[]
+    selectionType     String          @default("SINGLE_SELECTION")
+    description       NameType[]
+    selectionRequired Boolean         @default(true)
+    customizations    Customization[]
+}
+
+type Customization {
+    id              String     @default(uuid())
+    name            NameType[]
+    value           String
+    additionalPrice Float      @default(0)
+    default         Boolean    @default(false)
+}
+
+type NameType {
+    key   String
+    value String
+}

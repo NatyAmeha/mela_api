@@ -47,6 +47,7 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
             exchange: ExchangeNames.AUTH_DIRECT_EXCHANGE
         }
         var messageResult = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
+
         })
 
     }
