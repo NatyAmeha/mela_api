@@ -20,9 +20,12 @@ export class SubscriptionResponse extends BaseResponse {
     @Field(type => [String])
     platformServicehavingFreeTrial?: string[]
 
+    constructor(data: Partial<SubscriptionResponse>) {
+        super()
+        Object.assign(this, data)
+    }
 
     changeSubscritpioStatus(status: boolean) {
         this.createdSubscription.isActive = status;
     }
-
 }

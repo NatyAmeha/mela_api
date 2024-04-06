@@ -60,9 +60,10 @@ export class Subscription extends BaseModel {
         return result
     }
 
-    getPlatformServicesHavingFreeTier(): PlatfromServiceSubscription[] {
-        return this.platformServices.filter(service => service.isTrialPeriod)
+    getPlatformServicesHavingFreeTier(): string[] {
+        return this.platformServices.filter(service => service.isTrialPeriod).map(service => service.serviceId)
     }
+
 }
 
 @ObjectType()

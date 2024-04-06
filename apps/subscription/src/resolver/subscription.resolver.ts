@@ -19,7 +19,7 @@ import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
 import { Access } from 'apps/auth/src/authorization/model/access.model';
 import { SubscriptionHelper } from '../utils/subscription.helper';
 import { IAccessGenerator } from '@app/common/permission_helper/access_factory.interface';
-import { SubscriptionAccessGenerator } from '../utils/subscription_access_factory';
+import { SubscriptionAccessGenerator } from '../utils/subscription_access_generator';
 
 
 
@@ -30,6 +30,7 @@ export class SubscriptionResolver {
     private readonly subscriptionService: SubscriptionService,
     private subscriptionHelper: SubscriptionHelper,
     @Inject(SubscriptionAccessGenerator.injectName) private subscriptionGenerator: IAccessGenerator<Subscription>
+
   ) { }
 
   // @UseGuards(AuthzGuard)

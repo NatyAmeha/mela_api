@@ -8,12 +8,15 @@ import { SubscriptionResponse } from '../model/subscription.response';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { IPlatformServiceRepo, PlatformServiceRepository } from '../repo/platform_service.repo';
 import { SubscriptionHelper } from '../utils/subscription.helper';
+import { ISubscriptionOption, SubscriptionFactory } from '../utils/subscrption_factory';
+import { RequestValidationException } from '@app/common/errors/request_validation_exception';
 
 @Injectable()
 export class SubscriptionService {
   constructor(
     @Inject(SubscriptionRepository.InjectName) private subscriptionRepo: ISubscritpionRepository,
     @Inject(PlatformServiceRepository.InjectName) private platformServcieRepo: IPlatformServiceRepo,
+    private subscriptionFactory: SubscriptionFactory,
     private subscriptionHelper: SubscriptionHelper,
   ) {
 
@@ -57,37 +60,14 @@ export class SubscriptionService {
   }
 
   async subscribeToPlan(info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
-    let subscriptionInfo: Subscription
-    if (info.type == SubscriptionType.PLATFORM) {
-      subscriptionInfo = await this.subscriptionHelper.getSubscriptionInfoForPlatformService(info)
-      var serviceIdsHavingTrialPeriod = this.subscriptionHelper.getPlatformServicesHavingFreeTier(subscriptionInfo)
-      let result = await this.subscriptionRepo.createSubscription(subscriptionInfo)
-      return <SubscriptionResponse>{
-        success: true,
-        createdSubscription: result,
-        platformServicehavingFreeTrial: serviceIdsHavingTrialPeriod
-      }
+    let response = await this.subscriptionFactory.create(info.type).createSubscriptionInfo(info);
+    if (response.success) {
+      let saveSubscriptionResult = await this.subscriptionRepo.createSubscription(response.createdSubscription)
+      response.createdSubscription = saveSubscriptionResult;
+      return response
     }
     else {
-      let plan = await this.getSubscriptionPlan(info.subscriptioinPlanId);
-      subscriptionInfo = info.getSubscriptionInfoFromPlan(plan);
-      let activeSubscription = await this.subscriptionRepo.getActiveSubscriptions(plan.id, plan.owner);
-      if (activeSubscription.length > 0) {
-        return <SubscriptionResponse>{
-          success: false,
-          message: "You already have active subscription for this plan",
-          existingActiveSubscriptions: activeSubscription,
-          plan: plan
-        }
-      }
-      else {
-        let result = await this.subscriptionRepo.createSubscription(subscriptionInfo)
-        return <SubscriptionResponse>{
-          success: true,
-          createdSubscription: result,
-          plan: plan
-        }
-      }
+      throw new RequestValidationException({ message: response.message, statusCode: 400 })
     }
   }
 

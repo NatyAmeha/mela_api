@@ -49,7 +49,7 @@ export class SubscriptionHelper {
         })
     }
 
-    getPlatformServicesHavingFreeTier(subscriptionInfo: Subscription): string[] {
-        return subscriptionInfo.platformServices.filter(service => service.isTrialPeriod).map(service => service.serviceId);
-    }
+
+
+
 }
