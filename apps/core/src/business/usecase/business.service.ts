@@ -39,6 +39,13 @@ export class BusinessService {
         }
     }
 
+
+    async updateBusinessRegistrationStage(businessId: string, stage: BusinessRegistrationStage): Promise<BusinessResponse> {
+        var result = await this.businessRepo.updatedBusinessRegistrationStage(businessId, stage, { canActivate: stage == BusinessRegistrationStage.COMPLETED ? true : false });
+        return new BusinessResponse({ business: result, success: true });
+    }
+
+
     async getProductBusiness(productId: string): Promise<Business> {
         return await this.businessRepo.getProductBusiness(productId);
     }

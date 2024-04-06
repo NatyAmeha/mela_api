@@ -1,13 +1,13 @@
 import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
-import { Business } from "../model/business.model";
+import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
     updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business>;
-    updatedBusinessRegistrationStage(businessId: string, stage: string, { subscriptionId, trialPeriodUsedServiceIds }: { subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
+    updatedBusinessRegistrationStage(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }?: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
     getProductBusiness(productId: string): Promise<Business>;
     getBusinessInfoForStaff(staffId: string): Promise<Business>;
 
@@ -51,13 +51,30 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async updatedBusinessRegistrationStage(businessId: string, stage: string, { subscriptionId, trialPeriodUsedServiceIds }: { subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business> {
+    async updatedBusinessRegistrationStage(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business> {
         try {
             const businessInfo = await this.business.findUnique({ where: { id: businessId } });
             if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            var result = await this.business.update({ where: { id: businessId }, data: { stage: stage, trialPeriodUsedServiceIds: { push: trialPeriodUsedServiceIds }, subscriptionIds: [subscriptionId, ...businessInfo.subscriptionIds] } });
+            if (stage == BusinessRegistrationStage.PAYMENT_STAGE) {
+                throw new RequestValidationException({ message: "Business already in payment stage" });
+            }
+            let result
+            if (subscriptionId && trialPeriodUsedServiceIds) {
+                result = await this.business.update({
+                    where: { id: businessId }, data: {
+                        stage: stage,
+                        isActive: canActivate,
+                        trialPeriodUsedServiceIds: { push: trialPeriodUsedServiceIds },
+                        subscriptionIds: [subscriptionId, ...businessInfo.subscriptionIds]
+                    }
+                });
+            }
+            else {
+                result = await this.business.update({ where: { id: businessId }, data: { stage: stage, isActive: canActivate, } });
+            }
+
             if (!result.id) {
                 throw new RequestValidationException({ message: "Business not updated" });
             }

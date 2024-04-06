@@ -1,6 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { BusinessService } from "../usecase/business.service";
-import { Business } from "../model/business.model";
+import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
 import { BusinessResponse } from "../model/business.response";
 import { ProductService } from "../../product/product.service";
@@ -60,6 +60,13 @@ export class BusinessResolver {
             business: response
         }
     }
+
+    @Mutation(returns => BusinessResponse)
+    async changeBusinessRegistrationStatus(@Args('businessId') businessId: string, @Args('stage', { type: () => BusinessRegistrationStage }) stage: BusinessRegistrationStage): Promise<BusinessResponse> {
+        let result = await this.businessService.updateBusinessRegistrationStage(businessId, stage);
+        return result;
+    }
+
 
     // @Mutation(returns => BusinessResponse)
     // async updateBusinessRegistrationStage(@Args('businessId') businessId: string, @Args('stage') stage: string): Promise<BusinessResponse> {
