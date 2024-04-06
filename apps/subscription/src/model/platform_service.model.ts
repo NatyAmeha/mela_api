@@ -1,7 +1,10 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { LocalizedData } from "@app/common/model/localized_model";
+
+
 import { Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
+import { SubscriptionLocalizedField } from "../utils/subscriptioni_localized_field.model";
+
 
 @ObjectType()
 @InputType("PlatformServiceInput")
@@ -9,22 +12,22 @@ export class PlatformService extends BaseModel {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    name: LocalizedData[]
+    @Field(type => [SubscriptionLocalizedField])
+    @Type(() => SubscriptionLocalizedField)
+    name: SubscriptionLocalizedField[]
 
-    @Field(type => [LocalizedData], { nullable: true })
-    @Type(() => LocalizedData)
-    description?: LocalizedData[]
+    @Field(type => [SubscriptionLocalizedField], { nullable: true })
+    @Type(() => SubscriptionLocalizedField)
+    description?: SubscriptionLocalizedField[]
 
     @Field()
     image?: string
     @Field(type => Float)
     basePrice: number
 
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    features?: LocalizedData[]
+    @Field(type => [SubscriptionLocalizedField])
+    @Type(() => SubscriptionLocalizedField)
+    features?: SubscriptionLocalizedField[]
 
     @Field(type => [CustomizationCategory])
     @Type(() => CustomizationCategory)
@@ -70,9 +73,9 @@ export class Customization {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    name: LocalizedData[]
+    @Field(type => [SubscriptionLocalizedField])
+    @Type(() => SubscriptionLocalizedField)
+    name: SubscriptionLocalizedField[]
 
     @Field(type => String)
     value: string
@@ -89,13 +92,13 @@ export class CustomizationCategory {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    name: LocalizedData[]
+    @Field(type => [SubscriptionLocalizedField])
+    @Type(() => SubscriptionLocalizedField)
+    name: SubscriptionLocalizedField[]
 
-    @Field(type => [LocalizedData], { nullable: true })
-    @Type(() => LocalizedData)
-    description?: LocalizedData[]
+    @Field(type => [SubscriptionLocalizedField], { nullable: true })
+    @Type(() => SubscriptionLocalizedField)
+    description?: SubscriptionLocalizedField[]
 
     @Field(type => SelectionType)
     selectionType?: string

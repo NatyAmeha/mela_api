@@ -2,7 +2,6 @@ import { Field, InputType, OmitType, PickType } from "@nestjs/graphql";
 import { PlatfromServiceSubscription, Subscription } from "../model/subscription.model";
 import { SubscriptionPlan } from "../model/subscription_plan.model";
 import { gt, isArray, isEmpty, remove } from "lodash";
-import { Type } from "class-transformer";
 import { IsArray, IsNotEmpty, IsString, IsUUID, ValidateIf, isNotEmpty } from "class-validator";
 import { SubscriptionType } from "../model/subscription_type.enum";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";

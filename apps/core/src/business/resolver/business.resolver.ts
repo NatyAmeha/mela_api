@@ -26,6 +26,7 @@ export class BusinessResolver {
         @Inject(AccessFactory.injectName) private accessFactory: IAccessFactory
     ) {
     }
+    @UseGuards(AuthzGuard)
     @Query(returns => BusinessResponse)
     async getBusinessDetails(@Args("id") id: string): Promise<BusinessResponse> {
         let business = await this.businessService.getBusiness(id);
@@ -51,7 +52,7 @@ export class BusinessResolver {
             business: createdBusiness
         }
     }
-
+    @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
     async updateBusinessInfo(@Args('businessId') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
         var response = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());

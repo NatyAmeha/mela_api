@@ -1,18 +1,19 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
+import { Directive, Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
 import { CreateAccessInput } from "../dto/access.input";
 import { IsArray, IsOptional } from "class-validator";
 import { CreatePermissionInput, PermissionGroupInput } from "../dto/permission.input";
 import { PermissionType } from "./permission_type.enum";
 import { PERMISSIONACTION, PermissionEffectType, PermissionResourceType } from "@app/common/permission_helper/permission_constants";
-import { LocalizedData } from "@app/common/model/localized_model";
+import { AuthLocalizedField } from "./auth_localized_field.model";
+
 
 @ObjectType()
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
-    @Field(type => [LocalizedData])
-    name?: LocalizedData[]
+    @Field(type => [AuthLocalizedField])
+    name?: AuthLocalizedField[]
     @Field()
     resourceId?: string
     @Field()
@@ -45,11 +46,13 @@ export class Access extends BaseModel {
 }
 
 @ObjectType()
+@Directive('@extends')
+@Directive('@key(fields: "id name{key,value} action resourceType resourceTarget effect groups{id,key,name{key,value}} userGenerated")')
 export class Permission {
-    @Field(type => ID)
+    @Field(types => ID)
     id?: string
-    @Field(type => [LocalizedData])
-    name: LocalizedData[]
+    @Field(types => [AuthLocalizedField])
+    name: AuthLocalizedField[]
     @Field()
     action: string = PERMISSIONACTION.ANY.toString()
     @Field()
@@ -79,14 +82,14 @@ export class PermissionGroup {
     id: string
     @Field()
     key: string
-    @Field(type => [LocalizedData])
-    name: LocalizedData[]
+    @Field(type => [AuthLocalizedField])
+    name: AuthLocalizedField[]
     constructor(data: Partial<PermissionGroup>) {
         Object.assign(this, data)
     }
 
     static getPermissionGroupFromInput(inputs: PermissionGroupInput[]): PermissionGroup[] {
-        return inputs.map(grp => new PermissionGroup({ name: grp.name as LocalizedData[], key: grp.key }))
+        return inputs.map(grp => new PermissionGroup({ name: grp.name as AuthLocalizedField[], key: grp.key }))
     }
 }
 

@@ -2,9 +2,11 @@ import { Field, Float, InputType, Int, OmitType, PartialType, } from "@nestjs/gr
 import { BenefitInfo, SubscriptionPlan } from "../model/subscription_plan.model";
 import { SubscriptionType } from "../model/subscription_type.enum";
 import { isNil, omitBy } from "lodash";
-import { LocalizedData } from "@app/common/model/localized_model";
+
 import { IsNotEmpty, IsNumber, isNotEmpty } from "class-validator";
 import { Transform, Type } from "class-transformer";
+import { SubscriptionLocalizedField } from "../utils/subscriptioni_localized_field.model";
+
 
 @InputType()
 export class CreateSubscriptionPlanInput extends OmitType(SubscriptionPlan, ["id", "subscriptions", "createdAt", "updatedAt", "isActive"] as const, InputType) {
@@ -14,11 +16,15 @@ export class CreateSubscriptionPlanInput extends OmitType(SubscriptionPlan, ["id
     @IsNotEmpty()
     @Transform((param) => (param.value as string[]).map(e => e.toUpperCase()))
     category: string[];
-    @Type(() => LocalizedData)
-    description?: LocalizedData[];
+
+    // @Field(type => [SubscriptionLocalizedField])
+    @Type(() => SubscriptionLocalizedField)
+    description?: SubscriptionLocalizedField[];
+
+    // @Field(type => [SubscriptionLocalizedField])
     @IsNotEmpty()
-    @Type(() => LocalizedData)
-    name: LocalizedData[];
+    @Type(() => SubscriptionLocalizedField)
+    name: SubscriptionLocalizedField[];
     @IsNumber()
     price: number;
     @Field(type => SubscriptionType, { description: "PLATFORM, BUSEINSS, PRODUCT, SERVICE" })
