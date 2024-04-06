@@ -7,7 +7,7 @@ import { BranchModule } from '../branch/branch.module';
 import { CoreServiceMsgBrockerClient } from '../core_service_msg_brocker';
 import { RmqModule } from 'libs/rmq/rmq_module';
 import { BusinessAccessGenerator } from './business_access_factory';
-import { AccessFactory } from '../access_factory.interface';
+import { AccessFactory } from '../../../../libs/common/src/permission_helper/access_factory.interface';
 
 
 @Module({

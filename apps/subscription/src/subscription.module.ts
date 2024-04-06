@@ -14,6 +14,7 @@ import { PlatformServiceRepository } from './repo/platform_service.repo';
 import { PlatformServiceResolver } from './resolver/platform_service.resolver';
 import { PlatfromUsecase } from './usecase/platform.usecase';
 import { SubscriptionHelper } from './utils/subscription.helper';
+import { SubscriptionAccessGenerator } from './utils/subscription_access_factory';
 
 @Module({
   imports: [
@@ -62,6 +63,8 @@ import { SubscriptionHelper } from './utils/subscription.helper';
     { provide: SubscriptionRepository.InjectName, useClass: SubscriptionRepository },
     { provide: SubscriptionMessageBrocker.InjectName, useClass: SubscriptionMessageBrocker },
     { provide: PlatformServiceRepository.InjectName, useClass: PlatformServiceRepository },
+    { provide: SubscriptionAccessGenerator.injectName, useClass: SubscriptionAccessGenerator },
+
     SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase, SubscriptionHelper],
 })
 export class SubscriptionModule { }

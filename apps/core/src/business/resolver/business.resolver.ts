@@ -8,12 +8,12 @@ import { BranchService } from "../../branch/usecase/branch.service";
 import { Product } from "../../product/model/product.model";
 import { Branch } from "../../branch/model/branch.model";
 import { CoreServiceMsgBrockerClient } from "../../core_service_msg_brocker";
-import { AppMsgQueues } from "libs/rmq/constants";
+import { AppMsgQueues, ExchangeTopics } from "libs/rmq/constants";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Access, DefaultRoles } from "apps/auth/src/authorization/model/access.model";
 import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
-import { AccessFactory, IAccessFactory } from "../../access_factory.interface";
+import { AccessFactory, IAccessFactory } from "../../../../../libs/common/src/permission_helper/access_factory.interface";
 
 
 @Resolver(of => Business)

@@ -83,7 +83,7 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
                 }
             })
             var planToDelete = await tx.subscriptionPlan.delete({ where: { id: planId } })
-            var result: SubscriptionResponse = {
+            var result = <SubscriptionResponse>{
                 success: true,
                 plan: new SubscriptionPlan({ ...planToDelete }),
                 deletedSubscritpions: subscriptionsToDelete

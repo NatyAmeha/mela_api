@@ -10,6 +10,7 @@ import { IPlatformServiceRepo } from "../repo/platform_service.repo";
 
 @InputType()
 export class CreateSubscriptionInput extends PickType(Subscription, ["owner", "type", "subscriptioinPlanId"] as const, InputType) {
+
     @Field(type => [CreatePlatformServiceSubscriptionInput])
     @ValidateIf((obj: CreateSubscriptionInput, value) => obj.type != SubscriptionType.PLATFORM)
     @IsNotEmpty()

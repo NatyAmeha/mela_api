@@ -15,21 +15,6 @@ export class SubscriptionHelper {
     constructor(@Inject(PlatformServiceRepository.InjectName) private platformServiceRepo: IPlatformServiceRepo) {
 
     }
-    generatePlatformAccessPermissionForBusiness(subscriptionInfo: Subscription): Access[] {
-        let accesses: Access[] = []
-        subscriptionInfo.platformServices?.forEach(subscriptionService => {
-            var permissions: Permission[] = []
-            let serviceLevelPermission = new Permission({ resourceType: subscriptionService.serviceName, resourceTarget: subscriptionService.serviceId, })
-            permissions.push(serviceLevelPermission)
-            let customizationPermissions = subscriptionService.selectedCustomizationId.map(id => {
-                return new Permission({ resourceType: PermissionType.PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION, resourceTarget: id })
-            });
-            permissions.push(...customizationPermissions)
-            var accessInfo = new Access({ name: [{ key: LanguageKey.ENGLISH, value: subscriptionService.serviceName }], permissionType: PermissionType.PLATFORM_PERMISSION, owner: subscriptionInfo.owner, ownerType: AccessOwnerType.BUSINESS, permissions: permissions })
-            accesses.push(accessInfo)
-        })
-        return accesses;
-    }
 
     async getSubscriptionInfoForPlatformService(subscriptionInput: CreateSubscriptionInput) {
         if (!subscriptionInput.selectedPlatformServices || isEmpty(subscriptionInput.selectedPlatformServices)) {

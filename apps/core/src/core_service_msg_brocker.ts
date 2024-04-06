@@ -2,8 +2,8 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
 import { CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
-import { AppMsgQueues, ExchangeNames, RoutingKey } from "libs/rmq/constants";
-import { IMessageBrocker } from "libs/rmq/message_brocker";
+import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
+import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { BusinessService } from "./business/usecase/business.service";
 import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
@@ -18,6 +18,7 @@ export interface ICoreServiceMsgBrocker {
 @Injectable()
 export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements OnModuleInit, OnModuleDestroy, ICoreServiceMsgBrocker {
     static InjectName = "AUTH_MSG_BROCKER"
+    processedMessageIds = new Set<string>();
     constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService, private businessService: BusinessService) {
         super(rmqService, configService)
     }
@@ -49,16 +50,26 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
 
     async listenCoreServiceEvent() {
         var messageInfo: IMessageBrocker<any> = {
-            routingKey: RoutingKey.CORE_SERVICE_ROUTING_KEY,
-            exchange: ExchangeNames.CORE_DIRECT_EXCHANGE
+            routingKey: ExchangeTopics.EVENT_TOPIC,
+            exchange: ExchangeTopics.EVENT_TOPIC,
+            exchangeType: ExchangeType.TOPIC,
         }
         this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
-            let messageInfo = JSON.parse(messageResult.content.toString())
-            this.channel.ack(messageInfo)
-            if (messageResult.properties.correlationId == SubscriptionServiceMessageType.SUBSCRIPTION_CREATED_EVENT) {
-                console.log("Subscription message received", messageResult.content.toString());
-                let subscriptionResponse = messageInfo as SubscriptionResponse
-                await this.businessService.updateBusienssRegistrationToPaymentStage(subscriptionResponse);
+            console.log("event received in Core service", messageResult.properties.messageId);
+            let canHandleMsg = true;
+            var messageId = messageResult.properties.messageId;
+            if (!this.processedMessageIds.has(messageId)) {
+                console.log("message not processed yet", messageId)
+                this.processedMessageIds.add(messageId);
+                let messageInfo = JSON.parse(messageResult.content.toString())
+                if (messageResult.properties.correlationId == SubscriptionServiceMessageType.PLATFORM_SUBSCRIPTION_CREATED_EVENT) {
+                    let subscriptionResponse = messageInfo as SubscriptionResponse
+                    var businesResult = await this.businessService.handleUpdateBusienssRegistrationToPaymentStageEvent(subscriptionResponse);
+                    canHandleMsg = businesResult.success;
+                }
+            }
+            if (canHandleMsg) {
+                this.channel.ack(messageResult)
             }
         })
     }

@@ -15,4 +15,9 @@ export class BusinessResponse extends BaseResponse {
     branchAdded?: Branch[]
     branchUpdated?: Branch[]
 
+    constructor(data: Partial<BusinessResponse>) {
+        super()
+        Object.assign(this, data)
+    }
+
 }

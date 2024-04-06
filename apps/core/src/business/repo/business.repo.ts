@@ -7,7 +7,7 @@ export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
     updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business>;
-
+    updatedBusinessRegistrationStage(businessId: string, stage: string, { subscriptionId, trialPeriodUsedServiceIds }: { subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
     getProductBusiness(productId: string): Promise<Business>;
     getBusinessInfoForStaff(staffId: string): Promise<Business>;
 
@@ -35,15 +35,36 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     async updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business> {
         try {
             const businessInfo = await this.business.findUnique({ where: { id: businessId } });
-            if (!businessInfo) {
+            if (businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
             const { customers, branches, products, staffs, ...businessData } = updatedBusinessData;
             var result = await this.business.update({ where: { id: businessId }, data: { ...businessData } });
+            if (!result.id) {
+                throw new RequestValidationException({ message: "Business not updated" });
+            }
             return new Business({ ...result });
         }
         catch (error) {
+            console.log("error", error)
             throw new PrismaException({ source: "Update business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async updatedBusinessRegistrationStage(businessId: string, stage: string, { subscriptionId, trialPeriodUsedServiceIds }: { subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business> {
+        try {
+            const businessInfo = await this.business.findUnique({ where: { id: businessId } });
+            if (!businessInfo) {
+                throw new RequestValidationException({ message: "Business not found" });
+            }
+            var result = await this.business.update({ where: { id: businessId }, data: { stage: stage, trialPeriodUsedServiceIds: { push: trialPeriodUsedServiceIds }, subscriptionIds: [subscriptionId, ...businessInfo.subscriptionIds] } });
+            if (!result.id) {
+                throw new RequestValidationException({ message: "Business not updated" });
+            }
+            return new Business({ ...result });
+        } catch (error) {
+            console.log("error", error)
+            throw new PrismaException({ source: "Update business registration stage", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

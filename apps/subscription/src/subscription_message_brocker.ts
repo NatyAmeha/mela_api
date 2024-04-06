@@ -3,8 +3,8 @@ import { ConfigService } from "@nestjs/config";
 import { Access } from "apps/auth/src/authorization/model/access.model";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
 import { SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
-import { AppMsgQueues, ExchangeNames, RoutingKey } from "libs/rmq/constants";
-import { IMessageBrocker } from "libs/rmq/message_brocker";
+import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
+import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { SubscriptionResponse } from "./model/subscription.response";
@@ -32,19 +32,14 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
         }
     }
 
-    async createPlatformAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>> {
+    async sendPlatformAccessPermissionMessagetoAuthService(access: Access[]): Promise<IMessageBrockerResponse<any>> {
         var messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
         var reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;
     }
 
-    async sendSubscriptionCreatedEventToCoreService(subscriptionResponse: SubscriptionResponse): Promise<boolean> {
-        var messageInfo: IMessageBrocker<SubscriptionResponse> = {
-            data: subscriptionResponse,
-            coorelationId: SubscriptionServiceMessageType.SUBSCRIPTION_CREATED_EVENT,
-            persistMessage: true,
-        }
-        var sendResult = await this.sendMessage(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo, "newId")
+    async sendSubscriptionCreatedEventToServices(subscriptionResponse: SubscriptionResponse,): Promise<boolean> {
+        var sendResult = await this.publishMessageByTopic(subscriptionResponse, ExchangeTopics.EVENT_TOPIC, SubscriptionServiceMessageType.PLATFORM_SUBSCRIPTION_CREATED_EVENT, { messageId: subscriptionResponse.createdSubscription.id })
         return sendResult;
     }
 
@@ -53,14 +48,15 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
     }
 
     async listenSubscriptionServiceEvent() {
+
         var messageInfo: IMessageBrocker<any> = {
-            routingKey: RoutingKey.SUBSCRIPTION_SERVICE_ROUTING_KEY,
-            exchange: ExchangeNames.SUBSCRIPTION_DIRECT_EXCHANGE
+            routingKey: "*",
+            exchange: ExchangeTopics.EVENT_TOPIC,
+            exchangeType: ExchangeType.TOPIC,
         }
         var messageResult = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
-
+            console.log("event received in subscription service", messageResult.content.toString());
         })
-
     }
 
     onModuleDestroy() {

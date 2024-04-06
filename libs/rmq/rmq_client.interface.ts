@@ -5,9 +5,11 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { ConsumeMessage } from "amqplib";
 import { Injectable } from "@nestjs/common";
 import { Observable, from, switchMap } from "rxjs";
+import { ExchangeNames, ExchangeTopics } from "./constants";
 
 export interface IRMQService {
-    connect(url: string[], queues: string[]): Promise<ChannelWrapper>
+    connect(url: string[]): Promise<IAmqpConnectionManager>
+    createChannel(queues: string[]): Promise<ChannelWrapper>
     sendMessage<T>(channel: ChannelWrapper, queue: string, messageInfo: IMessageBrocker<T>): Promise<boolean>
     sendMessageAndWaitResponse<T>(channel: ChannelWrapper, queue: string, replyToQueue: string, messageInfo: IMessageBrocker<T>): Promise<boolean>
     listenMessage(channel: ChannelWrapper, queue: string, messageType?: string): Promise<ConsumeMessage>
@@ -18,20 +20,31 @@ export interface IRMQService {
 
 @Injectable()
 export class RMQService implements IRMQService {
+    connection: IAmqpConnectionManager;
     static InjectName = "RMQ_SERVICE"
-    async connect(url: string[], queues: string[]): Promise<ChannelWrapper> {
+    async connect(url: string[]): Promise<IAmqpConnectionManager> {
         try {
-            const connection = amqp.connect(url);
-            const channel = await connection.createChannel({
-                setup: (channel: Channel) => {
+            this.connection = amqp.connect(url);
+            return this.connection;
+        } catch (ex) {
+            console.log("RMQ connection exceptioin", ex)
+        }
+    }
+    async createChannel(queues: string[]): Promise<ChannelWrapper> {
+        try {
+            const channel = await this.connection.createChannel({
+                setup: async (channel: Channel) => {
                     queues.forEach(async queue => {
                         await channel.assertQueue(queue, { durable: true });
                     });
+                    await channel.assertExchange(ExchangeTopics.EVENT_TOPIC, ExchangeType.TOPIC, { durable: true });
+                    await channel.bindQueue(queues[0], ExchangeTopics.EVENT_TOPIC, "event.#");
+
                 },
             });
             return channel;
         } catch (ex) {
-            console.log("RMQ connection exceptioin", ex)
+            console.log("create channel exception", ex)
         }
     }
     async sendMessage<T>(channel: ChannelWrapper, queue: string, messageInfo: IMessageBrocker<T>): Promise<boolean> {
@@ -61,9 +74,10 @@ export class RMQService implements IRMQService {
     async listenMessage(channel: ChannelWrapper, queue: string, messageType?: string): Promise<ConsumeMessage> {
         return new Promise(async (resolve: (value: ConsumeMessage) => void, reject: (error: Error) => void) => {
             channel.consume(queue, (response) => {
-                console.log("listen request reply", queue, messageType, response.content.BYTES_PER_ELEMENT.toString(), response.properties)
+                console.log("listen request reply", queue, messageType, response.content.toString(), response.properties)
                 if (messageType != undefined) {
                     if (response.properties.correlationId == messageType) {
+                        // channel.ack(response)
                         resolve(response);
                     }
                 }
@@ -92,32 +106,35 @@ export class RMQService implements IRMQService {
     }
     async publishMessage<T>(channel: ChannelWrapper, messageInfo: IMessageBrocker<T>): Promise<boolean> {
         try {
-            await channel.assertExchange(messageInfo.exchange, messageInfo.exchangeType, { durable: false });
-            var result = await channel.publish(messageInfo.exchange, messageInfo.routingKey, Buffer.from(JSON.stringify(messageInfo.data)))
-            setTimeout(() => {
-                channel.close();
-            }, 500);
+            await channel.assertExchange(messageInfo.exchange, messageInfo.exchangeType, { durable: true });
+            var result = await channel.publish(messageInfo.exchange, messageInfo.routingKey, Buffer.from(JSON.stringify(messageInfo.data)), {
+                messageId: messageInfo.messageId,
+                correlationId: messageInfo.coorelationId
+            });
             return result;
 
         } catch (error) {
-
+            console.log("publish message error", error)
         }
     }
+
+
     subscribeToMessage(channel: ChannelWrapper, messageInfo: Partial<IMessageBrocker<any>>, fromQueue: string): Observable<ConsumeMessage> {
         try {
+            console.log("subscribe message", messageInfo.exchange, messageInfo.exchangeType)
+
             return from(
                 channel.assertExchange(messageInfo.exchange, messageInfo.exchangeType, { durable: false })
             ).pipe(
                 switchMap(() => channel.assertQueue(fromQueue, { exclusive: true })),
                 switchMap(queue => {
-                    channel.bindQueue(queue.queue, messageInfo.exchange, messageInfo.routingKey);
+                    // channel.bindQueue(queue.queue, messageInfo.exchange, "*");
                     return new Observable<ConsumeMessage>(observer => {
                         channel.consume(
                             queue.queue,
                             (msg) => {
                                 observer.next(msg)
                             },
-                            { noAck: true },
                         );
                     });
                 })

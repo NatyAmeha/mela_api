@@ -79,16 +79,14 @@ export class Business extends BaseModel {
     @Field()
     staffs?: Staff[]
     @Field(types => [String])
-    subscriptionIds?: string[];
+    subscriptionIds?: string[]
     @Field(types => [String])
-    trialPeriodUsedServiceIds?: string[];
+    trialPeriodUsedServiceIds?: string[] = [];
 
     constructor(partial?: Partial<Business>) {
         super();
         Object.assign(this, partial);
     }
-
-
 }
 
 enum OpeningStatus {

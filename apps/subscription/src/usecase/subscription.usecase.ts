@@ -36,11 +36,11 @@ export class SubscriptionService {
     let planInfo = await this.subscriptionRepo.getSubscriptionPlan(planId);
     let updateResult = await this.subscriptionRepo.updateSubscriptionPlanInfo(planInfo.id, { ...updatedPlanInfo })
     if (!updateResult) {
-      return {
+      return <SubscriptionResponse>{
         success: false
       }
     }
-    return {
+    return <SubscriptionResponse>{
       success: true,
       plan: planInfo,
     }
@@ -62,7 +62,7 @@ export class SubscriptionService {
       subscriptionInfo = await this.subscriptionHelper.getSubscriptionInfoForPlatformService(info)
       var serviceIdsHavingTrialPeriod = this.subscriptionHelper.getPlatformServicesHavingFreeTier(subscriptionInfo)
       let result = await this.subscriptionRepo.createSubscription(subscriptionInfo)
-      return {
+      return <SubscriptionResponse>{
         success: true,
         createdSubscription: result,
         platformServicehavingFreeTrial: serviceIdsHavingTrialPeriod
@@ -73,7 +73,7 @@ export class SubscriptionService {
       subscriptionInfo = info.getSubscriptionInfoFromPlan(plan);
       let activeSubscription = await this.subscriptionRepo.getActiveSubscriptions(plan.id, plan.owner);
       if (activeSubscription.length > 0) {
-        return {
+        return <SubscriptionResponse>{
           success: false,
           message: "You already have active subscription for this plan",
           existingActiveSubscriptions: activeSubscription,
@@ -82,7 +82,7 @@ export class SubscriptionService {
       }
       else {
         let result = await this.subscriptionRepo.createSubscription(subscriptionInfo)
-        return {
+        return <SubscriptionResponse>{
           success: true,
           createdSubscription: result,
           plan: plan

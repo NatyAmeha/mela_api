@@ -3,10 +3,11 @@ import { BusinessRepository, IBusinessRepository } from "../repo/business.repo";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { BusinessResponse } from "../model/business.response";
 
 @Injectable()
 export class BusinessService {
-
+    // try-catch block  must be used on the methods that handles message broker message/event
     constructor(@Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository) {
 
     }
@@ -22,18 +23,20 @@ export class BusinessService {
         return await this.businessRepo.updateBusiness(businessId, data);
     }
 
-    async updateBusienssRegistrationToPaymentStage(subscriptionInfo: SubscriptionResponse,) {
-        let businessId = subscriptionInfo.createdSubscription.owner
-        var businessInfo = await this.businessRepo.getBusiness(businessId);
-        if (!businessInfo) {
-            throw new RequestValidationException({ message: "Business not found" });
+    async handleUpdateBusienssRegistrationToPaymentStageEvent(subscriptionInfo: SubscriptionResponse,): Promise<BusinessResponse> {
+        try {
+            let businessId = subscriptionInfo.createdSubscription.owner
+            var updatedBusinessInfo = await this.businessRepo.updatedBusinessRegistrationStage(
+                businessId, BusinessRegistrationStage.PAYMENT_STAGE,
+                {
+                    subscriptionId: subscriptionInfo.createdSubscription.id,
+                    trialPeriodUsedServiceIds: subscriptionInfo.platformServicehavingFreeTrial
+                }
+            );
+            return new BusinessResponse({ business: updatedBusinessInfo, success: true });
+        } catch (error) {
+            return new BusinessResponse({ success: false, message: "Unable to update business registration stage" });
         }
-        await this.businessRepo.updateBusiness(businessId, {
-            stage: BusinessRegistrationStage.PAYMENT_STAGE,
-            trialPeriodUsedServiceIds: [...businessInfo.trialPeriodUsedServiceIds, ...subscriptionInfo.platformServicehavingFreeTrial],
-            subscriptionIds: [...subscriptionInfo.createdSubscription.id, ...businessInfo.subscriptionIds]
-        });
-        return true;
     }
 
     async getProductBusiness(productId: string): Promise<Business> {

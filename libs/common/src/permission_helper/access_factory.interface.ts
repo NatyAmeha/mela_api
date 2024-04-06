@@ -1,10 +1,11 @@
 import { Access } from "apps/auth/src/authorization/model/access.model";
-import { Business } from "./business/model/business.model";
-import { BusinessAccessGenerator } from "./business/business_access_factory";
+import { Business } from "../../../../apps/core/src/business/model/business.model";
+import { BusinessAccessGenerator } from "../../../../apps/core/src/business/business_access_factory";
 import { BaseModel } from "@app/common/model/base.model";
 
 export interface IAccessFactory {
     getBusinessAccessGenerator(): IAccessGenerator<Business>
+
 
 }
 

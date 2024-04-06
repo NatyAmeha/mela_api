@@ -4,6 +4,7 @@ export interface IMessageBrocker<T> {
     exchangeType?: ExchangeType
     routingKey?: string
     coorelationId?: string,
+    messageId?: string
     replyCoorelationId?: string
     replyQueue?: string,  // to listen and filter message reply by id
     expirationInSecond?: number,
@@ -11,5 +12,5 @@ export interface IMessageBrocker<T> {
 }
 
 export enum ExchangeType {
-    DIRECT = "direct", FANOUT = "fanout", PUB_SUB = "pubsub"
+    DIRECT = "direct", FANOUT = "fanout", TOPIC = "topic"
 }

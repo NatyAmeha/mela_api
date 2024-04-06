@@ -4,8 +4,8 @@ import { ChannelWrapper } from "amqp-connection-manager";
 import { ConsumeMessage } from "amqplib";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
 import { AuthServiceMessageType } from "libs/rmq/app_message_type";
-import { ExchangeNames, RoutingKey } from "libs/rmq/constants";
-import { IMessageBrocker } from "libs/rmq/message_brocker";
+import { ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
+import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { AuthorizationService } from "./authorization";
 import { Subscription } from "apps/subscription/src/model/subscription.model";
@@ -36,20 +36,23 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
     }
 
     async listenAuthServiceRequestAndReply() {
+
         this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (messageResult) => {
             this.respondToMessage(messageResult)
         })
     }
 
     async listenAuthEvents() {
+
         var messageInfo: IMessageBrocker<any> = {
-            routingKey: RoutingKey.AUTH_SERVICE_ROUTING_KEY,
-            exchange: ExchangeNames.AUTH_DIRECT_EXCHANGE
+            routingKey: ExchangeTopics.EVENT_TOPIC,
+            exchange: ExchangeTopics.EVENT_TOPIC,
+            exchangeType: ExchangeType.TOPIC,
         }
         var messageResult = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
-
+            console.log("event received in Auth service", messageResult.properties.messageId);
+            console.log("event received in Auth service", messageResult.content.toString());
         })
-
     }
 
     async respondToMessage(messageInfo: ConsumeMessage) {
@@ -66,6 +69,7 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
 
         }
         finally {
+            // if (replyResponse.success) { }
             this.channel.ack(messageInfo);
             var sendResult = await this.sendMessage(messageInfo.properties.replyTo, replyResponse, replyCoorelationId)
         }
