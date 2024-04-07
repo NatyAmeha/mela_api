@@ -7,8 +7,12 @@ export const Configuration = () => ({
         accessTokenExpiresIn: "1d",
         refreshTokenExpiresIn: "7d",
         userAccessEndpointFromAuthService: (userId: string) => {
-            return `http://localhost:3002/access?user=${userId}`;
+            return `http://localhost:3002/access/user?id=${userId}`;
+        },
+        businessAccessFetchEndpoint: (businessId: string) => {
+            return `http://localhost:3002/access/business?id=${businessId}`;
         }
     },
+
 });
 

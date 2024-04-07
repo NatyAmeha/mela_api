@@ -1,4 +1,4 @@
-import { Access, Permission } from "../model/access.model";
+import { Access, AccessOwnerType, Permission } from "../model/access.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { ErrorTypes } from "@app/common/errors/error_types";
 import { find, includes, map, pull, remove } from "lodash";
@@ -11,6 +11,8 @@ export interface IAuthorizationRepo {
     removeAccess(accessId: string): Promise<AccessResponse>
     addPermissionToAccess(accessId: string, permissions: Permission[]): Promise<Permission[]>
     removePermissionsFromAccess(accessId: string, permissionsId: string[]): Promise<boolean>
+    getUserAllAccesses(userId: string): Promise<Access[]>
+    getBusinessAllAccesses(businessId: string): Promise<Access[]>
 }
 
 export class AuthorizationRepo extends PrismaClient implements IAuthorizationRepo {
@@ -85,6 +87,24 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
         })
         var ress = result.permissions as Permission[]
         return true;
+    }
+
+    async getUserAllAccesses(userId: string): Promise<Access[]> {
+        try {
+            let accesses = await this.access.findMany({ where: { ownerType: AccessOwnerType.USER.toString(), owner: userId } })
+            return accesses.map(access => new Access({ ...access }))
+        } catch (ex) {
+            throw new PrismaException({ source: "Get User All Accesses", statusCode: 400, code: ex.code, meta: { message: ex.meta.message ?? ex.meta.cause } })
+        }
+    }
+
+    async getBusinessAllAccesses(businessId: string): Promise<Access[]> {
+        try {
+            let accesses = await this.access.findMany({ where: { ownerType: AccessOwnerType.BUSINESS.toString(), owner: businessId }, include: { permissions: true } })
+            return accesses.map(access => new Access({ ...access }))
+        } catch (error) {
+            throw new PrismaException({ source: "Get Business All Accesses", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
+        }
     }
 
 

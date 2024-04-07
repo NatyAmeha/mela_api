@@ -10,10 +10,13 @@ import { Branch } from "../../branch/model/branch.model";
 import { CoreServiceMsgBrockerClient } from "../../core_service_msg_brocker";
 import { AppMsgQueues, ExchangeTopics } from "libs/rmq/constants";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
-import { Access, DefaultRoles } from "apps/auth/src/authorization/model/access.model";
+import { Access, AppResources, DefaultRoles } from "apps/auth/src/authorization/model/access.model";
 import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { AccessFactory, IAccessFactory } from "../../../../../libs/common/src/permission_helper/access_factory.interface";
+import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
+import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
+import { PERMISSIONACTION, PermissionEffectType } from "@app/common/permission_helper/permission_constants";
 
 
 @Resolver(of => Business)
@@ -39,7 +42,9 @@ export class BusinessResolver {
             branches: businessBranches
         }
     }
-    // @UseGuards(AuthzGuard)
+
+
+    @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
     async createBusiness(@Args('data') data: CreateBusinessInput): Promise<BusinessResponse> {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());

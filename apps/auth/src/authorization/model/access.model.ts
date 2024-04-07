@@ -1,5 +1,5 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { Directive, Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
+import { Directive, Field, ID, InputType, ObjectType, PartialType, PickType, registerEnumType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
 import { CreateAccessInput } from "../dto/access.input";
 import { IsArray, IsOptional } from "class-validator";
 import { CreatePermissionInput, PermissionGroupInput } from "../dto/permission.input";
@@ -9,6 +9,8 @@ import { AuthLocalizedField } from "./auth_localized_field.model";
 
 
 @ObjectType()
+@Directive('@extends')
+@Directive('@key(fields: "id name{key,value} resourceId role permissions{action,resourceType,resourceTarget,effect,groups{id,key,name{key,value}}} owner ownerType dateCreated dateUpdated permissionType")')
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -52,7 +54,7 @@ export class Permission {
     @Field(types => ID)
     id?: string
     @Field(types => [AuthLocalizedField])
-    name: AuthLocalizedField[]
+    name?: AuthLocalizedField[]
     @Field()
     action: string = PERMISSIONACTION.ANY.toString()
     @Field()
@@ -75,6 +77,7 @@ export class Permission {
         return inputs.map(input => new Permission({ ...input, groups: PermissionGroup.getPermissionGroupFromInput(input.groups) }))
     }
 }
+
 
 @ObjectType()
 export class PermissionGroup {

@@ -25,7 +25,15 @@ export class AuthorizationService {
         return result;
     }
 
-    async createDefaultBusinessOwnerAccess(access: Access) {
-
+    async getAllUserAccesses(userId: string): Promise<Access[]> {
+        let result = await this.authorizationRepo.getUserAllAccesses(userId);
+        return result;
     }
+
+    async getAllBusinessAccesses(businessId: string): Promise<Access[]> {
+        let result = await this.authorizationRepo.getBusinessAllAccesses(businessId);
+        return result;
+    }
+
+
 }

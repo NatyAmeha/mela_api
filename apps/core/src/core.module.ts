@@ -11,6 +11,7 @@ import { ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
 import { BusinessModule } from './business/business.module';
 import { BranchModule } from './branch/branch.module';
 import { ProductModule } from './product/product.module';
+import { CommonModule } from '@app/common';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ProductModule } from './product/product.module';
     ProductModule,
     RmqModule,
     LoggerModule,
+    CommonModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloFederationDriver,
       useFactory: () => {
