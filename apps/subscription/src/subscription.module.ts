@@ -16,6 +16,7 @@ import { PlatfromUsecase } from './usecase/platform.usecase';
 import { SubscriptionHelper } from './utils/subscription.helper';
 import { SubscriptionAccessGenerator } from './utils/subscription_access_generator';
 import { BusinessSubscriptionOption, PlatformSubscriptionOption, SubscriptionFactory } from './utils/subscrption_factory';
+import { CommonModule } from '@app/common';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { BusinessSubscriptionOption, PlatformSubscriptionOption, SubscriptionFac
     }),
     // RmqModule.register(SUBSCRIPTION_RMQ_CLIENT),
     RmqModule,
-
+    CommonModule,
     LoggerModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloFederationDriver,

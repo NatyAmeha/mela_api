@@ -18,6 +18,7 @@ export class BusinessAccessGenerator implements IAccessGenerator<Business> {
                     permissionType: PermissionType.PLATFORM_PERMISSION,
                     permissions: [
                         new Permission({ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourceTarget: businessInfo.id }),
+                        new Permission({ resourceType: AppResources.PLATFORM_SERVICES, action: PERMISSIONACTION.ANY, resourceTarget: businessInfo.id }),
                     ]
                 })
                 accessList.push(businessOwnershipAccess)

@@ -24,7 +24,7 @@ export class Subscription extends BaseModel {
     isTrialPeriod: boolean
     @Field(type => SubscriptionType)
     type: string
-    @Field({ description: "owner can be business id, service id, product id" })
+    @Field({ description: "owner of the subscription. it will be a business id for platform service subscription and user id for business subscription" })
     owner?: string
     @Field(type => Date)
     createdAt?: Date

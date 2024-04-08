@@ -14,9 +14,6 @@ import { Access, AppResources, DefaultRoles } from "apps/auth/src/authorization/
 import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { AccessFactory, IAccessFactory } from "../../../../../libs/common/src/permission_helper/access_factory.interface";
-import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
-import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
-import { PERMISSIONACTION, PermissionEffectType } from "@app/common/permission_helper/permission_constants";
 
 
 @Resolver(of => Business)

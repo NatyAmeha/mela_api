@@ -16,10 +16,13 @@ import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'apps/auth/src/auth/service/guard/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
 import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
-import { Access } from 'apps/auth/src/authorization/model/access.model';
+import { Access, AppResources, DefaultRoles } from 'apps/auth/src/authorization/model/access.model';
 import { SubscriptionHelper } from '../utils/subscription.helper';
 import { IAccessGenerator } from '@app/common/permission_helper/access_factory.interface';
 import { SubscriptionAccessGenerator } from '../utils/subscription_access_generator';
+import { PermissionSelectionCriteria, RequiresPermission } from '@app/common/permission_helper/require_permission.decorator';
+import { PERMISSIONACTION } from '@app/common/permission_helper/permission_constants';
+import { PermissionGuard } from '@app/common/permission_helper/permission.guard';
 
 
 
@@ -73,8 +76,20 @@ export class SubscriptionResolver {
   }
 
 
+
+  @UseGuards(AuthzGuard)
+  @RequiresPermission(
+    {
+      permissions: [
+        { resourceType: AppResources.CUSTOMER, action: PERMISSIONACTION.CREATE },
+        { role: DefaultRoles.BUSINESS_OWNER }
+      ],
+      selectionCriteria: PermissionSelectionCriteria.ANY
+    }
+  )
+  @UseGuards(PermissionGuard)
   @Mutation(returns => SubscriptionResponse)
-  async subscribeToPlatformServices(@Args("input") planInput: CreateSubscriptionInput) {
+  async subscribeBusinessToPlatformServices(@Args("id", { description: "id of the business" }) businessId: string, @Args("input") planInput: CreateSubscriptionInput) {
     // validate the input
     // create subscription info
     let subscritpionResponse = await this.subscriptionService.subscribeToPlan(planInput);

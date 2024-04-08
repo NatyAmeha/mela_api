@@ -4,10 +4,12 @@ import { BasePermissionHelper } from './permission_helper/permission_helper';
 @Global()
 @Module({
   providers: [
-    { provide: BasePermissionHelper.injectName, useClass: BasePermissionHelper }
+    { provide: BasePermissionHelper.InjectName, useClass: BasePermissionHelper },
+    BasePermissionHelper,
   ],
   exports: [
-    BasePermissionHelper.injectName
+    BasePermissionHelper.InjectName,
+    BasePermissionHelper
   ],
 })
-export class CommonModule { }
+export class CommonModule { } 
