@@ -9,7 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SubscriptionRepository } from './repo/subscription.repository';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqModule } from 'libs/rmq/rmq_module';
-import { SubscriptionMessageBrocker } from './subscription_message_brocker';
+import { SubscriptionMessageBrocker } from './msg_brocker_client/subscription_message_brocker';
 import { PlatformServiceRepository } from './repo/platform_service.repo';
 import { PlatformServiceResolver } from './resolver/platform_service.resolver';
 import { PlatfromUsecase } from './usecase/platform.usecase';
@@ -17,6 +17,7 @@ import { SubscriptionHelper } from './utils/subscription.helper';
 import { SubscriptionAccessGenerator } from './utils/subscription_access_generator';
 import { BusinessSubscriptionOption, PlatformSubscriptionOption, SubscriptionFactory } from './utils/subscrption_factory';
 import { CommonModule } from '@app/common';
+import { SubscriptionMsgProcessosor } from './msg_brocker_client/subscription_service_msg_processor';
 
 @Module({
   imports: [
@@ -67,8 +68,12 @@ import { CommonModule } from '@app/common';
     { provide: PlatformServiceRepository.InjectName, useClass: PlatformServiceRepository },
     { provide: SubscriptionAccessGenerator.injectName, useClass: SubscriptionAccessGenerator },
 
+    { provide: SubscriptionMsgProcessosor.InjectName, useClass: SubscriptionMsgProcessosor },
+
     SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase, SubscriptionHelper,
-    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption
+    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption,
+
+
   ],
 })
 export class SubscriptionModule { }

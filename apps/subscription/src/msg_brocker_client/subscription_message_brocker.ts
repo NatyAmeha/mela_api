@@ -7,7 +7,10 @@ import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rm
 import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
-import { SubscriptionResponse } from "./model/subscription.response";
+import { SubscriptionResponse } from "../model/subscription.response";
+import { SubscriptionMsgProcessosor } from "./subscription_service_msg_processor";
+import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
+import { Subscription } from "rxjs";
 
 export interface ISubscriptionMessageBrocker {
     createPlatformAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>>
@@ -17,7 +20,12 @@ export interface ISubscriptionMessageBrocker {
 @Injectable()
 export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnModuleInit, OnModuleDestroy {
     static InjectName = "SUBSCRIPTION_MSG_BROCKER"
-    constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService) {
+    eventMsgListenerSubscription?: Subscription;
+
+    constructor(public configService: ConfigService,
+        @Inject(RMQService.InjectName) public rmqService: IRMQService,
+        @Inject(SubscriptionMsgProcessosor.InjectName) private subscriptionMessageProcessor: IReceivedMessageProcessor,
+    ) {
         super(rmqService, configService)
     }
 
@@ -33,35 +41,36 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
     }
 
     async sendPlatformAccessPermissionMessagetoAuthService(access: Access[]): Promise<IMessageBrockerResponse<any>> {
-        var messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
-        var reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        let messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
+        let reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;
     }
 
     async sendSubscriptionCreatedEventToServices(subscriptionResponse: SubscriptionResponse,): Promise<boolean> {
-        var sendResult = await this.publishMessageByTopic(subscriptionResponse, ExchangeTopics.EVENT_TOPIC, SubscriptionServiceMessageType.PLATFORM_SUBSCRIPTION_CREATED_EVENT, { messageId: subscriptionResponse.createdSubscription.id })
+        let sendResult = await this.publishMessageByTopic(subscriptionResponse, ExchangeTopics.EVENT_TOPIC, SubscriptionServiceMessageType.PLATFORM_SUBSCRIPTION_CREATED_EVENT, { messageId: subscriptionResponse.createdSubscription.id })
         return sendResult;
     }
 
     async listenSubscriptionRequestAndReply() {
-        var messageResult = await this.rmqService.listenMessage(this.channel, this.requestQueue)
+        let messageResult = await this.rmqService.listenMessage(this.channel, this.requestQueue)
     }
 
     async listenSubscriptionServiceEvent() {
-
-        var messageInfo: IMessageBrocker<any> = {
+        let messageInfo: IMessageBrocker<any> = {
             routingKey: "*",
             exchange: ExchangeTopics.EVENT_TOPIC,
             exchangeType: ExchangeType.TOPIC,
         }
-        var messageResult = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
+        this.eventMsgListenerSubscription = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
             console.log("event received in subscription service", messageResult.content.toString());
+            let result = await this.subscriptionMessageProcessor.processMessage(this.channel, messageResult)
         })
     }
 
     onModuleDestroy() {
         console.log("channel closed")
         this.channel.close()
+        this.eventMsgListenerSubscription?.unsubscribe();
     }
 
 

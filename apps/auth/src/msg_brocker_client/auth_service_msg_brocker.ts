@@ -7,10 +7,13 @@ import { AuthServiceMessageType } from "libs/rmq/app_message_type";
 import { ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
 import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
-import { AuthorizationService } from "./authorization";
-import { Subscription } from "apps/subscription/src/model/subscription.model";
+import { AuthorizationService } from "../authorization";
+
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
-import { Access } from "../prisma/generated/prisma_auth_client";
+import { Access } from "../../prisma/generated/prisma_auth_client";
+import { AuthMsgProcessosor } from "./auth_msg_processor";
+import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
+import { Subscription } from "rxjs";
 
 export interface IAuthServiceMsgBrocker {
 
@@ -19,7 +22,10 @@ export interface IAuthServiceMsgBrocker {
 @Injectable()
 export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModuleInit, OnModuleDestroy, IAuthServiceMsgBrocker {
     static InjectName = "AUTH_MSG_BROCKER"
-    constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService, private authorizationService: AuthorizationService) {
+    eventMsgListenerSubscription?: Subscription;
+
+    constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService,
+        @Inject(AuthMsgProcessosor.InjectName) private authMessageProcessor: IReceivedMessageProcessor,) {
         super(rmqService, configService)
     }
 
@@ -36,49 +42,32 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
     }
 
     async listenAuthServiceRequestAndReply() {
-
         this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (messageResult) => {
-            this.respondToMessage(messageResult)
+            let replyResponse: IMessageBrockerResponse<any> = { success: false }
+            let replyCoorelationId = messageResult.properties.correlationId;
+            replyResponse.success = await this.authMessageProcessor.processMessage(this.channel, messageResult)
+            await this.sendMessage(messageResult.properties.replyTo, replyResponse, replyCoorelationId)
         })
     }
 
     async listenAuthEvents() {
-
-        var messageInfo: IMessageBrocker<any> = {
+        let messageInfo: IMessageBrocker<any> = {
             routingKey: ExchangeTopics.EVENT_TOPIC,
             exchange: ExchangeTopics.EVENT_TOPIC,
             exchangeType: ExchangeType.TOPIC,
         }
-        var messageResult = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
-            console.log("event received in Auth service", messageResult.properties.messageId);
+        this.eventMsgListenerSubscription = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
             console.log("event received in Auth service", messageResult.content.toString());
+            await this.authMessageProcessor.processMessage(this.channel, messageResult)
         })
-    }
-
-    async respondToMessage(messageInfo: ConsumeMessage) {
-        var replyResponse: IMessageBrockerResponse<any> = { success: false }
-        var replyCoorelationId = messageInfo.properties.correlationId;
-        try {
-            var messageContent = JSON.parse(messageInfo.content.toString())
-            if (messageInfo.properties.correlationId == AuthServiceMessageType.CREATE_ACCESS_PERMISSION) {
-                let accesses = messageContent as Access[];
-                let createResult = await this.authorizationService.createAccess(accesses)
-                replyResponse.success = createResult.success;
-            }
-        } catch (error) {
-
-        }
-        finally {
-            // if (replyResponse.success) { }
-            this.channel.ack(messageInfo);
-            var sendResult = await this.sendMessage(messageInfo.properties.replyTo, replyResponse, replyCoorelationId)
-        }
     }
 
 
     onModuleDestroy() {
         console.log("channel closed")
+        this.eventMsgListenerSubscription?.unsubscribe();
         this.channel.close();
+
     }
 
 

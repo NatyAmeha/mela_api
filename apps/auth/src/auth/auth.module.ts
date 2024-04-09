@@ -21,8 +21,9 @@ import { AuthorizationModule } from '../authorization';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqModule } from 'libs/rmq/rmq_module';
 import { AUTH_RMQ_CLIENT } from '../cosntants';
-import { AuthServiceMsgBrocker } from '../auth_service_msg_brocker';
+import { AuthServiceMsgBrocker } from '../msg_brocker_client/auth_service_msg_brocker';
 import { AuthController } from './auth.controller';
+import { AuthMsgProcessosor } from '../msg_brocker_client/auth_msg_processor';
 
 
 
@@ -91,7 +92,9 @@ import { AuthController } from './auth.controller';
     },
     { provide: AuthServiceMsgBrocker.InjectName, useClass: AuthServiceMsgBrocker },
     AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy,
-    UserResolver
+    UserResolver,
+
+    { provide: AuthMsgProcessosor.InjectName, useClass: AuthMsgProcessosor }
   ],
 })
 export class AuthModule { }

@@ -8,7 +8,7 @@ import { SubscriptionType } from '../model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
 import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from '../dto/subscription.input';
 import { SubscriptionResponse } from '../model/subscription.response';
-import { SubscriptionMessageBrocker } from '../subscription_message_brocker';
+import { SubscriptionMessageBrocker } from '../msg_brocker_client/subscription_message_brocker';
 import { AppMsgQueues } from 'libs/rmq/constants';
 import { IMessageBrocker } from 'libs/rmq/message_brocker';
 import { AuthServiceMessageType } from 'libs/rmq/app_message_type';

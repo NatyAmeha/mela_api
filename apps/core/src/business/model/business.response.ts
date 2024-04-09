@@ -35,7 +35,6 @@ export class BusinessResponse extends BaseResponse {
                 default:
                     return false;
             }
-            return this.message == CommonBusinessErrorMessages.BUSINESS_ALREADY_IN_PAYMENT_STAGE
         }
         return false;
     }
