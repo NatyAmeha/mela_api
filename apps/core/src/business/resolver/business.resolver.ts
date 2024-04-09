@@ -26,7 +26,8 @@ export class BusinessResolver {
         @Inject(AccessFactory.injectName) private accessFactory: IAccessFactory
     ) {
     }
-    @UseGuards(AuthzGuard)
+
+
     @Query(returns => BusinessResponse)
     async getBusinessDetails(@Args("id") id: string): Promise<BusinessResponse> {
         let business = await this.businessService.getBusiness(id);

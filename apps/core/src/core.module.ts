@@ -21,6 +21,9 @@ import { BranchResolver } from './branch/branch.resolver';
 import { ProductRepository } from './product/repo/product.repository';
 import { ProductResolver } from './product/product.resolver';
 import { ProductService } from './product/product.service';
+import { StaffRepository } from './staff/repo/staff.repo';
+import { StaffResolver } from './staff/staff.resolver';
+import { StaffService } from './staff/staff.service';
 
 
 @Module({
@@ -64,6 +67,9 @@ import { ProductService } from './product/product.service';
 
     { provide: ProductRepository.injectName, useClass: ProductRepository },
     ProductService, ProductResolver,
+
+    { provide: StaffRepository.injectName, useClass: StaffRepository },
+    StaffResolver, StaffService,
 
     { provide: CoreServiceMessageProcessor.InjectName, useClass: CoreServiceMessageProcessor },
     CoreServiceMsgBrockerClient

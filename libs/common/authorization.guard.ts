@@ -9,7 +9,7 @@ export class AuthzGuard implements CanActivate {
         var gqlContext = GqlExecutionContext.create(context)
         var request = gqlContext.getContext().req;
         var userHeaderValue = request.headers.user ?? "";
-        if (userHeaderValue !== "undefined") {
+        if (userHeaderValue && userHeaderValue !== "undefined") {
             var userInfo = JSON.parse(userHeaderValue) as User;
             if (userInfo.id != undefined) {
                 return true
