@@ -5,7 +5,7 @@ import { ConsumeMessage } from "amqplib";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
 import { AuthServiceMessageType } from "libs/rmq/app_message_type";
 import { ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
-import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
+import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { AuthorizationService } from "../authorization";
 
@@ -51,11 +51,7 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
     }
 
     async listenAuthEvents() {
-        let messageInfo: IMessageBrocker<any> = {
-            routingKey: ExchangeTopics.EVENT_TOPIC,
-            exchange: ExchangeTopics.EVENT_TOPIC,
-            exchangeType: ExchangeType.TOPIC,
-        }
+        let messageInfo = new MessageBrockerMsgBuilder().withExchange(ExchangeTopics.EVENT_TOPIC, ExchangeType.TOPIC).withRoutingKey(ExchangeTopics.EVENT_TOPIC).build();
         this.eventMsgListenerSubscription = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
             console.log("event received in Auth service", messageResult.content.toString());
             await this.authMessageProcessor.processMessage(this.channel, messageResult)

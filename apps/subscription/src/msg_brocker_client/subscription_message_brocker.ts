@@ -4,7 +4,7 @@ import { Access } from "apps/auth/src/authorization/model/access.model";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
 import { SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
 import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
-import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
+import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { SubscriptionResponse } from "../model/subscription.response";
@@ -56,11 +56,7 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
     }
 
     async listenSubscriptionServiceEvent() {
-        let messageInfo: IMessageBrocker<any> = {
-            routingKey: "*",
-            exchange: ExchangeTopics.EVENT_TOPIC,
-            exchangeType: ExchangeType.TOPIC,
-        }
+        let messageInfo = new MessageBrockerMsgBuilder().withExchange(ExchangeTopics.EVENT_TOPIC, ExchangeType.TOPIC).withRoutingKey(ExchangeTopics.EVENT_TOPIC).build();
         this.eventMsgListenerSubscription = await this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
             console.log("event received in subscription service", messageResult.content.toString());
             let result = await this.subscriptionMessageProcessor.processMessage(this.channel, messageResult)

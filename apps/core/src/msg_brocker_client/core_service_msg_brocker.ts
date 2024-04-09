@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
 import { CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
 import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
-import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
+import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { BusinessService } from "../business/usecase/business.service";
 import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
@@ -53,11 +53,7 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
     }
 
     async listenCoreServiceEvent() {
-        var messageInfo: IMessageBrocker<any> = {
-            routingKey: ExchangeTopics.EVENT_TOPIC,
-            exchange: ExchangeTopics.EVENT_TOPIC,
-            exchangeType: ExchangeType.TOPIC,
-        }
+        let messageInfo = new MessageBrockerMsgBuilder().withExchange(ExchangeTopics.EVENT_TOPIC, ExchangeType.TOPIC).withRoutingKey(ExchangeTopics.EVENT_TOPIC).build();
         this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
             console.log("event received in Core service", messageResult.properties.messageId);
             await this.messageProcessor.processMessage(this.channel, messageResult)

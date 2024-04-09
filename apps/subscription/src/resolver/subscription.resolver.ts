@@ -10,7 +10,7 @@ import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from 
 import { SubscriptionResponse } from '../model/subscription.response';
 import { SubscriptionMessageBrocker } from '../msg_brocker_client/subscription_message_brocker';
 import { AppMsgQueues } from 'libs/rmq/constants';
-import { IMessageBrocker } from 'libs/rmq/message_brocker';
+import { IMessageBrocker, MessageBrockerMsgBuilder } from 'libs/rmq/message_brocker';
 import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
 import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'apps/auth/src/auth/service/guard/get_user_decorator';
@@ -36,20 +36,10 @@ export class SubscriptionResolver {
 
   ) { }
 
-  // @UseGuards(AuthzGuard)
+  @UseGuards(AuthzGuard)
   @Mutation(returns => SubscriptionPlan)
   async createPlatformSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
     let subscriptionInfo = plan.getSubscriptionInfo({ subscriptionType: SubscriptionType.PLATFORM, isActiveSubscription: false })
-    let messageInfo: IMessageBrocker<SubscriptionPlan> = {
-      data: subscriptionInfo,
-      coorelationId: AuthServiceMessageType.PLATFORM_ACCESS_PERMISSION_CREATED,
-      replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
-      expirationInSecond: 60 * 1,
-      persistMessage: true,
-
-
-    }
-    let reply = await this.subscriptionBroker.sendMessageGetReply<SubscriptionPlan, number>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
     let result = await this.subscriptionService.createSubscriptionPlan(subscriptionInfo);
     return result;
   }
@@ -121,14 +111,9 @@ export class SubscriptionResolver {
       return response
     }
 
-    let messageInfo: IMessageBrocker<Subscription> = {
-      // only send the new platform service info to create access permission
-      data: { ...response.createdSubscription, platformServices: response.addedPlatformServices } as Subscription,
-      coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
-      replyQueue: AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE,
-      expirationInSecond: 60 * 1,
-      persistMessage: true,
-    }
+    var data = { ...response.createdSubscription, platformServices: response.addedPlatformServices } as Subscription
+    let messageInfo = new MessageBrockerMsgBuilder<Subscription>().withData(data).withCoorelationId(AuthServiceMessageType.CREATE_ACCESS_PERMISSION)
+      .withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withExpiration(60).withPersistMessage(true).build()
     // add access permission
     let reply = await this.subscriptionBroker.sendMessageGetReply<SubscriptionPlan, IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
     if (reply.success) {
