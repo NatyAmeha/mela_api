@@ -3,6 +3,7 @@ import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
+import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
@@ -57,8 +58,8 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            if (stage == BusinessRegistrationStage.PAYMENT_STAGE) {
-                throw new RequestValidationException({ message: "Business already in payment stage" });
+            if (stage == BusinessRegistrationStage.PAYMENT_STAGE) {  
+                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUSINESS_ALREADY_IN_PAYMENT_STAGE });
             }
             let result
             if (subscriptionId && trialPeriodUsedServiceIds) {

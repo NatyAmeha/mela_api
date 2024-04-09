@@ -81,7 +81,7 @@ export class SubscriptionResolver {
   @RequiresPermission(
     {
       permissions: [
-        { resourceType: AppResources.CUSTOMER, action: PERMISSIONACTION.CREATE },
+        { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE },
         { role: DefaultRoles.BUSINESS_OWNER }
       ],
       selectionCriteria: PermissionSelectionCriteria.ANY

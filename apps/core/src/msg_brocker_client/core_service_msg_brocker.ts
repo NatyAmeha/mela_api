@@ -5,10 +5,13 @@ import { CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq
 import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
 import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
-import { BusinessService } from "./business/usecase/business.service";
+import { BusinessService } from "../business/usecase/business.service";
 import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
 import { Access } from "apps/auth/src/authorization/model/access.model";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
+
+import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
+import { CoreServiceMessageProcessor } from "./core_service_msg_processor";
 
 
 export interface ICoreServiceMsgBrocker {
@@ -18,8 +21,9 @@ export interface ICoreServiceMsgBrocker {
 @Injectable()
 export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements OnModuleInit, OnModuleDestroy, ICoreServiceMsgBrocker {
     static InjectName = "AUTH_MSG_BROCKER"
-    processedMessageIds = new Set<string>();
-    constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService, private businessService: BusinessService) {
+
+    constructor(@Inject(RMQService.InjectName) public rmqService: IRMQService, public configService: ConfigService,
+        @Inject(CoreServiceMessageProcessor.InjectName) private messageProcessor: IReceivedMessageProcessor,) {
         super(rmqService, configService)
     }
     async sendCreateAccessPermissionMessage(accessList: Access[]): Promise<IMessageBrockerResponse> {
@@ -56,21 +60,7 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
         }
         this.rmqService.subscribeToMessage(this.channel, messageInfo, this.eventQueue).subscribe(async (messageResult) => {
             console.log("event received in Core service", messageResult.properties.messageId);
-            let canHandleMsg = true;
-            var messageId = messageResult.properties.messageId;
-            if (!this.processedMessageIds.has(messageId)) {
-                console.log("message not processed yet", messageId)
-                this.processedMessageIds.add(messageId);
-                let messageInfo = JSON.parse(messageResult.content.toString())
-                if (messageResult.properties.correlationId == SubscriptionServiceMessageType.PLATFORM_SUBSCRIPTION_CREATED_EVENT) {
-                    let subscriptionResponse = messageInfo as SubscriptionResponse
-                    var businesResult = await this.businessService.handleUpdateBusienssRegistrationToPaymentStageEvent(subscriptionResponse);
-                    canHandleMsg = businesResult.success;
-                }
-            }
-            if (canHandleMsg) {
-                this.channel.ack(messageResult)
-            }
+            await this.messageProcessor.processMessage(this.channel, messageResult)
         })
     }
 

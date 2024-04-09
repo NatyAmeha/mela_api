@@ -2,12 +2,12 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/g
 import { BusinessService } from "../usecase/business.service";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
-import { BusinessResponse } from "../model/business.response";
+import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
 import { ProductService } from "../../product/product.service";
 import { BranchService } from "../../branch/usecase/branch.service";
 import { Product } from "../../product/model/product.model";
 import { Branch } from "../../branch/model/branch.model";
-import { CoreServiceMsgBrockerClient } from "../../core_service_msg_brocker";
+import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
 import { AppMsgQueues, ExchangeTopics } from "libs/rmq/constants";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Access, AppResources, DefaultRoles } from "apps/auth/src/authorization/model/access.model";
@@ -32,12 +32,8 @@ export class BusinessResolver {
         let business = await this.businessService.getBusiness(id);
         var businessProducts = await this.productService.getBusinessProducts(id);
         var businessBranches = await this.branchService.getBusinessBranches(id);
-        return {
-            success: true,
-            business: business,
-            products: businessProducts,
-            branches: businessBranches
-        }
+        var respnse = new BusinessResponseBuilder().withBusiness(business).withProducts(businessProducts).withBranches(businessBranches).build();
+        return respnse;
     }
 
 
@@ -49,19 +45,15 @@ export class BusinessResolver {
 
         let reply = await this.coreServiceMsgBrocker.sendCreateAccessPermissionMessage(businessOwnerAccess);
         console.log("reply", reply)
-        return {
-            success: true,
-            business: createdBusiness
-        }
+        var response = new BusinessResponseBuilder().withBusiness(createdBusiness).build();
+        return response;
     }
     @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
     async updateBusinessInfo(@Args('businessId') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
-        var response = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
-        return {
-            success: true,
-            business: response
-        }
+        var businessResult = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
+        var response = new BusinessResponseBuilder().withBusiness(businessResult).build();
+        return response;
     }
 
     @Mutation(returns => BusinessResponse)
