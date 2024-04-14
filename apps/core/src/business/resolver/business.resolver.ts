@@ -42,7 +42,7 @@ export class BusinessResolver {
     @Mutation(returns => BusinessResponse)
     async createBusiness(@Args('data') data: CreateBusinessInput): Promise<BusinessResponse> {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());
-        let businessOwnerAccess = await this.accessFactory.getBusinessAccessGenerator().createDefaultAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
+        let businessOwnerAccess = await this.accessFactory.getBusinessAccessGenerator().createAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
 
         let reply = await this.coreServiceMsgBrocker.sendCreateAccessPermissionMessage(businessOwnerAccess);
         console.log("reply", reply)

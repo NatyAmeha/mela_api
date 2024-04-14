@@ -30,6 +30,11 @@ export class AuthMsgProcessosor implements IReceivedMessageProcessor {
                     let createResult = await this.authorizationService.createAccess(accesses)
                     replyResponse.success = createResult.isSafeErrorIfExist();
                 }
+
+                else if (messageResult.properties.correlationId == AuthServiceMessageType.REVOKE_PLATFORM_ACCESS_PERMISSION_FROM_BUSINESS) {
+                    let accessRevokeResult = await this.authorizationService.revokePlatformServiceAccessPermissionFromBusiness(messageContent.businessId, messageContent.accessId)
+                    replyResponse.success = accessRevokeResult.isSafeErrorIfExist();
+                }
             }
             if (canAckMessage) {
                 channel.ack(messageResult)

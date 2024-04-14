@@ -68,7 +68,7 @@ export class RMQService implements IRMQService {
             return sendResult;
 
         } catch (ex) {
-
+            console.log("send message exception", ex)
         }
     }
     async listenMessage(channel: ChannelWrapper, queue: string, messageType?: string): Promise<ConsumeMessage> {
@@ -122,7 +122,6 @@ export class RMQService implements IRMQService {
     subscribeToMessage(channel: ChannelWrapper, messageInfo: Partial<IMessageBrocker<any>>, fromQueue: string): Observable<ConsumeMessage> {
         try {
             console.log("subscribe message", messageInfo.exchange, messageInfo.exchangeType)
-
             return from(
                 channel.assertExchange(messageInfo.exchange, messageInfo.exchangeType, { durable: false })
             ).pipe(
@@ -142,6 +141,7 @@ export class RMQService implements IRMQService {
 
 
         } catch (error) {
+            console.log("subscribe message error", error)
         }
     }
 

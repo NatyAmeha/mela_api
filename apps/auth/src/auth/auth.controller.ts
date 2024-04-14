@@ -1,11 +1,7 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { AuthService } from "./usecase/auth.service";
-import { User } from "./model/user.model";
-import { CurrentUser } from "./service/guard/get_user_decorator";
-import { userInfo } from "os";
 import { AuthorizationService } from "../authorization";
 import { UserResponse } from "./dto/user.response";
-import { BusinessResponse, BusinessResponseBuilder } from "apps/core/src/business/model/business.response";
 
 @Controller()
 export class AuthController {
@@ -22,12 +18,12 @@ export class AuthController {
         }
     }
 
-    @Get("/access/business")
-    async getBusinessAccess(@Query("id") businessId: string): Promise<BusinessResponse | undefined> {
-        let businessAccesses = await this.authorizationService.getAllBusinessAccesses(businessId)
-        var response = new BusinessResponseBuilder().withAccesses(businessAccesses).build();
-        return response;
-    }
+    // @Get("/access/business")
+    // async getBusinessAccess(@Query("id") businessId: string): Promise<BusinessResponse | undefined> {
+    //     let businessAccesses = await this.authorizationService.getAllBusinessAccesses(businessId)
+    //     var response = new BusinessResponseBuilder().withAccesses(businessAccesses).build();
+    //     return response;
+    // }
 
 
 }  

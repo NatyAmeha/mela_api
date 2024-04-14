@@ -22,6 +22,10 @@ export class AccessResponse extends BaseResponse {
 
 export class AccessResponseBuilder {
     private accessResponse: AccessResponse = new AccessResponse();
+    withSuccess(): AccessResponseBuilder {
+        this.accessResponse.success = true;
+        return this;
+    }
     withAccesses(accesses: Access[]): AccessResponseBuilder {
         this.accessResponse.success = true;;
         this.accessResponse.accesses = accesses;

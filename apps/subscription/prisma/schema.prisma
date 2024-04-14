@@ -30,6 +30,7 @@ model Subscription {
     id                  String                        @id @default(auto()) @map("_id") @db.ObjectId
     startDate           DateTime?
     endDate             DateTime?
+    amountPaid          Float?                        @default(0)
     subscriptioinPlanId String?                       @db.ObjectId
     plan                SubscriptionPlan?             @relation(fields: [subscriptioinPlanId], references: [id])
     isTrialPeriod       Boolean?

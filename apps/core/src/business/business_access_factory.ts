@@ -7,7 +7,7 @@ import { PERMISSIONACTION } from "@app/common/permission_helper/permission_const
 
 export class BusinessAccessGenerator implements IAccessGenerator<Business> {
     static injectName = "BusinessAccessFacotry";
-    async createDefaultAccess(businessInfo: Business, role?: string): Promise<Access[]> {
+    async createAccess(businessInfo: Business, role?: string): Promise<Access[]> {
         var accessList: Access[] = []
         switch (role) {
             case DefaultRoles.BUSINESS_OWNER:

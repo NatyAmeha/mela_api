@@ -73,6 +73,7 @@ model Business {
     staffs                    Staff[]
     stage                     String          @default("CREATED")
     subscriptionIds           String[]        @default([]) @db.ObjectId
+    activeSubscriptionId      String?
     trialPeriodUsedServiceIds String[]        @default([]) @db.ObjectId
 }
 

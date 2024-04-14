@@ -23,6 +23,8 @@ import { SubscriptionAccessGenerator } from '../utils/subscription_access_genera
 import { PermissionSelectionCriteria, RequiresPermission } from '@app/common/permission_helper/require_permission.decorator';
 import { PERMISSIONACTION } from '@app/common/permission_helper/permission_constants';
 import { PermissionGuard } from '@app/common/permission_helper/permission.guard';
+import { SubscriptionUpgradeResponse } from '../model/subscription_upgrade.response';
+import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
 
 
 
@@ -57,6 +59,8 @@ export class SubscriptionResolver {
     return result;
   }
 
+
+
   @Mutation(returns => SubscriptionPlan)
   @UseGuards(AuthzGuard)
   async createBusinessSubscriptionPlan(@Args("plan") plan: CreateSubscriptionPlanInput) {
@@ -88,7 +92,7 @@ export class SubscriptionResolver {
     }
 
     // create access permission for business on auth servcie
-    let platformServiceAccess = await this.subscriptionGenerator.createDefaultAccess(subscritpionResponse.createdSubscription, SubscriptionType.PLATFORM);
+    let platformServiceAccess = await this.subscriptionGenerator.createAccess(subscritpionResponse.createdSubscription, SubscriptionType.PLATFORM);
     let reply = await this.subscriptionBroker.sendPlatformAccessPermissionMessagetoAuthService(platformServiceAccess);
     if (reply.success) {
       let updateResult = await this.subscriptionService.updateSubscriptionStatus(subscritpionResponse.createdSubscription!.id!, true)
@@ -103,6 +107,30 @@ export class SubscriptionResolver {
     return subscritpionResponse
   }
 
+
+
+  @Query(returns => SubscriptionUpgradeResponse)
+  async getPriceInfoToUpgradeSubscription(@Args("id", { description: "Subscritpion id" }) subscriptionId: string, @Args("subscriptionUpdateInfo") updatePlatformSubscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse> {
+    let subscriptionUpgradeResponse = await this.subscriptionService.getSubscriptionUpgradeInfo(subscriptionId, updatePlatformSubscriptionInput)
+    return subscriptionUpgradeResponse
+  }
+
+  @Mutation(returns => SubscriptionResponse)
+  async renewBusienssPlatformSubscription(@Args("id") id: string, @Args("subscriptionUpdateInfo") data: SubscriptionUpgradeInput): Promise<SubscriptionResponse> {
+    let subscriptionUpgradeResponse = await this.subscriptionService.renewSubscription(id, data);
+    if (subscriptionUpgradeResponse.success) {
+      //Send  Revoke  previous permission and create new access message to Auth service
+      let newplatformServiceAccessesForBusiness = await this.subscriptionGenerator.createAccess(subscriptionUpgradeResponse.createdSubscription, SubscriptionType.PLATFORM);
+      let newAccessCreateResult = await this.subscriptionBroker.sendRevokePreviousPlatformAccessPermissionAndCreateNewAccessToAuthService(data.businessId, newplatformServiceAccessesForBusiness);
+      if (newAccessCreateResult.success) {
+        // Sned subscription created event to core service to update business subscriptioni stage
+        let sendResult = await this.subscriptionBroker.sendSubscriptionCreatedEventToServices(subscriptionUpgradeResponse)
+      }
+      console.log("subscritpion status update", newAccessCreateResult, subscriptionUpgradeResponse)
+    }
+    return subscriptionUpgradeResponse
+  }
+
   @Mutation(returns => SubscriptionResponse)
   async addPlatformServiceToSubscription(@Args("subscriptionId") subscriptionId: string, @Args("platformServiceInfo", { type: () => [CreatePlatformServiceSubscriptionInput] }) serviceInfo: CreatePlatformServiceSubscriptionInput[]): Promise<SubscriptionResponse> {
     // add to subscription
@@ -111,7 +139,7 @@ export class SubscriptionResolver {
       return response
     }
 
-    var data = { ...response.createdSubscription, platformServices: response.addedPlatformServices } as Subscription
+    let data = { ...response.createdSubscription, platformServices: response.addedPlatformServices } as Subscription
     let messageInfo = new MessageBrockerMsgBuilder<Subscription>().withData(data).withCoorelationId(AuthServiceMessageType.CREATE_ACCESS_PERMISSION)
       .withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withExpiration(60).withPersistMessage(true).build()
     // add access permission

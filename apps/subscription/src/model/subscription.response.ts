@@ -2,6 +2,7 @@ import { Field, Int, ObjectType } from "@nestjs/graphql";
 import { PlatfromServiceSubscription, Subscription } from "./subscription.model";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { BaseResponse } from "@app/common/model/base.response";
+import { PlatformService } from "./platform_service.model";
 
 @ObjectType()
 export class SubscriptionResponse extends BaseResponse {
@@ -27,5 +28,21 @@ export class SubscriptionResponse extends BaseResponse {
 
     changeSubscritpioStatus(status: boolean) {
         this.createdSubscription.isActive = status;
+    }
+}
+
+
+@ObjectType()
+export class SubscriptioinUpgradePriceingResponse extends BaseResponse {
+    @Field(type => Int)
+    price: number
+    @Field(type => [PlatformService])
+    addedPlatformServices?: PlatformService[]
+    @Field(type => [PlatformService])
+    removedPlatformServices?: PlatformService[]
+
+    constructor(data: Partial<SubscriptioinUpgradePriceingResponse>) {
+        super()
+        Object.assign(this, data)
     }
 }

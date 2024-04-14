@@ -1,11 +1,13 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ChannelWrapper } from "amqp-connection-manager";
-import { Access } from "apps/auth/src/authorization/model/access.model";
-import { ExchangeNames, RoutingKey } from "libs/rmq/constants";
-import { ExchangeType, IMessageBrocker } from "libs/rmq/message_brocker";
+import { Access, AccessOwnerType } from "apps/auth/src/authorization/model/access.model";
+import { AppMsgQueues, ExchangeNames, RoutingKey } from "libs/rmq/constants";
+import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { AuthServiceMessageType } from "./app_message_type";
+import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
+import { RevokeAccessMetadata } from "apps/auth/src/authorization/model/revoke_access.metadata";
 
 export interface IAppMessageBrocker {
     connectMessageBrocker(): Promise<void>
@@ -28,7 +30,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
 
 
     async connectMessageBrocker() {
-        var rmqUrl = this.configService.get<string>("rmq.rmq_config.url")
+        let rmqUrl = this.configService.get<string>("rmq.rmq_config.url")
         this.eventQueue = this.configService.get<string>("rmq.rmq_config.queue")
         this.requestQueue = this.configService.get<string>("rmq.rmq_config.requestQueue")
         this.replyQueue = this.configService.get<string>("rmq.rmq_config.replyQueue")
@@ -40,11 +42,11 @@ export class AppMessageBrocker implements IAppMessageBrocker {
     async sendMessage<T, K>(queue: string, message: T, messageId: string): Promise<boolean> {
         try {
             this.channel = await this.rmqService.createChannel([this.eventQueue, this.requestQueue, this.replyQueue])
-            var messageInfo: IMessageBrocker<T> = {
+            let messageInfo: IMessageBrocker<T> = {
                 data: message,
                 coorelationId: messageId,
             }
-            var sendResult = await this.rmqService.sendMessage(this.channel, queue, messageInfo)
+            let sendResult = await this.rmqService.sendMessage(this.channel, queue, messageInfo)
             return sendResult;
         } catch (ex) {
             console.log("error occured while sending message")
@@ -57,10 +59,10 @@ export class AppMessageBrocker implements IAppMessageBrocker {
     async sendMessageGetReply<T, K>(queue: string, messageInfo: IMessageBrocker<T>): Promise<K> {
         try {
             this.channel = await this.rmqService.createChannel([this.eventQueue, this.requestQueue, this.replyQueue])
-            var sendResult = await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo.replyQueue, messageInfo)
-            var reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
+            let sendResult = await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo.replyQueue, messageInfo)
+            let reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
             if (reply?.content) {
-                var response = reply.content.toString()
+                let response = reply.content.toString()
                 this.channel.ack(reply)
                 return JSON.parse(response) as K
             }
@@ -75,7 +77,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
     async publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string }): Promise<boolean> {
         try {
             this.channel = await this.rmqService.createChannel([this.eventQueue, this.requestQueue, this.replyQueue])
-            var messageInfo: IMessageBrocker<T> = {
+            let messageInfo: IMessageBrocker<T> = {
                 data: message,
                 routingKey: RoutingKey.CORE_SERVICE_EVENT,
                 exchange: topic,
@@ -83,7 +85,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
                 coorelationId: coorelationId,
                 exchangeType: ExchangeType.TOPIC,
             }
-            var sendResult = await this.rmqService.publishMessage(this.channel, messageInfo)
+            let sendResult = await this.rmqService.publishMessage(this.channel, messageInfo)
             return sendResult;
         } catch (ex) {
             console.log("error occured while sending message")
@@ -93,7 +95,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
     }
 
     generateAccessMessageToSendToAuthService(accesses: Access[], replyQueue: string): IMessageBrocker<Access[]> {
-        var messageInfo: IMessageBrocker<Access[]> = {
+        let messageInfo: IMessageBrocker<Access[]> = {
             data: accesses,
             coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
             replyQueue: replyQueue,
@@ -101,6 +103,12 @@ export class AppMessageBrocker implements IAppMessageBrocker {
             persistMessage: true,
         }
         return messageInfo;
+    }
+
+    async sendAccessRevokeMessageToAuthService(revokeAccessMetadata: RevokeAccessMetadata, correlationId: string, messageId: string): Promise<boolean> {
+        let revokePlatformServiceMessage = new MessageBrockerMsgBuilder().withData(revokeAccessMetadata).withCoorelationId(correlationId).withMessageId(messageId).build();
+        let result = await this.sendMessage(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, revokePlatformServiceMessage, correlationId)
+        return result;
     }
 
 

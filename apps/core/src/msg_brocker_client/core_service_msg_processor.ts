@@ -23,7 +23,7 @@ export class CoreServiceMessageProcessor implements IReceivedMessageProcessor {
                 let messageInfo = JSON.parse(messageResult.content.toString())
                 if (messageResult.properties.correlationId == SubscriptionServiceMessageType.PLATFORM_SUBSCRIPTION_CREATED_EVENT) {
                     let subscriptionResponse = messageInfo as SubscriptionResponse
-                    var businesResponse = await this.businessService.handleUpdateBusienssRegistrationToPaymentStageEvent(subscriptionResponse);
+                    var businesResponse = await this.businessService.handleUpdateBusienssSubscriptionEvent(subscriptionResponse);
                     canAckMessage = businesResponse.isSafeErrorIfExist();
                 }
             }

@@ -8,7 +8,7 @@ export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
     updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business>;
-    updatedBusinessRegistrationStage(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }?: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
+    updatedBusinessSubscriptionInfo(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }?: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
     getProductBusiness(productId: string): Promise<Business>;
     getBusinessInfoForStaff(staffId: string): Promise<Business>;
 
@@ -52,15 +52,13 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async updatedBusinessRegistrationStage(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business> {
+    async updatedBusinessSubscriptionInfo(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business> {
         try {
             const businessInfo = await this.business.findUnique({ where: { id: businessId } });
             if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            if (stage == BusinessRegistrationStage.PAYMENT_STAGE) {  
-                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUSINESS_ALREADY_IN_PAYMENT_STAGE });
-            }
+
             let result
             if (subscriptionId && trialPeriodUsedServiceIds) {
                 result = await this.business.update({
@@ -68,6 +66,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
                         stage: stage,
                         isActive: canActivate,
                         trialPeriodUsedServiceIds: { push: trialPeriodUsedServiceIds },
+                        activeSubscriptionId: subscriptionId,
                         subscriptionIds: [subscriptionId, ...businessInfo.subscriptionIds]
                     }
                 });

@@ -72,6 +72,8 @@ export class Business extends BaseModel {
 
     @Field()
     staffs?: Staff[]
+    @Field()
+    activeSubscriptionId?: string
     @Field(types => [String])
     subscriptionIds?: string[]
     @Field(types => [String])

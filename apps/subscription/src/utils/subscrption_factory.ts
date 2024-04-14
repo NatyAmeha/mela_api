@@ -2,11 +2,16 @@ import { Inject, Injectable } from "@nestjs/common"
 import { PlatfromServiceSubscription, Subscription } from "../model/subscription.model"
 import { IPlatformServiceRepo, PlatformServiceRepository } from "../repo/platform_service.repo"
 import { isEmpty } from "class-validator"
-import { CreateSubscriptionInput } from "../dto/subscription.input"
+import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from "../dto/subscription.input"
 import { RequestValidationException } from "@app/common/errors/request_validation_exception"
 import { SubscriptionType } from "../model/subscription_type.enum"
 import { ISubscritpionRepository, SubscriptionRepository } from "../repo/subscription.repository"
 import { SubscriptionResponse } from "../model/subscription.response"
+import { SubscriptionUpgradeInput } from "../dto/update_subscription.input"
+import { Customization, PlatformService } from "../model/platform_service.model"
+import { CurrentSubscriptionUpgradeResponse, DowngradePlatformSubscriptionDecorator, SubscriptionUpgradeResponse, UpgradePlatformServiesSubscriptionDecorator } from "../model/subscription_upgrade.response"
+import { LanguageKey } from "@app/common/model/localized_model"
+
 
 @Injectable()
 export class SubscriptionFactory {
@@ -25,24 +30,28 @@ export class SubscriptionFactory {
 }
 
 export interface ISubscriptionOption {
-    createSubscriptionInfo(subscriptionInput: CreateSubscriptionInput): Promise<SubscriptionResponse>
+    createSubscriptionInfo(subscriptionInput: CreateSubscriptionInput, totalPrice: number): Promise<SubscriptionResponse>
+    createSubscriptionInfoFromSubscriptionUpgradeInfo(planInfo: SubscriptionUpgradeResponse): Promise<SubscriptionResponse>
+    getSubscriptionUpgradeInfo(subscriiptionInfo: Subscription, platformServices: PlatformService[], subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse>
 }
 
 @Injectable()
 export class PlatformSubscriptionOption implements ISubscriptionOption {
-    constructor(@Inject(PlatformServiceRepository.InjectName) private platformServiceRepo: IPlatformServiceRepo) {
+    constructor(
+        @Inject(PlatformServiceRepository.InjectName) private platformServiceRepo: IPlatformServiceRepo,
+    ) {
 
     }
-    async createSubscriptionInfo(subscriptionInput: CreateSubscriptionInput): Promise<SubscriptionResponse> {
+    async createSubscriptionInfo(subscriptionInput: CreateSubscriptionInput, totalPrice: number): Promise<SubscriptionResponse> {
         if (!subscriptionInput.selectedPlatformServices || isEmpty(subscriptionInput.selectedPlatformServices)) {
             throw new RequestValidationException({ message: "platform service must be selected" })
         }
-        var startDate = new Date(Date.now())
+        let startDate = new Date(Date.now())
 
-        var serviceSubscriptionInfo = await Promise.all(subscriptionInput.selectedPlatformServices.map(async service => {
-            var serviceInfo = await this.platformServiceRepo.getPlatformService(service.serviceId)
+        let serviceSubscriptionInfo = await Promise.all(subscriptionInput.selectedPlatformServices.map(async service => {
+            let serviceInfo = await this.platformServiceRepo.getPlatformService(service.serviceId)
             if (serviceInfo) {
-                var endDate = new Date(Date.now())
+                let endDate = new Date(Date.now())
                 endDate.setDate(endDate.getDate() + serviceInfo.duration)
                 return <PlatfromServiceSubscription>{
                     serviceId: serviceInfo.id,
@@ -54,9 +63,10 @@ export class PlatformSubscriptionOption implements ISubscriptionOption {
                 }
             }
         }))
-        var subscriptionInfo = new Subscription({
+        let subscriptionInfo = new Subscription({
             type: SubscriptionType.PLATFORM,
             owner: subscriptionInput.owner,
+            amountPaid: totalPrice,
             platformServices: serviceSubscriptionInfo,
             isActive: false
         })
@@ -66,8 +76,31 @@ export class PlatformSubscriptionOption implements ISubscriptionOption {
             createdSubscription: subscriptionInfo,
             platformServicehavingFreeTrial: serviceIdsHavingTrialPeriod
         });
-
     }
+
+    async createSubscriptionInfoFromSubscriptionUpgradeInfo(upgradeInfo: SubscriptionUpgradeResponse): Promise<SubscriptionResponse> {
+        let selectedPlatfromService = upgradeInfo.addedPlatformServices.map(service => {
+            let selectedCustomizationFromPlatformService = service.customizationCategories.map(category => category.customizations).flat()
+            return new CreatePlatformServiceSubscriptionInput({
+                serviceId: service.id,
+                serviceName: service.name.find(name => name?.key == LanguageKey.ENGLISH).value ?? "",
+                selectedCustomizationId: selectedCustomizationFromPlatformService.map(customization => customization.id)
+            })
+        })
+        let subscriptionInput = new CreateSubscriptionInput({ selectedPlatformServices: selectedPlatfromService, type: SubscriptionType.PLATFORM, owner: upgradeInfo.owner })
+        let subscriptionResult = await this.createSubscriptionInfo(subscriptionInput, upgradeInfo.price)
+        return subscriptionResult
+    }
+
+
+    async getSubscriptionUpgradeInfo(subscriiptionInfo: Subscription, platformServices: PlatformService[], subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse> {
+        let baseSubscriptionUpgrade = new CurrentSubscriptionUpgradeResponse({});
+        let upgradeSubscriptionDecorator = new UpgradePlatformServiesSubscriptionDecorator(baseSubscriptionUpgrade)
+        let downgradePlatformSubscriptionDecorator = new DowngradePlatformSubscriptionDecorator(upgradeSubscriptionDecorator)
+        let result = downgradePlatformSubscriptionDecorator.getSubscriptionUpgradeInfo(subscriiptionInfo, platformServices, subscriptionInput)
+        return result
+    }
+
 }
 
 @Injectable()
@@ -75,7 +108,7 @@ export class BusinessSubscriptionOption implements ISubscriptionOption {
     constructor(@Inject(SubscriptionRepository.InjectName) private subscriptionRepo: ISubscritpionRepository) {
 
     }
-    async createSubscriptionInfo(subscriptionInput: CreateSubscriptionInput): Promise<SubscriptionResponse> {
+    async createSubscriptionInfo(subscriptionInput: CreateSubscriptionInput, totalPrice: number): Promise<SubscriptionResponse> {
         let plan = await this.subscriptionRepo.getSubscriptionPlan(subscriptionInput.subscriptioinPlanId);
         let subscriptionInfo = subscriptionInput.getSubscriptionInfoFromPlan(plan);
         let activeSubscription = await this.subscriptionRepo.getActiveSubscriptions(plan.id, plan.owner);
@@ -95,5 +128,13 @@ export class BusinessSubscriptionOption implements ISubscriptionOption {
                 plan: plan
             }
         }
+    }
+
+    async getSubscriptionUpgradeInfo(subscriiptionInfo: Subscription, platformServices: PlatformService[], subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse> {
+        return { success: false, price: 0, owner: "" }
+    }
+
+    async createSubscriptionInfoFromSubscriptionUpgradeInfo(planInfo: SubscriptionUpgradeResponse): Promise<SubscriptionResponse> {
+        return new SubscriptionResponse({ success: false, message: "Not implemented yet" })
     }
 }

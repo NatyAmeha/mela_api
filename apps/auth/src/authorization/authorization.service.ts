@@ -35,5 +35,10 @@ export class AuthorizationService {
         return result;
     }
 
+    async revokePlatformServiceAccessPermissionFromBusiness(businessId: string, accessId: string): Promise<AccessResponse> {
+        let result = await this.authorizationRepo.revokePlatformServiceAccessPermissions(businessId);
+        return result;
+    }
+
 
 }

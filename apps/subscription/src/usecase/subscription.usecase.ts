@@ -10,6 +10,8 @@ import { IPlatformServiceRepo, PlatformServiceRepository } from '../repo/platfor
 import { SubscriptionHelper } from '../utils/subscription.helper';
 import { ISubscriptionOption, SubscriptionFactory } from '../utils/subscrption_factory';
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
+import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
+import { SubscriptionUpgradeResponse } from '../model/subscription_upgrade.response';
 
 @Injectable()
 export class SubscriptionService {
@@ -17,7 +19,6 @@ export class SubscriptionService {
     @Inject(SubscriptionRepository.InjectName) private subscriptionRepo: ISubscritpionRepository,
     @Inject(PlatformServiceRepository.InjectName) private platformServcieRepo: IPlatformServiceRepo,
     private subscriptionFactory: SubscriptionFactory,
-    private subscriptionHelper: SubscriptionHelper,
   ) {
 
   }
@@ -60,7 +61,7 @@ export class SubscriptionService {
   }
 
   async subscribeToPlan(info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
-    let response = await this.subscriptionFactory.create(info.type).createSubscriptionInfo(info);
+    let response = await this.subscriptionFactory.create(info.type).createSubscriptionInfo(info, 250);
     if (response.success) {
       let saveSubscriptionResult = await this.subscriptionRepo.createSubscription(response.createdSubscription)
       response.createdSubscription = saveSubscriptionResult;
@@ -73,11 +74,11 @@ export class SubscriptionService {
 
   async addPlatformServiceToSubscription(subscriptionId: string, subscriptionInfo: CreatePlatformServiceSubscriptionInput[]): Promise<SubscriptionResponse> {
     let newPlatformServiceInfo = await Promise.all(subscriptionInfo.map(async info => {
-      var input = new CreatePlatformServiceSubscriptionInput({ ...info })
+      let input = new CreatePlatformServiceSubscriptionInput({ ...info })
       return await input.generatePlatformServiceSubscriptionInfo(this.platformServcieRepo)
     }))
     let existingSubscriptionInfo = await this.subscriptionRepo.getSubscriptionInfo(subscriptionId)
-    var existingPlatformServiceInSubscription = existingSubscriptionInfo.getPlatformServiceAlreadyInSubscriptioin(newPlatformServiceInfo)
+    let existingPlatformServiceInSubscription = existingSubscriptionInfo.getPlatformServiceAlreadyInSubscriptioin(newPlatformServiceInfo)
     if (existingPlatformServiceInSubscription.length > 0) {
       return <SubscriptionResponse>{
         success: false,
@@ -91,6 +92,27 @@ export class SubscriptionService {
       success: true,
       createdSubscription: { ...existingSubscriptionInfo, platformServices: [...existingSubscriptionInfo.platformServices, ...newPlatformServiceInfo] },
       addedPlatformServices: newPlatformServiceInfo
+    }
+  }
+
+  async getSubscriptionUpgradeInfo(subscriptionId: string, subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse> {
+    let subscriptionInfo = await this.subscriptionRepo.getSubscriptionInfo(subscriptionId)
+    let platformServices = await this.platformServcieRepo.getAllPlatformServices();
+    let subscriptionOption = this.subscriptionFactory.create(subscriptionInfo.type);
+    let result = await subscriptionOption.getSubscriptionUpgradeInfo(subscriptionInfo, platformServices, subscriptionInput)
+    return result;
+  }
+
+  async renewSubscription(subscriptionId: string, subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionResponse> {
+    let subscriptionUpgradeInfo = await this.getSubscriptionUpgradeInfo(subscriptionId, subscriptionInput)
+    let newSubscriptionInfo = await this.subscriptionFactory.create(SubscriptionType.PLATFORM).createSubscriptionInfoFromSubscriptionUpgradeInfo(subscriptionUpgradeInfo)
+    if (newSubscriptionInfo.success) {
+      let saveSubscriptionResult = await this.subscriptionRepo.createSubscription(newSubscriptionInfo.createdSubscription)
+      newSubscriptionInfo.createdSubscription = saveSubscriptionResult;
+      return newSubscriptionInfo
+    }
+    else {
+      throw new RequestValidationException({ message: newSubscriptionInfo.message, statusCode: 400 })
     }
   }
 

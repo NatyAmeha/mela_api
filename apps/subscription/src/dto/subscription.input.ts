@@ -15,6 +15,11 @@ export class CreateSubscriptionInput extends PickType(Subscription, ["owner", "t
     @IsNotEmpty()
     selectedPlatformServices?: CreatePlatformServiceSubscriptionInput[]
 
+    constructor(data: Partial<CreateSubscriptionInput>) {
+        super()
+        Object.assign(this, data)
+    }
+
     getSubscriptionInfoFromPlan(plan: SubscriptionPlan): Subscription {
         var startDate = new Date(Date.now())
         var endDate = new Date(Date.now())
@@ -68,5 +73,20 @@ export class CreatePlatformServiceSubscriptionInput extends PickType(PlatfromSer
         else {
             throw new RequestValidationException({ message: `Unable to get Platform service using this id ${this.serviceId}` })
         }
+    }
+}
+
+@InputType()
+export class UpdatePlatformSubscriptionInput {
+    @Field()
+    @IsUUID()
+    serviceId: string;
+
+    @Field(types => [String])
+    @IsArray()
+    @IsUUID()
+    selectedCustomizationId?: string[];
+    constructor(data: Partial<UpdatePlatformSubscriptionInput>) {
+        Object.assign(this, data)
     }
 }

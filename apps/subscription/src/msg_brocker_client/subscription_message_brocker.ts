@@ -1,8 +1,8 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Access } from "apps/auth/src/authorization/model/access.model";
+import { Access, AccessOwnerType } from "apps/auth/src/authorization/model/access.model";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
-import { SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
+import { AuthServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
 import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
@@ -11,6 +11,8 @@ import { SubscriptionResponse } from "../model/subscription.response";
 import { SubscriptionMsgProcessosor } from "./subscription_service_msg_processor";
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 import { Subscription } from "rxjs";
+import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
+import { RevokeAccessMetadata } from "apps/auth/src/authorization/model/revoke_access.metadata";
 
 export interface ISubscriptionMessageBrocker {
     createPlatformAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>>
@@ -44,6 +46,20 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
         let messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
         let reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;
+    }
+
+    async sendRevokePreviousPlatformAccessPermissionAndCreateNewAccessToAuthService(businessId: string, newBsinessAccess: Access[]): Promise<IMessageBrockerResponse<any>> {
+        // revoke previous access message
+        var revokeAccessCommand = new RevokeAccessMetadata({ ownerId: businessId, ownerType: AccessOwnerType.BUSINESS, permissionType: PermissionType.PLATFORM_PERMISSION })
+        let messageId = `${businessId}-${AuthServiceMessageType.REVOKE_PLATFORM_ACCESS_PERMISSION_FROM_BUSINESS}`
+        // will not wait for the reply
+        let sendResult = await this.sendAccessRevokeMessageToAuthService(revokeAccessCommand, AuthServiceMessageType.REVOKE_PLATFORM_ACCESS_PERMISSION_FROM_BUSINESS, messageId);
+        if (sendResult) {
+            // create new access
+            let createAccessResult = await this.sendPlatformAccessPermissionMessagetoAuthService(newBsinessAccess)
+            return createAccessResult;
+        }
+        return undefined
     }
 
     async sendSubscriptionCreatedEventToServices(subscriptionResponse: SubscriptionResponse,): Promise<boolean> {

@@ -1,12 +1,14 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { PlatformService } from "../model/platform_service.model";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
+import { PrismaException } from "@app/common/errors/prisma_exception";
 
 export interface IPlatformServiceRepo {
     createPlatformService(serviceInfo: PlatformService): Promise<PlatformService>
     findPlatfromServices(queryHelper: QueryHelper<PlatformService>): Promise<PlatformService[]>
     getPlatformService(platformServiceId: string): Promise<PlatformService | undefined>
+    getAllPlatformServices(): Promise<PlatformService[]>
 }
 @Injectable()
 export class PlatformServiceRepository extends PrismaClient implements IPlatformServiceRepo, OnModuleInit, OnModuleDestroy {
@@ -31,6 +33,15 @@ export class PlatformServiceRepository extends PrismaClient implements IPlatform
             return undefined
         }
         return new PlatformService({ ...result });
+    }
+
+    async getAllPlatformServices(): Promise<PlatformService[]> {
+        try {
+            var result = await this.platformService.findMany()
+            return result.map(service => new PlatformService({ ...service }))
+        } catch (error) {
+            throw new PrismaException({ source: "Get All platform service", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
+        }
     }
 
 

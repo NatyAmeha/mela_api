@@ -5,6 +5,7 @@ import { find, includes, map, pull, remove } from "lodash";
 import { PrismaClient } from "apps/auth/prisma/generated/prisma_auth_client";
 import { AccessResponse, AccessResponseBuilder } from "../model/acces.response";
 import { PrismaException } from "@app/common/errors/prisma_exception";
+import { PermissionType } from "../model/permission_type.enum";
 
 export interface IAuthorizationRepo {
     addPermissionAccess(accesses: Access[]): Promise<AccessResponse>;
@@ -13,6 +14,8 @@ export interface IAuthorizationRepo {
     removePermissionsFromAccess(accessId: string, permissionsId: string[]): Promise<boolean>
     getUserAllAccesses(userId: string): Promise<Access[]>
     getBusinessAllAccesses(businessId: string): Promise<Access[]>
+
+    revokePlatformServiceAccessPermissions(businessId: string,): Promise<AccessResponse>
 }
 
 export class AuthorizationRepo extends PrismaClient implements IAuthorizationRepo {
@@ -91,6 +94,16 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
             return accesses.map(access => new Access({ ...access }))
         } catch (error) {
             throw new PrismaException({ source: "Get Business All Accesses", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
+        }
+    }
+
+    async revokePlatformServiceAccessPermissions(businessId: string): Promise<AccessResponse> {
+        try {
+            let result = await this.access.deleteMany({ where: { owner: businessId, ownerType: AccessOwnerType.BUSINESS.toString(), permissionType: PermissionType.PLATFORM_PERMISSION } })
+            return new AccessResponseBuilder().withSuccess().build();
+        } catch (error) {
+            console.log("error", error)
+            return new AccessResponseBuilder().withError(error.message, 400);
         }
     }
 

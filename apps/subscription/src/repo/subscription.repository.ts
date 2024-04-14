@@ -35,6 +35,7 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
         }
         return new SubscriptionPlan({ ...createResult });
     }
+
     async updateSubscriptionPlanInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean> {
         var updateResult = await this.subscriptionPlan.update({
             where: { id: planId },

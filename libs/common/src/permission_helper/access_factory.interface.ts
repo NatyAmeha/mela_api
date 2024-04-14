@@ -10,7 +10,7 @@ export interface IAccessFactory {
 }
 
 export interface IAccessGenerator<T extends BaseModel> {
-    createDefaultAccess(data: T, role?: string): Promise<Access[]>
+    createAccess(data: T, role?: string): Promise<Access[]>
 }
 
 

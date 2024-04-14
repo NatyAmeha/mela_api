@@ -23,12 +23,13 @@ export class BusinessService {
         return await this.businessRepo.updateBusiness(businessId, data);
     }
 
-    async handleUpdateBusienssRegistrationToPaymentStageEvent(subscriptionInfo: SubscriptionResponse,): Promise<BusinessResponse> {
+    async handleUpdateBusienssSubscriptionEvent(subscriptionInfo: SubscriptionResponse,): Promise<BusinessResponse> {
         try {
             let businessId = subscriptionInfo.createdSubscription.owner
-            var updatedBusinessInfo = await this.businessRepo.updatedBusinessRegistrationStage(
+            var updatedBusinessInfo = await this.businessRepo.updatedBusinessSubscriptionInfo(
                 businessId, BusinessRegistrationStage.PAYMENT_STAGE,
                 {
+                    canActivate: false,
                     subscriptionId: subscriptionInfo.createdSubscription.id,
                     trialPeriodUsedServiceIds: subscriptionInfo.platformServicehavingFreeTrial
                 }
@@ -41,7 +42,7 @@ export class BusinessService {
 
 
     async updateBusinessRegistrationStage(businessId: string, stage: BusinessRegistrationStage): Promise<BusinessResponse> {
-        var result = await this.businessRepo.updatedBusinessRegistrationStage(businessId, stage, { canActivate: stage == BusinessRegistrationStage.COMPLETED ? true : false });
+        var result = await this.businessRepo.updatedBusinessSubscriptionInfo(businessId, stage, { canActivate: stage == BusinessRegistrationStage.COMPLETED ? true : false });
         return new BusinessResponse({ business: result, success: true });
     }
 

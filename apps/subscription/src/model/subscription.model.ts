@@ -1,5 +1,5 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { Field, ID, InputType, ObjectType } from "@nestjs/graphql";
+import { Field, Float, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { SubscriptionType } from "./subscription_type.enum";
 import { types } from "joi";
@@ -18,6 +18,8 @@ export class Subscription extends BaseModel {
     startDate: Date
     @Field(type => Date)
     endDate: Date
+    @Field(types => Float, { defaultValue: 0 })
+    amountPaid?: number
     @Field()
     subscriptioinPlanId?: string
     @Field()

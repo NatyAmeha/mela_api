@@ -7,7 +7,7 @@ import { LanguageKey } from "@app/common/model/localized_model";
 
 export class SubscriptionAccessGenerator implements IAccessGenerator<Subscription> {
     static injectName = "SubscriptionAccessGenerator";
-    async createDefaultAccess(subscriptionInfo: Subscription, role?: string): Promise<Access[]> {
+    async createAccess(subscriptionInfo: Subscription, role?: string): Promise<Access[]> {
         let accesses: Access[] = []
         switch (role) {
             case SubscriptionType.PLATFORM:
