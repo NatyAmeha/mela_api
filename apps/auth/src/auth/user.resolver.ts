@@ -2,7 +2,7 @@ import { Args, Int, Mutation, Parent, Query, ResolveField, Resolver } from "@nes
 import { User } from "./model/user.model";
 import { UseGuards } from "@nestjs/common";
 import { JwtGuard } from "./service/guard/jwt.gurad";
-import { CurrentUser } from "./service/guard/get_user_decorator";
+import { CurrentUser } from "../../../../libs/common/get_user_decorator";
 import { AuthService } from "./usecase/auth.service";
 import { UpdateUserInput } from "./dto/update_user.input";
 import { UserResponse } from "./dto/user.response";

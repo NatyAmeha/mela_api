@@ -17,6 +17,8 @@ import { AccessFactory, IAccessFactory } from "../../../../../libs/common/src/pe
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
 import { PermissionSelectionCriteria, RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
+import { CurrentUser } from "libs/common/get_user_decorator";
+import { User } from "apps/auth/prisma/generated/prisma_auth_client";
 
 
 @Resolver(of => Business)
@@ -68,6 +70,15 @@ export class BusinessResolver {
     async changeBusinessRegistrationStatus(@Args('businessId') businessId: string, @Args('stage', { type: () => BusinessRegistrationStage }) stage: BusinessRegistrationStage): Promise<BusinessResponse> {
         let result = await this.businessService.updateBusinessRegistrationStage(businessId, stage);
         return result;
+    }
+
+    @UseGuards(AuthzGuard)
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.READ }] })
+    @UseGuards(PermissionGuard)
+    @Query(returns => BusinessResponse)
+    async getUserBusinesses(@CurrentUser() userInfo: User): Promise<BusinessResponse> {
+        let response = await this.businessService.getUserOwnedBusinesses(userInfo.id);
+        return response;
     }
 
 

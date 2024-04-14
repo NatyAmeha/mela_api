@@ -10,7 +10,7 @@ import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { SecurityException } from '@app/common/errors/security_exception';
 import { AuthInfo } from './dto/auth_info.args';
 import { JwtGuard, JwtRefreshGuard } from './service/guard/jwt.gurad';
-import { CurrentUser } from './service/guard/get_user_decorator';
+import { CurrentUser } from '../../../../libs/common/get_user_decorator';
 import { UpdateUserInput } from './dto/update_user.input';
 import { boolean } from 'joi';
 

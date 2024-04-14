@@ -18,10 +18,10 @@ export class BasePermissionHelper implements IPermissionHelper {
 
     isPermissionInGrantedPermissions(grantedPermissions: Permission[], permissionInfo: RequestedPermissionInfo): boolean {
         var matchedPermission = grantedPermissions.filter((gp) => {
-            var rr = (gp.resourceType == permissionInfo.resourceType)
+            var hasAccess = (gp.resourceType == permissionInfo.resourceType)
                 && (gp.action == permissionInfo.action || gp.action == PERMISSIONACTION.ANY)
-                && (gp.resourceTarget == permissionInfo.resourceTarget)
-            return rr;
+                && (permissionInfo.resourceTarget != undefined ? gp.resourceTarget == permissionInfo.resourceTarget : true)
+            return hasAccess;
         });
         if (matchedPermission.length == 0) {
             return false;
@@ -32,6 +32,9 @@ export class BasePermissionHelper implements IPermissionHelper {
 
     isPermissionsGranted(userAccesses: Access[], permissionConfiguration: PermissionConfiguration): boolean {
         var grantedPermissions: Permission[] = [];
+        if (permissionConfiguration.selectionCriteria == null) {
+            permissionConfiguration.selectionCriteria = PermissionSelectionCriteria.ANY;
+        }
         userAccesses?.forEach(access => {
             grantedPermissions.push(...access.permissions)
         })
@@ -74,9 +77,7 @@ export class BasePermissionHelper implements IPermissionHelper {
         permissions.permissions.forEach(p => {
             p.resourceTarget = resourceTarget;
         })
-        if (permissions.selectionCriteria == null) {
-            permissions.selectionCriteria = PermissionSelectionCriteria.ANY;
-        }
+
         return permissions;
     }
 }

@@ -13,7 +13,7 @@ import { AppMsgQueues } from 'libs/rmq/constants';
 import { IMessageBrocker, MessageBrockerMsgBuilder } from 'libs/rmq/message_brocker';
 import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
 import { AuthzGuard } from 'libs/common/authorization.guard';
-import { CurrentUser } from 'apps/auth/src/auth/service/guard/get_user_decorator';
+import { CurrentUser } from 'libs/common/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
 import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
 import { Access, AppResources, DefaultRoles } from 'apps/auth/src/authorization/model/access.model';

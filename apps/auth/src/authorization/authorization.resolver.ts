@@ -1,6 +1,6 @@
 import { Args, Mutation, Resolver } from "@nestjs/graphql";
 import { Access, Permission } from "./model/access.model";
-import { CurrentUser } from "../auth/service/guard/get_user_decorator";
+import { CurrentUser } from "../../../../libs/common/get_user_decorator";
 import { User } from "../auth/model/user.model";
 import { CreateAccessInput } from "./dto/access.input";
 import { AuthorizationService } from "./authorization.service";

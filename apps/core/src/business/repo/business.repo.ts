@@ -4,6 +4,7 @@ import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
+import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
@@ -11,6 +12,7 @@ export interface IBusinessRepository {
     updatedBusinessSubscriptionInfo(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }?: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
     getProductBusiness(productId: string): Promise<Business>;
     getBusinessInfoForStaff(staffId: string): Promise<Business>;
+    getUserOwnedBusinesses(userId: string): Promise<BusinessResponse>;
 
 }
 
@@ -114,6 +116,19 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             return new Business({ ...business });
         } catch (error) {
             throw new PrismaException({ source: "Get business info for staff", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getUserOwnedBusinesses(userId: string): Promise<BusinessResponse> {
+        try {
+            const businesses = await this.business.findMany({ where: { creator: userId } });
+            let finalBusinessList = businesses.map(business => new Business({ ...business }));
+            return new BusinessResponseBuilder().withBusinesses(finalBusinessList).build();
+        } catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            throw new PrismaException({ source: "Get user owned businesses", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

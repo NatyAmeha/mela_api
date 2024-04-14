@@ -32,7 +32,6 @@ export class PermissionGuard implements CanActivate {
         }
         let resourceTarget = this.helper.getResourceTargetFromArgument(gql);
         let requiredPermissionWithResourceTarget = this.helper.addResourceTargetOnRequestedPermissions(requestedPermissionConfig, resourceTarget);
-
         return this.helper.isPermissionsGranted(permittedAccesses, requiredPermissionWithResourceTarget)
     }
 

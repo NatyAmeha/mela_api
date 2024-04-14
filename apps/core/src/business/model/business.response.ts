@@ -10,6 +10,8 @@ import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 export class BusinessResponse extends BaseResponse {
     @Field(type => Business)
     business?: Business;
+    @Field(type => [Business])
+    businesses?: Business[]
     @Field(type => [Product])
     products?: Product[]
     @Field(type => [Branch])
@@ -57,6 +59,12 @@ export class BusinessResponseBuilder {
     withBusiness(business: Business): BusinessResponseBuilder {
         this.response.success = true;
         this.response.business = business;
+        return this;
+    }
+
+    withBusinesses(businesses: Business[]): BusinessResponseBuilder {
+        this.response.success = true;
+        this.response.businesses = businesses;
         return this;
     }
 
