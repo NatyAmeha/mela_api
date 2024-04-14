@@ -34,8 +34,8 @@ import { StaffService } from './staff/staff.service';
       load: [configuration],
     }),
     RmqModule,
-    LoggerModule,
     CommonModule,
+    LoggerModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloFederationDriver,
       useFactory: () => {
@@ -72,7 +72,7 @@ import { StaffService } from './staff/staff.service';
     StaffResolver, StaffService,
 
     { provide: CoreServiceMessageProcessor.InjectName, useClass: CoreServiceMessageProcessor },
-    CoreServiceMsgBrockerClient
+    CoreServiceMsgBrockerClient,
   ],
   exports: []
 })

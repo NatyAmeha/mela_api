@@ -36,7 +36,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     async updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business> {
         try {
             const businessInfo = await this.business.findUnique({ where: { id: businessId } });
-            if (businessInfo) {
+            if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
             const { customers, branches, products, staffs, ...businessData } = updatedBusinessData;

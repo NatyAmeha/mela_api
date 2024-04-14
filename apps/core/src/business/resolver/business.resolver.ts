@@ -14,6 +14,9 @@ import { Access, AppResources, DefaultRoles } from "apps/auth/src/authorization/
 import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { AccessFactory, IAccessFactory } from "../../../../../libs/common/src/permission_helper/access_factory.interface";
+import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
+import { PermissionSelectionCriteria, RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
+import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 
 
 @Resolver(of => Business)
@@ -49,9 +52,13 @@ export class BusinessResolver {
         var response = new BusinessResponseBuilder().withBusiness(createdBusiness).build();
         return response;
     }
+
+
     @UseGuards(AuthzGuard)
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE }] })
+    @UseGuards(PermissionGuard)
     @Mutation(returns => BusinessResponse)
-    async updateBusinessInfo(@Args('businessId') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
+    async updateBusinessInfo(@Args('id') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
         var businessResult = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
         var response = new BusinessResponseBuilder().withBusiness(businessResult).build();
         return response;

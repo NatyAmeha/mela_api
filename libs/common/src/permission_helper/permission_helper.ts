@@ -14,6 +14,7 @@ export interface IPermissionHelper {
 @Injectable()
 export class BasePermissionHelper implements IPermissionHelper {
     static InjectName = "Base_Permission_Helper";
+    constructor() { }
 
     isPermissionInGrantedPermissions(grantedPermissions: Permission[], permissionInfo: RequestedPermissionInfo): boolean {
         var matchedPermission = grantedPermissions.filter((gp) => {
@@ -73,6 +74,9 @@ export class BasePermissionHelper implements IPermissionHelper {
         permissions.permissions.forEach(p => {
             p.resourceTarget = resourceTarget;
         })
+        if (permissions.selectionCriteria == null) {
+            permissions.selectionCriteria = PermissionSelectionCriteria.ANY;
+        }
         return permissions;
     }
 }

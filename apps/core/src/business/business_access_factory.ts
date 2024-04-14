@@ -1,8 +1,8 @@
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
-import { IAccessFactory, IAccessGenerator } from "../../../../libs/common/src/permission_helper/access_factory.interface";
 import { Business } from "./model/business.model";
 import { Access, AccessOwnerType, AppResources, DefaultRoles, Permission } from "apps/auth/src/authorization/model/access.model";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
+import { IAccessGenerator } from "@app/common/permission_helper/access_factory.interface";
 
 
 export class BusinessAccessGenerator implements IAccessGenerator<Business> {

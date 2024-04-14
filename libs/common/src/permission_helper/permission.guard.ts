@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Inject, Injectable, Scope, forwardRef } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { Observable } from "rxjs";
@@ -11,7 +11,7 @@ import { PermissionConfiguration, RequestedPermissionInfo } from "./require_perm
 @Injectable()
 export class PermissionGuard implements CanActivate {
     static PERMISSION_CONFIGURATION = Symbol('PERMISSION_CONFIGURATION');
-    constructor(private reflector: Reflector, private permissionHelper: BasePermissionHelper) {
+    constructor(private reflector: Reflector, @Inject(forwardRef(() => BasePermissionHelper)) protected helper: BasePermissionHelper) {
 
     }
 
@@ -30,10 +30,10 @@ export class PermissionGuard implements CanActivate {
         if (!requestedPermissionConfig) {
             throw new RequestValidationException({ message: "Access is not provided", statusCode: 400 })
         }
-        let resourceTarget = this.permissionHelper.getResourceTargetFromArgument(gql);
-        let requiredPermissionWithResourceTarget = this.permissionHelper.addResourceTargetOnRequestedPermissions(requestedPermissionConfig, resourceTarget);
+        let resourceTarget = this.helper.getResourceTargetFromArgument(gql);
+        let requiredPermissionWithResourceTarget = this.helper.addResourceTargetOnRequestedPermissions(requestedPermissionConfig, resourceTarget);
 
-        return this.permissionHelper.isPermissionsGranted(permittedAccesses, requiredPermissionWithResourceTarget)
+        return this.helper.isPermissionsGranted(permittedAccesses, requiredPermissionWithResourceTarget)
     }
 
 
