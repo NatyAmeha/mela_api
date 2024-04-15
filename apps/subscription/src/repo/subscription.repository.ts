@@ -3,7 +3,7 @@ import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { Subscription } from "../model/subscription.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
-import { SubscriptionResponse } from "../model/subscription.response";
+import { SubscriptionResponse, SubscriptionResponseBuilder } from "../model/subscription.response";
 import { PrismaClient } from '@prisma/client'
 
 
@@ -16,9 +16,16 @@ export interface ISubscritpionRepository {
 
     createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
     getSubscriptionInfo(id: string): Promise<Subscription>
+    getSubscriptions(queryInfo: QueryHelper<Subscription>): Promise<SubscriptionResponse>
+
+    ownerHasSubscription(ownerId: string, subsciptionId: string): Promise<boolean>
+
+
     getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
     updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean>
     isplatformServiceInSubscription(platformServiceId: string[]): Promise<boolean>
+
+
 }
 
 export class SubscriptionRepository extends PrismaClient implements ISubscritpionRepository, OnModuleInit, OnModuleDestroy {
@@ -102,6 +109,16 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
         return new Subscription({ ...result });
     }
 
+    async getSubscriptions(queryInfo: QueryHelper<Subscription>): Promise<SubscriptionResponse> {
+        var result = await this.subscription.findMany({ where: { ...queryInfo.query as any } })
+        if (!result) {
+            return new SubscriptionResponseBuilder().withError("Unable to find subscription fo").build()
+
+        }
+        var subscriptions = result.map(sub => new Subscription({ ...sub }))
+        return new SubscriptionResponseBuilder().withSubscriptions(subscriptions).build()
+    }
+
     async updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean> {
         var a = subscriptionInfo.subscriptioinPlanId;
         var updateResult = await this.subscription.update({ where: { id: id }, data: { ...subscriptionInfo } as any })
@@ -111,6 +128,12 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
     async isplatformServiceInSubscription(platformServiceId: string[]): Promise<boolean> {
         var result = await this.subscription.findFirst({ where: { platformServices: { some: { serviceId: { in: platformServiceId } } } } })
         return result.id != undefined
+    }
+
+
+    async ownerHasSubscription(owner: string, subsciptionId: string): Promise<boolean> {
+        var result = await this.subscription.findFirst({ where: { owner: owner, id: subsciptionId } })
+        return result?.id != undefined
     }
 
     async onModuleDestroy() {

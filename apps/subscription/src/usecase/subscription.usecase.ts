@@ -104,6 +104,10 @@ export class SubscriptionService {
   }
 
   async renewSubscription(subscriptionId: string, subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionResponse> {
+    let businessHasSubscription = await this.subscriptionRepo.ownerHasSubscription(subscriptionInput.businessId, subscriptionId)
+    if (!businessHasSubscription) {
+      throw new RequestValidationException({ message: "Business does not have subscription", statusCode: 400 })
+    }
     let subscriptionUpgradeInfo = await this.getSubscriptionUpgradeInfo(subscriptionId, subscriptionInput)
     let newSubscriptionInfo = await this.subscriptionFactory.create(SubscriptionType.PLATFORM).createSubscriptionInfoFromSubscriptionUpgradeInfo(subscriptionUpgradeInfo)
     if (newSubscriptionInfo.success) {

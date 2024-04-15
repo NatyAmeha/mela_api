@@ -16,7 +16,7 @@ import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'libs/common/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
 import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
-import { Access, AppResources, DefaultRoles } from 'apps/auth/src/authorization/model/access.model';
+import { Access, AppResources, DefaultRoles, Permission } from 'apps/auth/src/authorization/model/access.model';
 import { SubscriptionHelper } from '../utils/subscription.helper';
 import { IAccessGenerator } from '@app/common/permission_helper/access_factory.interface';
 import { SubscriptionAccessGenerator } from '../utils/subscription_access_generator';
@@ -25,6 +25,7 @@ import { PERMISSIONACTION } from '@app/common/permission_helper/permission_const
 import { PermissionGuard } from '@app/common/permission_helper/permission.guard';
 import { SubscriptionUpgradeResponse } from '../model/subscription_upgrade.response';
 import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
+import { AuthGuard } from '@nestjs/passport';
 
 
 
@@ -115,18 +116,27 @@ export class SubscriptionResolver {
     return subscriptionUpgradeResponse
   }
 
+  @UseGuards(AuthzGuard)
+  @RequiresPermission(
+    {
+      permissions: [
+        { resourceType: AppResources.PLATFORM_SERVICE_SUBSCRIPTION, action: PERMISSIONACTION.MANAGE },
+      ],
+    }
+  )
+  @UseGuards(PermissionGuard)
   @Mutation(returns => SubscriptionResponse)
   async renewBusienssPlatformSubscription(@Args("id") id: string, @Args("subscriptionUpdateInfo") data: SubscriptionUpgradeInput): Promise<SubscriptionResponse> {
     let subscriptionUpgradeResponse = await this.subscriptionService.renewSubscription(id, data);
     if (subscriptionUpgradeResponse.success) {
       //Send  Revoke  previous permission and create new access message to Auth service
       let newplatformServiceAccessesForBusiness = await this.subscriptionGenerator.createAccess(subscriptionUpgradeResponse.createdSubscription, SubscriptionType.PLATFORM);
-      let newAccessCreateResult = await this.subscriptionBroker.sendRevokePreviousPlatformAccessPermissionAndCreateNewAccessToAuthService(data.businessId, newplatformServiceAccessesForBusiness);
+      let newAccessCreateResult = await this.subscriptionBroker.sendAccessRenewalMessageToAuthService(data.businessId, newplatformServiceAccessesForBusiness);
       if (newAccessCreateResult.success) {
         // Sned subscription created event to core service to update business subscriptioni stage
         let sendResult = await this.subscriptionBroker.sendSubscriptionCreatedEventToServices(subscriptionUpgradeResponse)
       }
-      console.log("subscritpion status update", newAccessCreateResult, subscriptionUpgradeResponse)
+      console.log("subscritpion status update", newAccessCreateResult)
     }
     return subscriptionUpgradeResponse
   }

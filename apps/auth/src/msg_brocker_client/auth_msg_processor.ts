@@ -6,6 +6,7 @@ import { AuthServiceMessageType } from "libs/rmq/app_message_type";
 import { Access } from "../authorization/model/access.model";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Injectable } from "@nestjs/common";
+import { AccessQueryMetadata, AccessRenewalInfo } from "../authorization/model/revoke_access.metadata";
 
 @Injectable()
 export class AuthMsgProcessosor implements IReceivedMessageProcessor {
@@ -32,8 +33,15 @@ export class AuthMsgProcessosor implements IReceivedMessageProcessor {
                 }
 
                 else if (messageResult.properties.correlationId == AuthServiceMessageType.REVOKE_PLATFORM_ACCESS_PERMISSION_FROM_BUSINESS) {
-                    let accessRevokeResult = await this.authorizationService.revokePlatformServiceAccessPermissionFromBusiness(messageContent.businessId, messageContent.accessId)
+                    let revokeAccessMetadata = messageContent as AccessQueryMetadata
+                    let accessRevokeResult = await this.authorizationService.revokeAccesses(revokeAccessMetadata)
                     replyResponse.success = accessRevokeResult.isSafeErrorIfExist();
+                }
+                else if (messageResult.properties.correlationId == AuthServiceMessageType.REVOKE_PREVIOUS_PLATFORM_ACCESS_PERMISSION_AND_CREATE_NEW_ACCESS) {
+                    let accessRenewalInfo = messageContent as AccessRenewalInfo
+                    let revokeResult = await this.authorizationService.revokeAccesses(accessRenewalInfo.revokeAccessCommand)
+                    let createResult = await this.authorizationService.createAccess(accessRenewalInfo.newAccesses);
+                    replyResponse.success = createResult.isSafeErrorIfExist() && revokeResult.isSafeErrorIfExist();
                 }
             }
             if (canAckMessage) {

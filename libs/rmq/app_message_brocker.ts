@@ -7,7 +7,8 @@ import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rm
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { AuthServiceMessageType } from "./app_message_type";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
-import { RevokeAccessMetadata } from "apps/auth/src/authorization/model/revoke_access.metadata";
+import { AccessQueryMetadata, AccessRenewalInfo } from "apps/auth/src/authorization/model/revoke_access.metadata";
+import { IMessageBrockerResponse } from "./message_brocker.response";
 
 export interface IAppMessageBrocker {
     connectMessageBrocker(): Promise<void>
@@ -105,7 +106,17 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         return messageInfo;
     }
 
-    async sendAccessRevokeMessageToAuthService(revokeAccessMetadata: RevokeAccessMetadata, correlationId: string, messageId: string): Promise<boolean> {
+    async sendAccessRenewalMessageToAuthService(businessId: string, newBusinessAccess: Access[]): Promise<IMessageBrockerResponse<any>> {
+        // revoke previous access message
+        var revokeAccessCommand = new AccessQueryMetadata({ ownerId: businessId, ownerType: AccessOwnerType.BUSINESS, permissionType: PermissionType.PLATFORM_PERMISSION })
+        var messageContent: AccessRenewalInfo = { newAccesses: newBusinessAccess, revokeAccessCommand: revokeAccessCommand }
+        let messageId = `${businessId}-${AuthServiceMessageType.REVOKE_PREVIOUS_PLATFORM_ACCESS_PERMISSION_AND_CREATE_NEW_ACCESS}`
+        let messageInfo = new MessageBrockerMsgBuilder().withData(messageContent).withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withCoorelationId(AuthServiceMessageType.REVOKE_PREVIOUS_PLATFORM_ACCESS_PERMISSION_AND_CREATE_NEW_ACCESS).withMessageId(messageId).build()
+        let reply = await this.sendMessageGetReply<any, IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        return reply;
+    }
+
+    async sendAccessRevokeMessageToAuthService(revokeAccessMetadata: AccessQueryMetadata, correlationId: string, messageId: string): Promise<boolean> {
         let revokePlatformServiceMessage = new MessageBrockerMsgBuilder().withData(revokeAccessMetadata).withCoorelationId(correlationId).withMessageId(messageId).build();
         let result = await this.sendMessage(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, revokePlatformServiceMessage, correlationId)
         return result;

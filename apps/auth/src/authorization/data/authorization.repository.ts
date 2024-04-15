@@ -6,6 +6,7 @@ import { PrismaClient } from "apps/auth/prisma/generated/prisma_auth_client";
 import { AccessResponse, AccessResponseBuilder } from "../model/acces.response";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { PermissionType } from "../model/permission_type.enum";
+import { AccessQueryMetadata } from "../model/revoke_access.metadata";
 
 export interface IAuthorizationRepo {
     addPermissionAccess(accesses: Access[]): Promise<AccessResponse>;
@@ -15,7 +16,8 @@ export interface IAuthorizationRepo {
     getUserAllAccesses(userId: string): Promise<Access[]>
     getBusinessAllAccesses(businessId: string): Promise<Access[]>
 
-    revokePlatformServiceAccessPermissions(businessId: string,): Promise<AccessResponse>
+    getAccesses(accessMetadata: AccessQueryMetadata): Promise<AccessResponse>
+    revokeAccessPermissions(revokAccessMetaData: AccessQueryMetadata): Promise<AccessResponse>
 }
 
 export class AuthorizationRepo extends PrismaClient implements IAuthorizationRepo {
@@ -97,10 +99,19 @@ export class AuthorizationRepo extends PrismaClient implements IAuthorizationRep
         }
     }
 
-    async revokePlatformServiceAccessPermissions(businessId: string): Promise<AccessResponse> {
+    async getAccesses(accessMetadata: AccessQueryMetadata): Promise<AccessResponse> {
         try {
-            let result = await this.access.deleteMany({ where: { owner: businessId, ownerType: AccessOwnerType.BUSINESS.toString(), permissionType: PermissionType.PLATFORM_PERMISSION } })
-            return new AccessResponseBuilder().withSuccess().build();
+            let accesses = await this.access.findMany({ where: { owner: accessMetadata.ownerId, ownerType: accessMetadata.ownerType.toString(), permissionType: accessMetadata.permissionType.toString() } })
+            return new AccessResponseBuilder().withAccesses(accesses.map(access => new Access({ ...access }))).build();
+        } catch (error) {
+            return new AccessResponseBuilder().withError(error.message, 400);
+        }
+    }
+
+    async revokeAccessPermissions(revokAccessMetaData: AccessQueryMetadata): Promise<AccessResponse> {
+        try {
+            let deleteResult = await this.access.deleteMany({ where: { owner: revokAccessMetaData.ownerId, ownerType: revokAccessMetaData.ownerType, permissionType: revokAccessMetaData.permissionType } })
+            return new AccessResponseBuilder().withDeleteAccessInfo(deleteResult.count).build();
         } catch (error) {
             console.log("error", error)
             return new AccessResponseBuilder().withError(error.message, 400);

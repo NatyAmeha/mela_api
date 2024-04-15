@@ -43,6 +43,7 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
 
     async listenAuthServiceRequestAndReply() {
         this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (messageResult) => {
+            console.log("Reply message received in Auth service", messageResult.content.toString());
             let replyResponse: IMessageBrockerResponse<any> = { success: false }
             let replyCoorelationId = messageResult.properties.correlationId;
             replyResponse.success = await this.authMessageProcessor.processMessage(this.channel, messageResult)

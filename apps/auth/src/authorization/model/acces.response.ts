@@ -1,10 +1,13 @@
-import { Field } from "@nestjs/graphql";
+import { Field, Int, ObjectType } from "@nestjs/graphql";
 import { Access } from "./access.model";
 import { BaseResponse } from "@app/common/model/base.response";
 
+@ObjectType()
 export class AccessResponse extends BaseResponse {
     @Field(type => [Access])
     accesses?: Access[]
+    @Field(types => Int)
+    deleteAccessCount?: number
 
     isSafeErrorIfExist(): boolean {
         if (this.success == true) {
@@ -36,7 +39,12 @@ export class AccessResponseBuilder {
         this.accessResponse.success = false;
         this.accessResponse.message = message;
         return this.accessResponse;
+    }
 
+    withDeleteAccessInfo(deleteAccessCount: number): AccessResponseBuilder {
+        this.accessResponse.success = true;
+        this.accessResponse.deleteAccessCount = deleteAccessCount;
+        return this;
     }
 
     withMessage(message: string): AccessResponseBuilder {

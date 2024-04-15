@@ -12,7 +12,7 @@ import { SubscriptionMsgProcessosor } from "./subscription_service_msg_processor
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 import { Subscription } from "rxjs";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
-import { RevokeAccessMetadata } from "apps/auth/src/authorization/model/revoke_access.metadata";
+import { AccessQueryMetadata, AccessRenewalInfo as AccessRenewalInfo } from "apps/auth/src/authorization/model/revoke_access.metadata";
 
 export interface ISubscriptionMessageBrocker {
     createPlatformAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>>
@@ -46,20 +46,6 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
         let messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
         let reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;
-    }
-
-    async sendRevokePreviousPlatformAccessPermissionAndCreateNewAccessToAuthService(businessId: string, newBsinessAccess: Access[]): Promise<IMessageBrockerResponse<any>> {
-        // revoke previous access message
-        var revokeAccessCommand = new RevokeAccessMetadata({ ownerId: businessId, ownerType: AccessOwnerType.BUSINESS, permissionType: PermissionType.PLATFORM_PERMISSION })
-        let messageId = `${businessId}-${AuthServiceMessageType.REVOKE_PLATFORM_ACCESS_PERMISSION_FROM_BUSINESS}`
-        // will not wait for the reply
-        let sendResult = await this.sendAccessRevokeMessageToAuthService(revokeAccessCommand, AuthServiceMessageType.REVOKE_PLATFORM_ACCESS_PERMISSION_FROM_BUSINESS, messageId);
-        if (sendResult) {
-            // create new access
-            let createAccessResult = await this.sendPlatformAccessPermissionMessagetoAuthService(newBsinessAccess)
-            return createAccessResult;
-        }
-        return undefined
     }
 
     async sendSubscriptionCreatedEventToServices(subscriptionResponse: SubscriptionResponse,): Promise<boolean> {

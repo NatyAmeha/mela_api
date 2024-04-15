@@ -110,6 +110,7 @@ export enum AppResources {
     CUSTOMER = 'CUSTOMER',
     USER = 'USER',
     PLATFORM_SERVICES = 'PLATFORM_SERVICES',
+    PLATFORM_SERVICE_SUBSCRIPTION = 'PLATFORM-SERVICE_SUBSCRIPTION',
 }
 
 export enum DefaultRoles {
