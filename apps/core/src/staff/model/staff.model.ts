@@ -3,7 +3,6 @@ import { Branch } from '../../branch/model/branch.model';
 import { Business } from '../../business/model/business.model';
 
 @ObjectType()
-@InputType('StaffInput')
 export class Staff {
     @Field(types => ID)
     id?: string;
@@ -37,4 +36,21 @@ export class Staff {
     constructor(partial?: Partial<Staff>) {
         Object.assign(this, partial);
     }
+}
+
+@InputType()
+export class StaffInput {
+    @Field()
+    name: string;
+
+    @Field(types => Int)
+    pin: number;
+
+    @Field(types => [String])
+    roles: string[];
+    @Field()
+    branchId?: string;
+
+    @Field()
+    businessId?: string;
 }

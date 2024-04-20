@@ -5,6 +5,17 @@ import { AccountStatus } from "./account_status.enum";
 import { JwtPayload } from "./jwt_payload.model";
 import { Access } from "../../authorization/model/access.model";
 
+export enum AccountType {
+    USER = "USER",
+    ADMIN = "ADMIN",
+    SUPERADMIN = "SUPPERADMIN"
+}
+
+registerEnumType(AccountType, {
+    name: 'AccountType',
+    description: 'The account type'
+});
+
 @ObjectType()
 export class User extends BaseModel {
     @Field(type => ID)
@@ -15,6 +26,7 @@ export class User extends BaseModel {
     phoneNumber?: string
     @Field()
     username?: string
+    @Field()
     isUsernamePlaceholder?: boolean
     @Field()
     password?: string
@@ -38,6 +50,8 @@ export class User extends BaseModel {
     accesses?: Access[]
     @Field(type => [String])
     accessIds?: string[]
+    @Field(type => AccountType, { defaultValue: AccountType.USER })
+    accountType: string
 
 
 
@@ -70,3 +84,5 @@ export class User extends BaseModel {
         }
     }
 }
+
+

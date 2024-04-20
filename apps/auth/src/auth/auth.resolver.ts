@@ -1,15 +1,16 @@
 import { Controller, Get, Logger, UseFilters, UseGuards } from '@nestjs/common';
 import { AuthService } from './usecase/auth.service';
 import { Args, InputType, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { User } from './model/user.model';
+import { AccountType, User } from './model/user.model';
 
-import { SignupInput } from './dto/signup.input';
+import { AdminSignUpInput, SignupInput } from './dto/signup.input';
 import { AuthResponse } from './model/auth.response';
 import { AppException } from '@app/common/errors/app_exception.model';
 import { JwtGuard, JwtRefreshGuard } from './service/guard/jwt.gurad';
 import { CurrentUser } from '../../../../libs/common/get_user_decorator';
 import { UpdateUserInput } from './dto/update_user.input';
 import { boolean } from 'joi';
+import { AuthzGuard, Role, RoleGuard } from 'libs/common/authorization.guard';
 
 @Resolver(of => User)
 export class AuthResolver {
@@ -23,6 +24,16 @@ export class AuthResolver {
   @Mutation(returns => AuthResponse)
   async createUserAccountUsingEmailPassword(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse | AppException> {
     var userInfo = User.createUserFromSignupInfo(signupInfo);
+    var result = await this.authService.createUserAccountUsingEmailPassword(userInfo);
+    return result;
+  }
+
+  // @UseGuards(AuthzGuard)
+  @Role(AccountType.ADMIN)
+  @UseGuards(RoleGuard)
+  @Mutation(returns => AuthResponse)
+  async createAdminAccountUsingEmailPassword(@Args("signup") signupInfo: AdminSignUpInput): Promise<AuthResponse | AppException> {
+    var userInfo = signupInfo.createUserFromSignupInfo();
     var result = await this.authService.createUserAccountUsingEmailPassword(userInfo);
     return result;
   }

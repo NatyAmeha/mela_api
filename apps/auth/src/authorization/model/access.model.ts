@@ -5,7 +5,7 @@ import { IsArray, IsOptional } from "class-validator";
 import { CreatePermissionInput, PermissionGroupInput } from "../dto/permission.input";
 import { PermissionType } from "./permission_type.enum";
 import { PERMISSIONACTION, PermissionEffectType, PermissionResourceType } from "@app/common/permission_helper/permission_constants";
-import { AuthLocalizedField } from "./auth_localized_field.model";
+import { LocalizedData } from "@app/common/model/localized_model";
 
 
 @ObjectType()
@@ -14,8 +14,8 @@ import { AuthLocalizedField } from "./auth_localized_field.model";
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
-    @Field(type => [AuthLocalizedField])
-    name?: AuthLocalizedField[]
+    @Field(type => [LocalizedData])
+    name?: LocalizedData[]
     @Field()
     resourceId?: string
     @Field()
@@ -53,8 +53,8 @@ export class Access extends BaseModel {
 export class Permission {
     @Field(types => ID)
     id?: string
-    @Field(types => [AuthLocalizedField])
-    name?: AuthLocalizedField[]
+    @Field(types => [LocalizedData])
+    name?: LocalizedData[]
     @Field()
     action: string = PERMISSIONACTION.ANY.toString()
     @Field()
@@ -85,14 +85,14 @@ export class PermissionGroup {
     id: string
     @Field()
     key: string
-    @Field(type => [AuthLocalizedField])
-    name: AuthLocalizedField[]
+    @Field(type => [LocalizedData])
+    name: LocalizedData[]
     constructor(data: Partial<PermissionGroup>) {
         Object.assign(this, data)
     }
 
     static getPermissionGroupFromInput(inputs: PermissionGroupInput[]): PermissionGroup[] {
-        return inputs.map(grp => new PermissionGroup({ name: grp.name as AuthLocalizedField[], key: grp.key }))
+        return inputs.map(grp => new PermissionGroup({ name: grp.name as LocalizedData[], key: grp.key }))
     }
 }
 
@@ -107,10 +107,28 @@ export enum AppResources {
     BUSINESS = 'BUSINESS',
     BRANCH = 'BRANCH',
     STAFF = 'STAFF',
+    PRODUCT = 'PRODUCT',
     CUSTOMER = 'CUSTOMER',
     USER = 'USER',
     PLATFORM_SERVICES = 'PLATFORM_SERVICES',
-    PLATFORM_SERVICE_SUBSCRIPTION = 'PLATFORM-SERVICE_SUBSCRIPTION',
+    PLATFORM_SERVICE_SUBSCRIPTION = 'PLATFORM_SERVICE_SUBSCRIPTION',
+}
+
+export enum AppResourceAction {
+    // Product
+
+
+
+    // Branchh
+    CREATE_BRANCH = 'CREATE_BRANCH',
+
+}
+
+export enum ProductResourceAction {
+    CREATE_ONE_PRODUCTS = "CREATE_1_PRODUCTS",
+    CREATE_HUNDRED_PRODUCTS = 'CREATE_100_PRODUCTS',
+    CREATE_500_PRODUCT = "CREATE_500_PRODUCT",
+    CREATE_THOUSAND_PRODUCTS = "CREATE_1000_PRODUCTS",
 }
 
 export enum DefaultRoles {

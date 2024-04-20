@@ -1,9 +1,8 @@
-import { ObjectType, Field, ID, InputType } from "@nestjs/graphql";
+import { Field, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { Expose, Type } from "class-transformer";
 import { types } from "joi";
 
 @ObjectType()
-@InputType("GalleryInput")
 export class Gallery {
     @Field({ description: "The logo image of the gallery" })
     logoImage?: string;
@@ -21,9 +20,23 @@ export class Gallery {
         Object.assign(this, partial);
     }
 }
+@InputType()
+export class GalleryInput extends Gallery {
+    @Field({ description: "The logo image of the gallery" })
+    logoImage?: string;
+
+    @Field({ description: "The cover image of the gallery" })
+    coverImage?: string;
+
+    @Field(types => [GalleryDataInput], { description: "The images in the gallery" })
+    @Type(() => GalleryDataInput)
+    images?: GalleryDataInput[];
+
+    @Field(types => [GalleryDataInput], { description: "The videos in the gallery" })
+    videos?: GalleryDataInput[];
+}
 
 @ObjectType()
-@InputType("GalleryDataInput")
 class GalleryData {
     @Field(types => ID)
     url: string;
@@ -34,5 +47,14 @@ class GalleryData {
     constructor(partial?: Partial<GalleryData>) {
         Object.assign(this, partial);
     }
+}
+
+@InputType()
+class GalleryDataInput {
+    @Field(types => ID)
+    url: string;
+
+    @Field()
+    featured?: boolean;
 }
 

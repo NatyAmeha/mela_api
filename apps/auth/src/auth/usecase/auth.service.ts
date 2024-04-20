@@ -1,7 +1,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { IUserRepository, UserRepository } from '../data/repo/user.repository';
-import { User } from '../model/user.model';
+import { AccountType, User } from '../model/user.model';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ACCESS_TOKEN, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN, REFRESH_TOKEN_EXPIRES_IN } from 'apps/auth/auth_configuration';
@@ -23,8 +23,8 @@ export class AuthService {
     private configService: ConfigService
   ) { }
   async createUserAccountUsingEmailPassword(userInfo: User) {
-    var registredUser = await this.emailAuthProvider.createAccount(userInfo)
-    var authResponse = await this.tokenGeneratorHelper(registredUser)
+    let registredUser = await this.emailAuthProvider.createAccount(userInfo)
+    let authResponse = await this.tokenGeneratorHelper(registredUser)
     await this.userRepo.updateUserInfo(registredUser.id, { refreshToken: authResponse.refreshToken })
     return {
       ...authResponse,
@@ -33,9 +33,9 @@ export class AuthService {
   }
 
   async authenticateUsingEmail(authInfo: AuthInfo): Promise<AuthResponse> {
-    var authenticatedUser = await this.emailAuthProvider.authenticate(authInfo);
+    let authenticatedUser = await this.emailAuthProvider.authenticate(authInfo);
     // generate tokens
-    var authResponse = await this.tokenGeneratorHelper(authenticatedUser)
+    let authResponse = await this.tokenGeneratorHelper(authenticatedUser)
     await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: authResponse.refreshToken })
     // response
     return {
@@ -45,12 +45,12 @@ export class AuthService {
   }
 
   async registerOrAuthenticateUsingPhoneNumber(userInfo: User): Promise<AuthResponse> {
-    var authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
-    var authenticatedUserResult: User;
+    let authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
+    let authenticatedUserResult: User;
     //register user by phone first and it user exist authenticate it
     try {
       authenticatedUserResult = await this.phoneAuthProvider.createAccount(userInfo)
-      var authResponse = await this.tokenGeneratorHelper(authenticatedUserResult);
+      let authResponse = await this.tokenGeneratorHelper(authenticatedUserResult);
       await this.userRepo.updateUserInfo(authenticatedUserResult.id, { refreshToken: authResponse.refreshToken })
       return {
         ...authResponse,
@@ -59,7 +59,7 @@ export class AuthService {
     } catch (error) {
       if (ExceptionHelper.isUserRegisteredBeforeException(error)) {
         authenticatedUserResult = await this.phoneAuthProvider.authenticate({ phoneNumber: userInfo.phoneNumber });
-        var authResponse = await this.tokenGeneratorHelper(authenticatedUserResult)
+        let authResponse = await this.tokenGeneratorHelper(authenticatedUserResult)
         await this.userRepo.updateUserInfo(authenticatedUserResult.id, { refreshToken: authResponse.refreshToken })
         return {
           ...authResponse,
@@ -73,13 +73,13 @@ export class AuthService {
   }
 
   async updateUserInfo(userId: string, updateUserInfo: User): Promise<boolean> {
-    var result = await this.userRepo.updateUserInfo(userId, updateUserInfo)
+    let result = await this.userRepo.updateUserInfo(userId, updateUserInfo)
     return result
   }
 
   async refreshToken(userInfo: User): Promise<AuthResponse> {
-    var authResponse = await this.tokenGeneratorHelper(userInfo)
-    var updateTokenResult = await this.userRepo.updateUserInfo(userInfo.id, { refreshToken: authResponse.refreshToken })
+    let authResponse = await this.tokenGeneratorHelper(userInfo)
+    let updateTokenResult = await this.userRepo.updateUserInfo(userInfo.id, { refreshToken: authResponse.refreshToken })
     return {
       ...authResponse,
       isNewUser: false
@@ -87,9 +87,9 @@ export class AuthService {
   }
 
   async tokenGeneratorHelper(user: User): Promise<AuthResponse> {
-    var authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
-    var generatedAccessToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
-    var generatedRefreshToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
+    let authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
+    let generatedAccessToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
+    let generatedRefreshToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
     return {
       success: true,
       user: user,
@@ -99,12 +99,12 @@ export class AuthService {
   }
 
   async getUserInfo(userId: string): Promise<User | undefined> {
-    var userInfo = await this.userRepo.getUser({ id: userId })
+    let userInfo = await this.userRepo.getUser({ id: userId })
     return userInfo
   }
 
   async logout(userId: string) {
-    var result = await this.emailAuthProvider.logout(userId);
+    let result = await this.emailAuthProvider.logout(userId);
     return result;
   }
 }

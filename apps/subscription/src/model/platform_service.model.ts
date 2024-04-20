@@ -1,33 +1,71 @@
 import { BaseModel } from "@app/common/model/base.model";
-
-
-import { Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
-import { SubscriptionLocalizedField } from "../utils/subscriptioni_localized_field.model";
+import { IsArray, IsNotEmpty } from "class-validator";
+import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
 
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
+export class SubscriptionRenewalInfo {
+    @Field(type => ID)
+    id?: string
 
-@ObjectType()
-@InputType("PlatformServiceInput")
+    @Field(type => [LocalizedData])
+    @Type(() => LocalizedData)
+    name: LocalizedData[]
+
+    @Field(type => Int, { defaultValue: 90 })
+    duration: number
+
+    @Field(type => Int, { defaultValue: 90 })
+    trialPeriod: number
+
+    @Field(type => Int, { defaultValue: 0 })
+    discountAmount: number
+}
+
+@InputType()
+export class SubscriptionRenewalInfoInput extends SubscriptionRenewalInfo {
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[]
+
+    @Field(type => Int, { defaultValue: 90 })
+    duration: number
+
+    @Field(type => Int, { defaultValue: 90 })
+    trialPeriod: number
+
+    @Field(type => Int, { defaultValue: 0 })
+    discountAmount: number
+}
+
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
 export class PlatformService extends BaseModel {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [SubscriptionLocalizedField])
-    @Type(() => SubscriptionLocalizedField)
-    name: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData])
+    @Type(() => LocalizedData)
+    name: LocalizedData[]
 
-    @Field(type => [SubscriptionLocalizedField], { nullable: true })
-    @Type(() => SubscriptionLocalizedField)
-    description?: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData], { nullable: true })
+    @Type(() => LocalizedData)
+    description?: LocalizedData[]
 
-    @Field()
-    image?: string
+
     @Field(type => Float)
     basePrice: number
 
-    @Field(type => [SubscriptionLocalizedField])
-    @Type(() => SubscriptionLocalizedField)
-    features?: SubscriptionLocalizedField[]
+    @Field()
+    image?: string
+
+    @Field(type => [LocalizedData])
+    @Type(() => LocalizedData)
+    features?: LocalizedData[]
 
     @Field(type => [CustomizationCategory])
     @Type(() => CustomizationCategory)
@@ -40,18 +78,24 @@ export class PlatformService extends BaseModel {
     @Type(() => PlatformService)
     relatedServices?: PlatformService[]
 
-    @Field(type => Int)
-    trialPeriod?: number
-    @Field(type => Int)
-    duration?: number = 90
+
+
+
+    @Field(type => [SubscriptionRenewalInfo])
+    @Type(() => SubscriptionRenewalInfo)
+    @IsNotEmpty()
+    @IsArray()
+    subscriptionRenewalInfo: SubscriptionRenewalInfo[]
+
 
     constructor(data: Partial<PlatformService>) {
         super()
         Object.assign(this, data)
     }
 
-    hasTrialPeriod() {
-        if (this.trialPeriod && this.trialPeriod > 0) {
+    hasTrialPeriod(renewalId: string): boolean {
+        let selectedSubscriptionRenewalInfo = this.subscriptionRenewalInfo.find(info => info.id == renewalId)
+        if (selectedSubscriptionRenewalInfo && selectedSubscriptionRenewalInfo.trialPeriod > 0) {
             return true
         }
         return false
@@ -67,15 +111,60 @@ export class PlatformService extends BaseModel {
     }
 }
 
-@ObjectType()
-@InputType("CustomizationInput")
+@InputType()
+export class PlatformServiceInput {
+
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[]
+
+    @Field(type => [LocalizedFieldInput],)
+    @Type(() => LocalizedFieldInput)
+    description?: LocalizedFieldInput[]
+
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    features?: LocalizedFieldInput[]
+
+    @Field(type => Float)
+    basePrice: number
+
+
+    @Field(type => [CustomizationCategoryInput])
+    @Type(() => CustomizationCategoryInput)
+    customizationCategories?: CustomizationCategoryInput[]
+
+
+    @Field(type => [PlatformServiceInput])
+    @Type(() => PlatformServiceInput)
+    relatedServices?: PlatformServiceInput[]
+
+
+    @Field(type => [SubscriptionRenewalInfoInput])
+    @Type(() => SubscriptionRenewalInfoInput)
+    @IsNotEmpty()
+    @IsArray()
+    subscriptionRenewalInfo: SubscriptionRenewalInfoInput[]
+
+    constructor(data: Partial<PlatformServiceInput>) {
+        Object.assign(this, data)
+    }
+}
+
+
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
 export class Customization {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [SubscriptionLocalizedField])
-    @Type(() => SubscriptionLocalizedField)
-    name: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData])
+    @Type(() => LocalizedData)
+    name: LocalizedData[]
+
+    @Field(type => String)
+    actionIdentifier: string
 
     @Field(type => String)
     value: string
@@ -86,19 +175,38 @@ export class Customization {
     default?: boolean
 }
 
-@ObjectType()
-@InputType("CustomizationCategoryInput")
+@InputType()
+export class CustomizationInput extends Customization {
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[]
+
+    @Field(type => String)
+    actionIdentifier: string
+
+    @Field(type => String)
+    value: string
+
+    @Field(type => Float)
+    additionalPrice?: number
+
+    default?: boolean
+}
+
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
 export class CustomizationCategory {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [SubscriptionLocalizedField])
-    @Type(() => SubscriptionLocalizedField)
-    name: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData])
+    @Type(() => LocalizedData)
+    name: LocalizedData[]
 
-    @Field(type => [SubscriptionLocalizedField], { nullable: true })
-    @Type(() => SubscriptionLocalizedField)
-    description?: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData], { nullable: true })
+    @Type(() => LocalizedData)
+    description?: LocalizedData[]
 
     @Field(type => SelectionType)
     selectionType?: string
@@ -109,6 +217,27 @@ export class CustomizationCategory {
     @Type(() => Customization)
     customizations: Customization[]
 }
+
+@InputType()
+export class CustomizationCategoryInput extends CustomizationCategory {
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[]
+
+    @Field(type => [LocalizedFieldInput], { nullable: true })
+    @Type(() => LocalizedFieldInput)
+    description?: LocalizedFieldInput[]
+
+    @Field(type => SelectionType)
+    selectionType?: string
+
+    selectionRequired?: boolean
+
+    @Field(type => [CustomizationInput])
+    @Type(() => CustomizationInput)
+    customizations: CustomizationInput[]
+}
+
 
 export enum SelectionType {
     SINGLE_SELECTION = "SINGLE_SELECTION",

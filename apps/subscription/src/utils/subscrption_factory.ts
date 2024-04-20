@@ -1,16 +1,17 @@
 import { Inject, Injectable } from "@nestjs/common"
-import { PlatfromServiceSubscription, Subscription } from "../model/subscription.model"
+import { PlatformSubscriptionBuilder, PlatfromServiceSubscription, CustomizationInfo, Subscription } from "../model/subscription.model"
 import { IPlatformServiceRepo, PlatformServiceRepository } from "../repo/platform_service.repo"
 import { isEmpty } from "class-validator"
 import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from "../dto/subscription.input"
 import { RequestValidationException } from "@app/common/errors/request_validation_exception"
 import { SubscriptionType } from "../model/subscription_type.enum"
 import { ISubscritpionRepository, SubscriptionRepository } from "../repo/subscription.repository"
-import { SubscriptionResponse } from "../model/subscription.response"
+import { SubscriptionResponse } from "../model/response/subscription.response"
 import { SubscriptionUpgradeInput } from "../dto/update_subscription.input"
 import { Customization, PlatformService } from "../model/platform_service.model"
-import { CurrentSubscriptionUpgradeResponse, DowngradePlatformSubscriptionDecorator, SubscriptionUpgradeResponse, UpgradePlatformServiesSubscriptionDecorator } from "../model/subscription_upgrade.response"
+import { CurrentSubscriptionUpgradeResponse, DowngradePlatformSubscriptionDecorator, SubscriptionUpgradeResponse, UpgradePlatformServiesSubscriptionDecorator } from "../model/response/subscription_upgrade.response"
 import { LanguageKey } from "@app/common/model/localized_model"
+
 
 
 @Injectable()
@@ -46,45 +47,24 @@ export class PlatformSubscriptionOption implements ISubscriptionOption {
         if (!subscriptionInput.selectedPlatformServices || isEmpty(subscriptionInput.selectedPlatformServices)) {
             throw new RequestValidationException({ message: "platform service must be selected" })
         }
-        let startDate = new Date(Date.now())
+        let allPlatformServices = await this.platformServiceRepo.getAllPlatformServices()
+        let subscriptionResult = new PlatformSubscriptionBuilder(allPlatformServices).generateBaseSubscription(subscriptionInput.owner, totalPrice).addPlatformServices(subscriptionInput).build()
 
-        let serviceSubscriptionInfo = await Promise.all(subscriptionInput.selectedPlatformServices.map(async service => {
-            let serviceInfo = await this.platformServiceRepo.getPlatformService(service.serviceId)
-            if (serviceInfo) {
-                let endDate = new Date(Date.now())
-                endDate.setDate(endDate.getDate() + serviceInfo.duration)
-                return <PlatfromServiceSubscription>{
-                    serviceId: serviceInfo.id,
-                    serviceName: service.serviceName,
-                    selectedCustomizationId: service.selectedCustomizationId,
-                    startDate: startDate,
-                    endDate: endDate,
-                    isTrialPeriod: serviceInfo.hasTrialPeriod()
-                }
-            }
-        }))
-        let subscriptionInfo = new Subscription({
-            type: SubscriptionType.PLATFORM,
-            owner: subscriptionInput.owner,
-            amountPaid: totalPrice,
-            platformServices: serviceSubscriptionInfo,
-            isActive: false
-        })
-        let serviceIdsHavingTrialPeriod = subscriptionInfo.getPlatformServicesHavingFreeTier()
+        let serviceIdsHavingTrialPeriod = subscriptionResult.getPlatformServicesHavingFreeTier()
         return new SubscriptionResponse({
             success: true,
-            createdSubscription: subscriptionInfo,
+            createdSubscription: subscriptionResult,
             platformServicehavingFreeTrial: serviceIdsHavingTrialPeriod
         });
     }
 
     async createSubscriptionInfoFromSubscriptionUpgradeInfo(upgradeInfo: SubscriptionUpgradeResponse): Promise<SubscriptionResponse> {
         let selectedPlatfromService = upgradeInfo.addedPlatformServices.map(service => {
-            let selectedCustomizationFromPlatformService = service.customizationCategories.map(category => category.customizations).flat()
+            let selectedCustomizationFromPlatformService = service.customizationCategories.map(category => category.customizations.map(customization => new CustomizationInfo({ action: customization.actionIdentifier, customizationId: customization.id }))).flat()
             return new CreatePlatformServiceSubscriptionInput({
                 serviceId: service.id,
                 serviceName: service.name.find(name => name?.key == LanguageKey.ENGLISH).value ?? "",
-                selectedCustomizationId: selectedCustomizationFromPlatformService.map(customization => customization.id)
+                selectedCustomizationInfo: selectedCustomizationFromPlatformService,
             })
         })
         let subscriptionInput = new CreateSubscriptionInput({ selectedPlatformServices: selectedPlatfromService, type: SubscriptionType.PLATFORM, owner: upgradeInfo.owner })

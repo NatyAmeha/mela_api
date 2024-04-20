@@ -1,12 +1,12 @@
 import { BaseResponse } from "@app/common/model/base.response"
 import { Field, Float, ObjectType } from "@nestjs/graphql"
-import { PlatformService } from "./platform_service.model"
-import { SubscriptionUpgradeInput } from "../dto/update_subscription.input"
-import { PlatfromServiceSubscription, Subscription } from "./subscription.model"
+import { PlatformService } from "../platform_service.model"
+import { SubscriptionUpgradeInput } from "../../dto/update_subscription.input"
+import { PlatfromServiceSubscription, Subscription } from "../subscription.model"
 import { sumBy } from "lodash"
-import { CreateSubscriptionInput } from "../dto/subscription.input"
+import { CreateSubscriptionInput } from "../../dto/subscription.input"
 import { type } from "os"
-import { SubscriptionType } from "./subscription_type.enum"
+import { SubscriptionType } from "../subscription_type.enum"
 
 
 @ObjectType()
@@ -41,7 +41,7 @@ export class CurrentSubscriptionUpgradeResponse extends SubscriptionUpgradeRespo
                 let fullServiceInfo = platformServices.find(serviceInfo => serviceInfo.id == service.serviceId)
                 let allCustomizationInsideService = fullServiceInfo.customizationCategories.map(customizationCategory => customizationCategory.customizations).flat()
 
-                let selectedCustomizationIds = service.selectedCustomizationId
+                let selectedCustomizationIds = service.selectedCustomizationInfo.map(customization => customization.customizationId)
                 let selectedCustomizationsInfo = allCustomizationInsideService.filter(customization => selectedCustomizationIds.includes(customization.id))
 
                 totalPrice += fullServiceInfo.basePrice;
@@ -83,8 +83,8 @@ export class UpgradePlatformServiesSubscriptionDecorator extends SubscriptionUpg
                     }
                     // add customization price that is not part of current subscription
                     let allCustomizationInsideService = serviceInfo.customizationCategories.map(customizationCategory => customizationCategory.customizations).flat()
-                    let customizationIdsExistInSubscription = serviceSubscription?.selectedCustomizationId ?? []
-                    let newCustomizationIdToAdd = service.selectedCustomizationId.filter(customizationId => !customizationIdsExistInSubscription.includes(customizationId))
+                    let customizationIdsExistInSubscription = (serviceSubscription?.selectedCustomizationInfo ?? []).map(customization => customization.customizationId)
+                    let newCustomizationIdToAdd = service.selectedCustomizationInfo?.map(customizationInfo => customizationInfo.customizationId).filter(customizationId => !customizationIdsExistInSubscription.includes(customizationId))
 
                     let newCustomizationsInfo = allCustomizationInsideService.filter(customization => newCustomizationIdToAdd.includes(customization.id))
                     let totalCustomizationPrice = sumBy(newCustomizationsInfo, customization => customization.additionalPrice)
@@ -137,7 +137,7 @@ export class DowngradePlatformSubscriptionDecorator extends SubscriptionUpgradeR
                     // Remove customization price
                     let allCustomizationInsideService = serviceInfo.customizationCategories.map(customizationCategory => customizationCategory.customizations).flat()
 
-                    let selectedServicecustomizationIdsInsideSubscription = serviceExistInSubscription.selectedCustomizationId
+                    let selectedServicecustomizationIdsInsideSubscription = serviceExistInSubscription.selectedCustomizationInfo.map(customization => customization.customizationId)
                     let selectedCustomizationsInfo = allCustomizationInsideService.filter(customization => selectedServicecustomizationIdsInsideSubscription.includes(customization.id))
                     let totalCustomizationPrice = sumBy(selectedCustomizationsInfo, customization => customization.additionalPrice)
                     totalPrice += totalCustomizationPrice

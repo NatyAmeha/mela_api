@@ -1,12 +1,10 @@
 import { Product } from "../../product/model/product.model";
-import { Address } from "../../business/model/address.model";
-import { Business } from "../../business/model/business.model";
-import { Staff } from "../../staff/model/staff.model";
+import { Address, AddressInput } from "../../business/model/address.model";
+import { Business, BusinessInput } from "../../business/model/business.model";
+import { Staff, StaffInput } from "../../staff/model/staff.model";
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
-import { LocalizedData } from "@app/common/model/localized_model";
-
+import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
 @ObjectType()
-@InputType('BranchInput')
 export class Branch {
     @Field(types => ID)
     id?: string;
@@ -50,4 +48,36 @@ export class Branch {
     constructor(partial?: Partial<Branch>) {
         Object.assign(this, partial);
     }
+}
+
+@InputType()
+export class BranchInput {
+
+    @Field(types => [LocalizedFieldInput])
+    name: LocalizedFieldInput[];
+
+    @Field()
+    phoneNumber: string;
+
+    @Field()
+    email?: string;
+
+    @Field()
+    website?: string;
+
+    @Field(types => AddressInput)
+    address: AddressInput;
+
+    @Field(types => [String], { defaultValue: [] })
+    productIds?: string[];
+
+
+    @Field()
+    businessId: string;
+
+    @Field(types => [String], { defaultValue: [] })
+    staffsId?: string[];
+
+    @Field(types => [StaffInput])
+    staffs?: StaffInput[];
 }

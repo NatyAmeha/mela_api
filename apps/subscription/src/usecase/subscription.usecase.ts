@@ -4,14 +4,14 @@ import { SubscriptionPlan } from '../model/subscription_plan.model';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
 import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from '../dto/subscription.input';
 import { PlatfromServiceSubscription, Subscription } from '../model/subscription.model';
-import { SubscriptionResponse } from '../model/subscription.response';
+import { SubscriptionResponse } from '../model/response/subscription.response';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { IPlatformServiceRepo, PlatformServiceRepository } from '../repo/platform_service.repo';
 import { SubscriptionHelper } from '../utils/subscription.helper';
 import { ISubscriptionOption, SubscriptionFactory } from '../utils/subscrption_factory';
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
 import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
-import { SubscriptionUpgradeResponse } from '../model/subscription_upgrade.response';
+import { SubscriptionUpgradeResponse } from '../model/response/subscription_upgrade.response';
 
 @Injectable()
 export class SubscriptionService {
@@ -55,8 +55,8 @@ export class SubscriptionService {
     return result;
   }
 
-  async updateSubscriptionStatus(subscritpionId: string, status: boolean) {
-    let result = await this.subscriptionRepo.updateSubscriptionInfo(subscritpionId, { isActive: status })
+  async updateSubscriptionStatus(subscriptionId: string, status: boolean) {
+    let result = await this.subscriptionRepo.updateSubscriptionInfo(subscriptionId, { isActive: status })
     return result;
   }
 
@@ -72,28 +72,29 @@ export class SubscriptionService {
     }
   }
 
-  async addPlatformServiceToSubscription(subscriptionId: string, subscriptionInfo: CreatePlatformServiceSubscriptionInput[]): Promise<SubscriptionResponse> {
-    let newPlatformServiceInfo = await Promise.all(subscriptionInfo.map(async info => {
-      let input = new CreatePlatformServiceSubscriptionInput({ ...info })
-      return await input.generatePlatformServiceSubscriptionInfo(this.platformServcieRepo)
-    }))
-    let existingSubscriptionInfo = await this.subscriptionRepo.getSubscriptionInfo(subscriptionId)
-    let existingPlatformServiceInSubscription = existingSubscriptionInfo.getPlatformServiceAlreadyInSubscriptioin(newPlatformServiceInfo)
-    if (existingPlatformServiceInSubscription.length > 0) {
-      return <SubscriptionResponse>{
-        success: false,
-        message: "Platform service is already in subscription, check existing services field",
-        existingPlatformService: existingPlatformServiceInSubscription
-      }
-    }
+  // async addPlatformServiceToSubscription(subscriptionId: string, subscriptionInfo: CreatePlatformServiceSubscriptionInput[]): Promise<SubscriptionResponse> {
+  //   let newPlatformServiceInfo = await Promise.all(subscriptionInfo.map(async info => {
+  //     let input = new CreatePlatformServiceSubscriptionInput({ ...info })
+  //      this.subscriptionFactory.create(SubscriptionType.PLATFORM).createSubscriptionInfo()
+  //     return await input.generatePlatformServiceSubscriptionInfo(this.platformServcieRepo)
+  //   }))
+  //   let existingSubscriptionInfo = await this.subscriptionRepo.getSubscriptionInfo(subscriptionId)
+  //   let existingPlatformServiceInSubscription = existingSubscriptionInfo.getPlatformServiceAlreadyInSubscriptioin(newPlatformServiceInfo)
+  //   if (existingPlatformServiceInSubscription.length > 0) {
+  //     return <SubscriptionResponse>{
+  //       success: false,
+  //       message: "Platform service is already in subscription, check existing services field",
+  //       existingPlatformService: existingPlatformServiceInSubscription
+  //     }
+  //   }
 
-    let updateResult = await this.subscriptionRepo.updateSubscriptionInfo(subscriptionId, { platformServices: [...existingSubscriptionInfo.platformServices, ...newPlatformServiceInfo] })
-    return <SubscriptionResponse>{
-      success: true,
-      createdSubscription: { ...existingSubscriptionInfo, platformServices: [...existingSubscriptionInfo.platformServices, ...newPlatformServiceInfo] },
-      addedPlatformServices: newPlatformServiceInfo
-    }
-  }
+  //   let updateResult = await this.subscriptionRepo.updateSubscriptionInfo(subscriptionId, { platformServices: [...existingSubscriptionInfo.platformServices, ...newPlatformServiceInfo] })
+  //   return <SubscriptionResponse>{
+  //     success: true,
+  //     createdSubscription: { ...existingSubscriptionInfo, platformServices: [...existingSubscriptionInfo.platformServices, ...newPlatformServiceInfo] },
+  //     addedPlatformServices: newPlatformServiceInfo
+  //   }
+  // }
 
   async getSubscriptionUpgradeInfo(subscriptionId: string, subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse> {
     let subscriptionInfo = await this.subscriptionRepo.getSubscriptionInfo(subscriptionId)

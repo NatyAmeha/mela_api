@@ -23,6 +23,7 @@ model User {
   profileImageUrl       String?
   refreshToken          String?
   accountStatus         String?  @default("PENDING")
+  accountType           String   @default("USER")
   isEmailPlaceholder    Boolean? @default(false)
   isUsernamePlaceholder Boolean? @default(false)
   // accesses              Access[]

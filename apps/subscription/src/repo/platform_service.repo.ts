@@ -9,6 +9,7 @@ export interface IPlatformServiceRepo {
     findPlatfromServices(queryHelper: QueryHelper<PlatformService>): Promise<PlatformService[]>
     getPlatformService(platformServiceId: string): Promise<PlatformService | undefined>
     getAllPlatformServices(): Promise<PlatformService[]>
+
 }
 @Injectable()
 export class PlatformServiceRepository extends PrismaClient implements IPlatformServiceRepo, OnModuleInit, OnModuleDestroy {
@@ -19,12 +20,17 @@ export class PlatformServiceRepository extends PrismaClient implements IPlatform
 
     async createPlatformService(serviceInfo: PlatformService): Promise<PlatformService> {
         var result = await this.platformService.create({ data: { ...serviceInfo } });
-        return result as PlatformService;
+        return new PlatformService({ ...result })
     }
 
     async findPlatfromServices(queryHelper: QueryHelper<PlatformService>): Promise<PlatformService[]> {
         var result = await this.platformService.findMany({ where: { ...queryHelper.query as any } })
-        return result as PlatformService[]
+        return result.map(service => new PlatformService({ ...service }))
+    }
+
+    async findPlatformServicesByIds(serviceIds: string[]): Promise<PlatformService[]> {
+        var result = await this.platformService.findMany({ where: { id: { in: serviceIds } } })
+        return result.map(service => new PlatformService({ ...service }))
     }
 
     async getPlatformService(platformServiceId: string): Promise<PlatformService> {

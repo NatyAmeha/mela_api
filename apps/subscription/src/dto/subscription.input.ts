@@ -1,5 +1,5 @@
 import { Field, InputType, OmitType, PickType } from "@nestjs/graphql";
-import { PlatfromServiceSubscription, Subscription } from "../model/subscription.model";
+import { PlatfromServiceSubscription, Subscription, PlatfromServiceSubscriptionInput, CustomizationInfoInput } from "../model/subscription.model";
 import { SubscriptionPlan } from "../model/subscription_plan.model";
 import { gt, isArray, isEmpty, remove } from "lodash";
 import { IsArray, IsNotEmpty, IsString, IsUUID, ValidateIf, isNotEmpty } from "class-validator";
@@ -40,40 +40,43 @@ export class CreateSubscriptionInput extends PickType(Subscription, ["owner", "t
 }
 
 @InputType()
-export class CreatePlatformServiceSubscriptionInput extends PickType(PlatfromServiceSubscription, ["serviceId", "serviceName", "selectedCustomizationId"] as const, InputType) {
+export class CreatePlatformServiceSubscriptionInput {
     @IsString()
     serviceId: string;
     @IsString()
     serviceName: string;
+
+    @Field(type => [CustomizationInfoInput])
     @IsArray()
     @IsUUID()
-    selectedCustomizationId: string[];
+    selectedCustomizationInfo: CustomizationInfoInput[];
+
+    @Field()
+    selectedRenewalId: string;
     constructor(data: Partial<CreatePlatformServiceSubscriptionInput>) {
-        super()
         Object.assign(this, data);
     }
 
-    async generatePlatformServiceSubscriptionInfo(platfromServiceRepo: IPlatformServiceRepo) {
-        var serviceInfo = await platfromServiceRepo.getPlatformService(this.serviceId)
-        if (serviceInfo) {
-            var startDate = new Date(Date.now())
-            var endDate = new Date(Date.now())
-            endDate.setDate(endDate.getDate() + serviceInfo.duration)
-            return <PlatfromServiceSubscription>{
-                serviceId: serviceInfo.id,
-                serviceName: this.serviceName,
-                selectedCustomizationId: this.selectedCustomizationId,
-                startDate: startDate,
-                endDate: endDate,
-                createdAt: new Date(Date.now()),
-                updatedAt: new Date(Date.now()),
-                isTrialPeriod: serviceInfo.hasTrialPeriod()
-            }
-        }
-        else {
-            throw new RequestValidationException({ message: `Unable to get Platform service using this id ${this.serviceId}` })
-        }
-    }
+    // async generatePlatformServiceSubscriptionInfo(platfromServiceRepo: IPlatformServiceRepo) {
+    //     var serviceInfo = await platfromServiceRepo.getPlatformService(this.serviceId)
+    //     var selectedSubscriptionRenewalInfo = serviceInfo?.subscriptionRenewalInfo.find(info => info.id == this.renewalId)
+    //     if (serviceInfo) {
+    //         var startDate = new Date(Date.now())
+    //         var endDate = new Date(Date.now())
+    //         endDate.setDate(endDate.getDate() + selectedSubscriptionRenewalInfo.duration)
+    //         return <PlatfromServiceSubscription>{
+    //             serviceId: serviceInfo.id,
+    //             serviceName: this.serviceName,
+    //             selectedCustomizationId: this.selectedCustomizationId,
+    //             startDate: startDate,
+    //             endDate: endDate,
+    //             isTrialPeriod: serviceInfo.hasTrialPeriod()
+    //         }
+    //     }
+    //     else {
+    //         throw new RequestValidationException({ message: `Unable to get Platform service using this id ${this.serviceId}` })
+    //     }
+    // }
 }
 
 @InputType()
@@ -82,10 +85,10 @@ export class UpdatePlatformSubscriptionInput {
     @IsUUID()
     serviceId: string;
 
-    @Field(types => [String])
+    @Field(types => [CustomizationInfoInput])
     @IsArray()
     @IsUUID()
-    selectedCustomizationId?: string[];
+    selectedCustomizationInfo?: CustomizationInfoInput[];
     constructor(data: Partial<UpdatePlatformSubscriptionInput>) {
         Object.assign(this, data)
     }

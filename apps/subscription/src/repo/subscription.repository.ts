@@ -3,7 +3,7 @@ import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { Subscription } from "../model/subscription.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
-import { SubscriptionResponse, SubscriptionResponseBuilder } from "../model/subscription.response";
+import { SubscriptionResponse, SubscriptionResponseBuilder } from "../model/response/subscription.response";
 import { PrismaClient } from '@prisma/client'
 
 

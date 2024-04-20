@@ -6,7 +6,7 @@ import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rm
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { BusinessService } from "../business/usecase/business.service";
-import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
+import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
 import { Access } from "apps/auth/src/authorization/model/access.model";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 

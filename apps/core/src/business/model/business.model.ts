@@ -1,25 +1,18 @@
 import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
-import { Customer } from "../../customer/model/customer.model";
-import { ProductGroup } from "./product_group.model";
-import { LocalizedData } from "@app/common/model/localized_model";
-import { Gallery } from "./gallery.model";
-import { Address } from "./address.model";
+import { Customer, CustomerInput } from "../../customer/model/customer.model";
+import { ProductGroup, ProductGroupInput } from "./product_group.model";
+import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
+import { Gallery, GalleryInput } from "./gallery.model";
+import { Address, AddressInput } from "./address.model";
 import { Branch } from "../../branch/model/branch.model";
 import { Product } from "../../product/model/product.model";
 import { Staff } from "../../staff/model/staff.model";
 import { BaseModel } from "@app/common/model/base.model";
 
 @ObjectType()
-@InputType("BusinessInput")
 export class Business extends BaseModel {
-    @Field(types => ID)
-    id?: string;
-
-    @Field(types => [LocalizedData])
-    name: LocalizedData[];
-
-    @Field(types => [LocalizedData])
-    description?: LocalizedData[];
+    @Field(type => ID)
+    id?: string
 
     @Field(types => [String])
     categories: string[];
@@ -40,8 +33,7 @@ export class Business extends BaseModel {
     creator: string;
     @Field(types => [String])
     customersId?: string[];
-    @Field(types => [Customer])
-    customers?: Customer[];
+
 
     @Field(types => OpeningStatus)
     openingStatus: string;
@@ -70,7 +62,7 @@ export class Business extends BaseModel {
     @Field(types => BusinessRegistrationStage)
     stage: string
 
-    @Field()
+    @Field(type => [Staff])
     staffs?: Staff[]
     @Field()
     activeSubscriptionId?: string
@@ -79,11 +71,88 @@ export class Business extends BaseModel {
     @Field(types => [String])
     trialPeriodUsedServiceIds?: string[] = [];
 
+    @Field(types => [LocalizedData])
+    name: LocalizedData[];
+
+    @Field(types => [LocalizedData])
+    description?: LocalizedData[];
+
+    @Field(types => [Customer])
+    customers?: Customer[];
+
     constructor(partial?: Partial<Business>) {
         super();
         Object.assign(this, partial);
     }
 }
+
+@InputType()
+export class BusinessInput {
+
+    @Field(types => [LocalizedFieldInput])
+    name: LocalizedFieldInput[];
+
+    @Field(types => [LocalizedFieldInput])
+    description?: LocalizedFieldInput[];
+
+    @Field(types => [String])
+    categories: string[];
+
+    @Field()
+    creator: string;
+
+    @Field(types => [String])
+    customersId?: string[];
+
+    @Field(types => OpeningStatus)
+    openingStatus: string;
+
+    @Field(types => [ProductGroupInput])
+    group?: ProductGroupInput[];
+
+    @Field(types => [String])
+    productIds?: string[];
+
+    @Field(types => AddressInput)
+    mainAddress: AddressInput;
+
+    @Field()
+    phoneNumber: string;
+    @Field()
+
+    email?: string;
+    @Field()
+    website?: string;
+    @Field(types => [String], { defaultValue: [] })
+    branchIds?: string[];
+
+
+    @Field()
+    activeSubscriptionId?: string
+
+    @Field(types => [String])
+    subscriptionIds?: string[]
+
+    @Field(types => [String])
+    trialPeriodUsedServiceIds?: string[] = [];
+
+    @Field(types => GalleryInput)
+    gallery: GalleryInput;
+
+    @Field(types => [CustomerInput])
+    customers?: CustomerInput[];
+
+    constructor(partial?: Partial<Business>) {
+        Object.assign(this, partial);
+    }
+
+    toBusiness(): Business {
+        const business = new Business({ ...this, stage: BusinessRegistrationStage.BUSINESS_CREATED });
+        return business;
+    }
+}
+
+
 
 enum OpeningStatus {
     OPEN = "OPEN",

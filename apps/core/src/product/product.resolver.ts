@@ -1,25 +1,39 @@
 import { Args, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql";
-import { Product } from "./model/product.model";
+import { Product, ProductInput } from "./model/product.model";
 import { ProductService } from "./product.service";
-import { CreateProductInput, UpdateProductInput } from "./dto/product.input";
+import { UpdateProductInput } from "./dto/product.input";
 import { ProductResponse } from "./model/product.response";
 import { Branch } from "../branch/model/branch.model";
 import { BranchService } from "../branch/usecase/branch.service";
 import { BusinessService } from "../business/usecase/business.service";
 import { Business } from "../business/model/business.model";
+import { UseGuards } from "@nestjs/common";
+import { AuthzGuard } from "libs/common/authorization.guard";
+import { PermissionSelectionCriteria, RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
+import { AppResources } from "apps/auth/src/authorization/model/access.model";
+import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
+import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
+import { PlatformServiceSubscription, PlatformServices } from "libs/common/get_user_decorator";
+import { PlatformServiceGateway, SubscriptionGateway } from "apps/mela_api/src/model/subscription.gateway.model";
 
 @Resolver(of => Product)
 export class ProductResolver {
     constructor(private productService: ProductService, private businessService: BusinessService, private branchService: BranchService) {
     }
 
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+        ],
+        getResourceTargetFromSubscription: true,
+        selectionCriteria: PermissionSelectionCriteria.ANY
+    })
+    @UseGuards(PermissionGuard)
     @Mutation(returns => ProductResponse)
-    async createProduct(@Args('product') product: CreateProductInput): Promise<ProductResponse> {
-        var productResult = await this.productService.createProduct(product);
-        return {
-            success: true,
-            product: productResult
-        }
+    async createBusinessProduct(@Args('productInfo') product: ProductInput, @PlatformServiceSubscription() businessSubscriptionInfo: SubscriptionGateway, @PlatformServices() platformServices: PlatformServiceGateway[]): Promise<ProductResponse> {
+        var productResult = await this.productService.createProduct(product, businessSubscriptionInfo, platformServices);
+        return productResult;
     }
 
     @Mutation(returns => ProductResponse)

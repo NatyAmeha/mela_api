@@ -1,16 +1,20 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { Field, Float, ID, InputType, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, Float, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { SubscriptionType } from "./subscription_type.enum";
 import { types } from "joi";
-import { Access, AccessOwnerType, Permission } from "apps/auth/src/authorization/model/access.model";
+import { Access, AccessOwnerType, AppResourceAction, Permission } from "apps/auth/src/authorization/model/access.model";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { includes } from "lodash";
+import { PlatformService } from "./platform_service.model";
+import { Injectable } from "@nestjs/common";
+import { CreateSubscriptionInput } from "../dto/subscription.input";
 
 
-@ObjectType()
-@InputType("SubscriptionInput")
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
 export class Subscription extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -48,6 +52,20 @@ export class Subscription extends BaseModel {
     }
 
 
+    getAllCustomizatioInsideSubscription(): CustomizationInfo[] {
+        let result: CustomizationInfo[] = []
+        this.platformServices.forEach(service => {
+            service.selectedCustomizationInfo.forEach(customization => {
+                result.push(customization)
+            })
+        })
+        return result
+    }
+
+    getPlatformServiceIdsInSubscription(): string[] {
+        return this.platformServices.map(service => service.serviceId)
+    }
+
 
     changeSubscriptionStatus(status: boolean) {
         this.isActive = status;
@@ -67,9 +85,15 @@ export class Subscription extends BaseModel {
 
 }
 
-@ObjectType()
-@InputType("PlatformServiceSubscriptionInput")
+@InputType()
+export class SubscriptionInput extends Subscription { }
+
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
 export class PlatfromServiceSubscription {
+    @Field(type => ID)
+    id?: string
     @Field(type => ID)
     serviceId: string
     @Field()
@@ -84,6 +108,86 @@ export class PlatfromServiceSubscription {
     createdAt?: Date
     @Field(type => Date)
     updatedAt: Date
-    @Field(type => [String])
-    selectedCustomizationId: string[]
+    @Field(type => [CustomizationInfo])
+    selectedCustomizationInfo: CustomizationInfo[]
+}
+
+@InputType()
+export class PlatfromServiceSubscriptionInput extends PlatfromServiceSubscription { }
+
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
+export class CustomizationInfo {
+    @Field(type => ID)
+    id?: string
+
+    @Field()
+    customizationId: string
+    @Field(type => String)
+    action: string
+
+    constructor(data: Partial<CustomizationInfo>) {
+        Object.assign(this, data)
+    }
+}
+
+@InputType()
+export class CustomizationInfoInput extends CustomizationInfo {
+
+    @Field(type => String)
+    action: string | AppResourceAction
+
+    constructor(data: Partial<CustomizationInfoInput>) {
+        super({})
+        Object.assign(this, data)
+    }
+}
+
+export interface ISubscriptionInfoBuilder {
+    generateBaseSubscription(owner: string, amountPaid: number): ISubscriptionInfoBuilder
+}
+
+// write a builder class for subscription data alongside with platform subscription
+@Injectable()
+export class PlatformSubscriptionBuilder implements ISubscriptionInfoBuilder {
+    private subscription: Subscription
+    constructor(private allPlatformServices: PlatformService[]) {
+        this.subscription = new Subscription({})
+    }
+
+    generateBaseSubscription(owner: string, amountPaid: number): PlatformSubscriptionBuilder {
+        this.subscription.type = SubscriptionType.PLATFORM
+        this.subscription.owner = owner
+        this.subscription.amountPaid = amountPaid
+        this.subscription.isActive = false
+        return this
+    }
+
+
+    addPlatformServices(subscriptionInput: CreateSubscriptionInput) {
+        let startDate = new Date(Date.now())
+        let serviceSubscriptionInfo = subscriptionInput.selectedPlatformServices.map(selectedServiceInput => {
+            let serviceInfo = this.allPlatformServices.find(platformService => platformService.id == selectedServiceInput.serviceId)
+            var selectedSubscriptionRenewalInfo = serviceInfo?.subscriptionRenewalInfo.find(info => info.id == selectedServiceInput.selectedRenewalId)
+            if (serviceInfo && selectedSubscriptionRenewalInfo) {
+                let endDate = new Date(Date.now())
+                endDate.setDate(endDate.getDate() + selectedSubscriptionRenewalInfo.duration)
+                return <PlatfromServiceSubscription>{
+                    serviceId: serviceInfo.id,
+                    serviceName: selectedServiceInput.serviceName,
+                    selectedCustomizationInfo: selectedServiceInput.selectedCustomizationInfo,
+                    startDate: startDate,
+                    endDate: endDate,
+                    isTrialPeriod: serviceInfo.hasTrialPeriod(selectedSubscriptionRenewalInfo.id)
+                }
+            }
+        })
+        this.subscription.platformServices = serviceSubscriptionInfo
+        return this
+    }
+
+    build() {
+        return this.subscription
+    }
 }

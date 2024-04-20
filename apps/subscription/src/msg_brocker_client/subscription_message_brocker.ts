@@ -7,7 +7,7 @@ import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rm
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
-import { SubscriptionResponse } from "../model/subscription.response";
+import { SubscriptionResponse } from "../model/response/subscription.response";
 import { SubscriptionMsgProcessosor } from "./subscription_service_msg_processor";
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 import { Subscription } from "rxjs";
@@ -42,7 +42,7 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
         }
     }
 
-    async sendPlatformAccessPermissionMessagetoAuthService(access: Access[]): Promise<IMessageBrockerResponse<any>> {
+    async createPlatformServiceAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>> {
         let messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
         let reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;

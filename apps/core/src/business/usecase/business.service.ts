@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { BusinessRepository, IBusinessRepository } from "../repo/business.repo";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
-import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
+import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { BusinessResponse } from "../model/business.response";
 

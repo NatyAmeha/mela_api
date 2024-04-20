@@ -1,7 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { BusinessService } from "../usecase/business.service";
-import { Business, BusinessRegistrationStage } from "../model/business.model";
-import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
+import { Business, BusinessInput, BusinessRegistrationStage } from "../model/business.model";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
 import { ProductService } from "../../product/product.service";
 import { BranchService } from "../../branch/usecase/branch.service";
@@ -13,12 +12,14 @@ import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Access, AppResources, DefaultRoles } from "apps/auth/src/authorization/model/access.model";
 import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
-import { AccessFactory, IAccessFactory } from "../../../../../libs/common/src/permission_helper/access_factory.interface";
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
 import { PermissionSelectionCriteria, RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { CurrentUser } from "libs/common/get_user_decorator";
 import { User } from "apps/auth/prisma/generated/prisma_auth_client";
+import { BusinessAccessGenerator } from "../business_access_factory";
+import { IAccessGenerator } from "@app/common/permission_helper/access_factory.interface";
+import { UpdateBusinessInput } from "../dto/business.input";
 
 
 @Resolver(of => Business)
@@ -28,7 +29,7 @@ export class BusinessResolver {
         private productService: ProductService,
         private branchService: BranchService,
         private coreServiceMsgBrocker: CoreServiceMsgBrockerClient,
-        @Inject(AccessFactory.injectName) private accessFactory: IAccessFactory
+        @Inject(BusinessAccessGenerator.injectName) private businessAccessGenerator: IAccessGenerator<Business>
     ) {
     }
 
@@ -45,10 +46,9 @@ export class BusinessResolver {
 
     @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
-    async createBusiness(@Args('data') data: CreateBusinessInput): Promise<BusinessResponse> {
+    async createBusiness(@Args('data') data: BusinessInput): Promise<BusinessResponse> {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());
-        let businessOwnerAccess = await this.accessFactory.getBusinessAccessGenerator().createAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
-
+        let businessOwnerAccess = await this.businessAccessGenerator.createAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
         let reply = await this.coreServiceMsgBrocker.sendCreateAccessPermissionMessage(businessOwnerAccess);
         console.log("reply", reply)
         var response = new BusinessResponseBuilder().withBusiness(createdBusiness).build();

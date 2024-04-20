@@ -24,6 +24,8 @@ import { ProductService } from './product/product.service';
 import { StaffRepository } from './staff/repo/staff.repo';
 import { StaffResolver } from './staff/staff.resolver';
 import { StaffService } from './staff/staff.service';
+import { BusinessAccessGenerator } from './business/business_access_factory';
+import { ProductResourceUsageTracker } from './resource_usage_tracker/product_resource_usage';
 
 
 @Module({
@@ -58,6 +60,7 @@ import { StaffService } from './staff/staff.service';
 
     { provide: BusinessRepository.injectName, useClass: BusinessRepository }, // This is the way to inject the repository
     { provide: AccessFactory.injectName, useClass: AccessFactory },
+    { provide: BusinessAccessGenerator.injectName, useClass: BusinessAccessGenerator },
     BusinessService,
     BusinessResolver,
 
@@ -66,6 +69,7 @@ import { StaffService } from './staff/staff.service';
     BranchResolver,
 
     { provide: ProductRepository.injectName, useClass: ProductRepository },
+    { provide: ProductResourceUsageTracker.injectName, useClass: ProductResourceUsageTracker },
     ProductService, ProductResolver,
 
     { provide: StaffRepository.injectName, useClass: StaffRepository },

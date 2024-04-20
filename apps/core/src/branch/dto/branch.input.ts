@@ -1,25 +1,33 @@
-import { InputType, OmitType, PartialType, PickType } from "@nestjs/graphql";
+import { Field, InputType, OmitType, PartialType, PickType } from "@nestjs/graphql";
 import { Branch } from "../model/branch.model";
-import { LocalizedData } from "@app/common/model/localized_model";
-import { Address } from "../../business/model/address.model";
+import { LocalizedFieldInput } from "@app/common/model/localized_model";
+import { Address, AddressInput } from "../../business/model/address.model";
 import { IsNotEmpty, IsString } from "class-validator";
 import { Type } from "class-transformer";
 
 @InputType()
-export class CreateBranchInput extends PickType(Branch, ['name', 'address', 'businessId', 'phoneNumber', 'email'], InputType) {
+export class CreateBranchInput {
+    @Field(type => [LocalizedFieldInput])
     @IsNotEmpty()
-    @Type(() => LocalizedData)
-    name: LocalizedData[];
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[];
+
     @IsNotEmpty()
-    @Type(() => Address)
+    @Field(type => AddressInput)
+    @Type(() => AddressInput)
     address: Address;
+
+    @Field()
     @IsNotEmpty()
     @IsString()
     businessId: string;
+
+    @Field()
     @IsNotEmpty()
     @IsString()
     phoneNumber: string;
 
+    @Field()
     email?: string;
 
     toBranch(): Branch {

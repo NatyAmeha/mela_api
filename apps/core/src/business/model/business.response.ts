@@ -16,7 +16,9 @@ export class BusinessResponse extends BaseResponse {
     products?: Product[]
     @Field(type => [Branch])
     branches?: Branch[]
+    @Field(type => [Branch])
     branchAdded?: Branch[]
+    @Field(type => [Branch])
     branchUpdated?: Branch[]
 
     accesses?: Access[]

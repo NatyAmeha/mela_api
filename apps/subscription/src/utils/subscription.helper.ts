@@ -26,16 +26,17 @@ export class SubscriptionHelper {
             var serviceInfo = await this.platformServiceRepo.getPlatformService(service.serviceId)
             if (serviceInfo) {
                 var endDate = new Date(Date.now())
-                endDate.setDate(endDate.getDate() + serviceInfo.duration)
+                var selectedRenewalInfo = serviceInfo.subscriptionRenewalInfo.find(info => info.id == service.selectedRenewalId)
+                endDate.setDate(endDate.getDate() + selectedRenewalInfo.duration)
                 return <PlatfromServiceSubscription>{
                     serviceId: serviceInfo.id,
                     serviceName: service.serviceName,
-                    selectedCustomizationId: service.selectedCustomizationId,
+                    selectedCustomizationInfo: service.selectedCustomizationInfo,
                     startDate: startDate,
                     endDate: endDate,
                     createdAt: new Date(Date.now()),
                     updatedAt: new Date(Date.now()),
-                    isTrialPeriod: serviceInfo.hasTrialPeriod()
+                    isTrialPeriod: serviceInfo.hasTrialPeriod(service.selectedRenewalId)
                 }
             }
         }))

@@ -108,7 +108,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
 
     async sendAccessRenewalMessageToAuthService(businessId: string, newBusinessAccess: Access[]): Promise<IMessageBrockerResponse<any>> {
         // revoke previous access message
-        var revokeAccessCommand = new AccessQueryMetadata({ ownerId: businessId, ownerType: AccessOwnerType.BUSINESS, permissionType: PermissionType.PLATFORM_PERMISSION })
+        var revokeAccessCommand = new AccessQueryMetadata({ ownerId: businessId, ownerType: AccessOwnerType.BUSINESS, permissionType: PermissionType.PLATFORM_SERVICE_ACCESS_PERMISSION })
         var messageContent: AccessRenewalInfo = { newAccesses: newBusinessAccess, revokeAccessCommand: revokeAccessCommand }
         let messageId = `${businessId}-${AuthServiceMessageType.REVOKE_PREVIOUS_PLATFORM_ACCESS_PERMISSION_AND_CREATE_NEW_ACCESS}`
         let messageInfo = new MessageBrockerMsgBuilder().withData(messageContent).withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withCoorelationId(AuthServiceMessageType.REVOKE_PREVIOUS_PLATFORM_ACCESS_PERMISSION_AND_CREATE_NEW_ACCESS).withMessageId(messageId).build()

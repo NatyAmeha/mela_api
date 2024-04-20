@@ -8,4 +8,9 @@ export class ProductResponse extends BaseResponse {
     product?: Product;
     @Field(type => [Product])
     products?: Product[];
+
+    constructor(data: Partial<ProductResponse>) {
+        super()
+        Object.assign(this, data)
+    }
 }

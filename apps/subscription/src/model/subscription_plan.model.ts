@@ -1,23 +1,24 @@
-import { Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql"
+import { Directive, Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql"
 import { BaseModel } from "@app/common/model/base.model"
 import { Subscription } from "./subscription.model"
 import { SubscriptionType } from "./subscription_type.enum"
 import { Transform, Type } from "class-transformer"
 import { IsNotEmpty, IsNumber, IsOptional, ValidateIf, isNotEmpty, } from "class-validator"
-import { SubscriptionLocalizedField } from "../utils/subscriptioni_localized_field.model"
+import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model"
 
 
-@ObjectType()
-@InputType("SubscriptionPlanInput")
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id")')
 export class SubscriptionPlan extends BaseModel {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [SubscriptionLocalizedField])
-    name?: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData])
+    name?: LocalizedData[]
 
-    @Field(type => [SubscriptionLocalizedField])
-    description?: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData])
+    description?: LocalizedData[]
 
     @Field(type => Float)
     price?: number
@@ -51,14 +52,25 @@ export class SubscriptionPlan extends BaseModel {
     }
 }
 
-@ObjectType()
-@InputType("BenefitInput")
+
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+// @Directive('@key(fields: "id")')
 export class BenefitInfo {
     @Field(type => [String])
     tags?: string[]
-    @Field(type => [SubscriptionLocalizedField])
-    @Type(() => SubscriptionLocalizedField)
-    descriptions: SubscriptionLocalizedField[]
+    @Field(type => [LocalizedData])
+    @Type(() => LocalizedData)
+    descriptions: LocalizedData[]
+}
+
+@InputType()
+export class BenefitInfoInput {
+    @Field(type => [String])
+    tags?: string[]
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    descriptions: LocalizedFieldInput[]
 }
 
 

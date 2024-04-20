@@ -1,7 +1,7 @@
 import { Business } from "apps/core/src/business/model/business.model"
 import { Access, AccessOwnerType, AppResources, DefaultRoles, Permission } from "../model/access.model"
 import { PermissionEffectType } from "@app/common/permission_helper/permission_constants"
-import { PlatformService } from "apps/subscription/src/model/platform_service.model"
+// import { PlatformService } from "apps/subscription/src/model/platform_service.model"
 
 export interface IPermissionGenerator<T> {
     generateDefaultPermissions(businessInfo: T): Promise<Access[]>

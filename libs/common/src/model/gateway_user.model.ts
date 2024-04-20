@@ -3,7 +3,7 @@
 
 export interface GatewayApiFetchResponse {
     user?: UserInfo
-    accesses?: GatewayUserAccess[]
+    accesses?: GatewayUserAccess[],
 
 }
 

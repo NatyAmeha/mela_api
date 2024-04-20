@@ -1,37 +1,9 @@
-import { Field, Int, ObjectType } from "@nestjs/graphql";
-import { PlatfromServiceSubscription, Subscription } from "./subscription.model";
-import { SubscriptionPlan } from "./subscription_plan.model";
-import { BaseResponse } from "@app/common/model/base.response";
-import { PlatformService } from "./platform_service.model";
-
-@ObjectType()
-export class SubscriptionResponse extends BaseResponse {
-    @Field(type => Subscription, { description: "subscription info created" })
-    createdSubscription?: Subscription;
-    @Field(type => SubscriptionPlan, { description: "Subscription plan info that is subscribed" })
-    plan?: SubscriptionPlan
-    @Field(type => [Subscription], { description: "subscriptions" })
-    subscriptions?: Subscription[]
-    @Field(type => [Subscription], { description: "existing subscription available for requested by planId and owner" })
-    existingActiveSubscriptions?: Subscription[]
-    @Field(type => [Subscription])
-    deletedSubscritpions?: Subscription[]
-    @Field(type => [PlatfromServiceSubscription])
-    addedPlatformServices?: PlatfromServiceSubscription[]
-    @Field(type => [PlatfromServiceSubscription])
-    existingPlatformService?: PlatfromServiceSubscription[]
-    @Field(type => [String])
-    platformServicehavingFreeTrial?: string[]
-
-    constructor(data: Partial<SubscriptionResponse>) {
-        super()
-        Object.assign(this, data)
-    }
-
-    changeSubscritpioStatus(status: boolean) {
-        this.createdSubscription.isActive = status;
-    }
-}
+import { Field, Int, ObjectType } from "@nestjs/graphql"
+import { PlatfromServiceSubscription, Subscription } from "../subscription.model"
+import { SubscriptionResponse } from "./subscription.response"
+import { SubscriptionPlan } from "../subscription_plan.model"
+import { PlatformService } from "../platform_service.model"
+import { BaseResponse } from "@app/common/model/base.response"
 
 
 @ObjectType()
@@ -48,8 +20,6 @@ export class SubscriptioinUpgradePriceingResponse extends BaseResponse {
         Object.assign(this, data)
     }
 }
-
-
 export class SubscriptionResponseBuilder {
     private response: SubscriptionResponse
     constructor() {

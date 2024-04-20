@@ -3,7 +3,7 @@ import { BusinessService } from "../business/usecase/business.service";
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 import { ConsumeMessage } from "amqplib";
 import { SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
-import { SubscriptionResponse } from "apps/subscription/src/model/subscription.response";
+import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
 import { ChannelWrapper } from "amqp-connection-manager";
 
 @Injectable({ scope: Scope.DEFAULT })
