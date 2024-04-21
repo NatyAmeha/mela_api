@@ -1,5 +1,5 @@
 import { Field, InputType, ObjectType } from "@nestjs/graphql";
-import { CreatePlatformServiceSubscriptionInput, UpdatePlatformSubscriptionInput } from "./subscription.input";
+import { SelectedPlatformServiceForSubscription, UpdatePlatformSubscriptionInput } from "./platform_service_subscription.input";
 
 
 

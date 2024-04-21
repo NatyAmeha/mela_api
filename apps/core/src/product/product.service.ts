@@ -3,8 +3,8 @@ import { IProductRepository, ProductRepository } from "./repo/product.repository
 import { Product, ProductInput } from "./model/product.model";
 import { ProductResourceUsageTracker } from "../resource_usage_tracker/product_resource_usage";
 import { ProductResponse } from "./model/product.response";
-import { AppResourceAction } from "apps/auth/src/authorization/model/access.model";
 import { PlatformServiceGateway, SubscriptionGateway } from "apps/mela_api/src/model/subscription.gateway.model";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 
 @Injectable()
 export class ProductService {
@@ -14,12 +14,16 @@ export class ProductService {
     ) {
     }
     async createProduct(productInput: ProductInput, subscriptionInfo: SubscriptionGateway, platformServices: PlatformServiceGateway[]): Promise<ProductResponse> {
+        if (subscriptionInfo == undefined || !platformServices || platformServices?.length == 0) {
+            throw new RequestValidationException({ message: "No subscription informatioin found" })
+        }
         let productUsageTracker = await this.productUsageTracker.getBusinessProductCreationUsage(productInput.businessId, subscriptionInfo, platformServices);
         if (productUsageTracker.isAtMaxUsage()) {
             return new ProductResponse({ success: false, message: "You have reached the maximum number of products you can create." })
         }
         let product = await this.productRepository.createProduct(productInput.toProduct());
         return new ProductResponse({ product: product })
+
     }
 
     async updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product> {

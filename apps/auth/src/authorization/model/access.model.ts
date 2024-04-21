@@ -103,33 +103,7 @@ export enum AccessOwnerType {
 }
 registerEnumType(AccessOwnerType, { name: 'AccessOwnerType' })
 
-export enum AppResources {
-    BUSINESS = 'BUSINESS',
-    BRANCH = 'BRANCH',
-    STAFF = 'STAFF',
-    PRODUCT = 'PRODUCT',
-    CUSTOMER = 'CUSTOMER',
-    USER = 'USER',
-    PLATFORM_SERVICES = 'PLATFORM_SERVICES',
-    PLATFORM_SERVICE_SUBSCRIPTION = 'PLATFORM_SERVICE_SUBSCRIPTION',
-}
 
-export enum AppResourceAction {
-    // Product
-
-
-
-    // Branchh
-    CREATE_BRANCH = 'CREATE_BRANCH',
-
-}
-
-export enum ProductResourceAction {
-    CREATE_ONE_PRODUCTS = "CREATE_1_PRODUCTS",
-    CREATE_HUNDRED_PRODUCTS = 'CREATE_100_PRODUCTS',
-    CREATE_500_PRODUCT = "CREATE_500_PRODUCT",
-    CREATE_THOUSAND_PRODUCTS = "CREATE_1000_PRODUCTS",
-}
 
 export enum DefaultRoles {
     ADMIN = 'ADMIN',

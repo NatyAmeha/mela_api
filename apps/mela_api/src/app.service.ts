@@ -23,6 +23,7 @@ export class AppService {
         if (token) {
           var jwtPayload = await jwtService.verifyAsync(token, { secret: config.auth.accessToken })
           var userAccessApiEndpoint = config.auth.userAccessEndpointFromAuthService(jwtPayload.sub)
+          var businessSubscriptionEndpoint = config.auth.businessSubscriptionEndpoint(jwtPayload.sub)
           var axiosresponse = await axios.get(userAccessApiEndpoint)
           var gatewayApiResponse = axiosresponse.data as GatewayApiFetchResponse
           if (!gatewayApiResponse) {

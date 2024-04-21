@@ -1,4 +1,4 @@
-import { Access, AccessOwnerType, AppResources, Permission } from "apps/auth/src/authorization/model/access.model";
+import { Permission } from "apps/auth/src/authorization/model/access.model";
 import { filter, isEmpty } from "lodash";
 import { PERMISSIONACTION, PermissionEffectType, PermissionResourceType, PermissionTargetType } from "./permission_constants";
 import { GqlExecutionContext } from "@nestjs/graphql";
@@ -7,6 +7,7 @@ import { Injectable } from "@nestjs/common";
 import { Subscription } from "apps/subscription/src/model/subscription.model";
 import { SubscriptionType } from "apps/subscription/src/model/subscription_type.enum";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
+import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 
 export interface IPermissionHelper {
     isPermissionsGranted(grantedPermissions: Permission[], requiredPermission: PermissionConfiguration): boolean

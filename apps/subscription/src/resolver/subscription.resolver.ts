@@ -6,7 +6,7 @@ import { Subscription } from '../model/subscription.model';
 import { CreateSubscriptionPlanInput, UpdateSubscriptionPlanInput } from '../dto/subscription_plan.input';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
-import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from '../dto/subscription.input';
+import { SelectedPlatformServiceForSubscription, CreatePlatformSubscriptionInput } from '../dto/platform_service_subscription.input';
 import { SubscriptionResponse } from '../model/response/subscription.response';
 import { SubscriptionMessageBrocker } from '../msg_brocker_client/subscription_message_brocker';
 import { AppMsgQueues } from 'libs/rmq/constants';
@@ -16,7 +16,7 @@ import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'libs/common/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
 import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
-import { Access, AppResources, DefaultRoles, Permission } from 'apps/auth/src/authorization/model/access.model';
+import { DefaultRoles } from 'apps/auth/src/authorization/model/access.model';
 import { SubscriptionHelper } from '../utils/subscription.helper';
 import { IAccessGenerator } from '@app/common/permission_helper/access_factory.interface';
 import { SubscriptionAccessGenerator } from '../utils/subscription_access_generator';
@@ -26,6 +26,7 @@ import { PermissionGuard } from '@app/common/permission_helper/permission.guard'
 import { SubscriptionUpgradeResponse } from '../model/response/subscription_upgrade.response';
 import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
 import { AuthGuard } from '@nestjs/passport';
+import { AppResources } from 'apps/mela_api/src/const/app_resource.constant';
 
 
 
@@ -71,33 +72,23 @@ export class SubscriptionResolver {
   }
 
 
-
-  @UseGuards(AuthzGuard)
-  @RequiresPermission(
-    {
-      permissions: [
-        { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE },
-        { role: DefaultRoles.BUSINESS_OWNER }
-      ],
-      selectionCriteria: PermissionSelectionCriteria.ANY
-    }
-  )
+  @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }] })
   @UseGuards(PermissionGuard)
   @Mutation(returns => SubscriptionResponse)
-  async subscribeBusinessToPlatformServices(@Args("id", { description: "id of the business" }) businessId: string, @Args("input") planInput: CreateSubscriptionInput) {
-    // validate the input
-    // create subscription info
-    let subscritpionResponse = await this.subscriptionService.subscribeToPlan(planInput);
+  async subscribeBusinessToPlatformServices(@Args("id", { description: "id of the business" }) businessId: string, @Args("input") planInput: CreatePlatformSubscriptionInput) {
+    // get business info from core service
+    let businessInfo = await this.subscriptionBroker.getBusinessInformationFromCoreService(businessId)
+    let subscritpionResponse = await this.subscriptionService.subscribeToPlatformServices(planInput, businessInfo.business);
     if (!subscritpionResponse.success) {
       return subscritpionResponse
     }
 
     // create access permission for business on auth servcie
-    let platformServiceAccess = await this.subscriptionAccessGenerator.createAccess(subscritpionResponse.createdSubscription, SubscriptionType.PLATFORM);
+    let platformServiceAccess = await this.subscriptionAccessGenerator.createAccess(subscritpionResponse.subscription, SubscriptionType.PLATFORM);
     let reply = await this.subscriptionBroker.createPlatformServiceAccessPermission(platformServiceAccess);
     if (reply.success) {
-      let updateResult = await this.subscriptionService.updateSubscriptionStatus(subscritpionResponse.createdSubscription!.id!, true)
-      // // subscritpionResponse.changeSubscritpioStatus(updateResult)
+      let updateResult = await this.subscriptionService.updateSubscriptionStatus(subscritpionResponse.subscription!.id!, true)
+      subscritpionResponse.changeSubscritpioStatus(updateResult)
       // subscritpionResponse.createdSubscription.isActive = updateResult
 
       // Sned subscription created event to core service to update business registration stage
@@ -130,7 +121,7 @@ export class SubscriptionResolver {
     let subscriptionUpgradeResponse = await this.subscriptionService.renewSubscription(id, data);
     if (subscriptionUpgradeResponse.success) {
       //Send  Revoke  previous permission and create new access message to Auth service
-      let newplatformServiceAccessesForBusiness = await this.subscriptionAccessGenerator.createAccess(subscriptionUpgradeResponse.createdSubscription, SubscriptionType.PLATFORM);
+      let newplatformServiceAccessesForBusiness = await this.subscriptionAccessGenerator.createAccess(subscriptionUpgradeResponse.subscription, SubscriptionType.PLATFORM);
       let newAccessCreateResult = await this.subscriptionBroker.sendAccessRenewalMessageToAuthService(data.businessId, newplatformServiceAccessesForBusiness);
       if (newAccessCreateResult.success) {
         // Sned subscription created event to core service to update business subscriptioni stage
@@ -186,12 +177,12 @@ export class SubscriptionResolver {
     return response
   }
 
-  @UseGuards(AuthzGuard)
-  @Mutation(returns => SubscriptionResponse)
-  async subscribeToPlan(@Args("info") info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
-    let response = await this.subscriptionService.subscribeToPlan(info);
-    return response
-  }
+  // @UseGuards(AuthzGuard)
+  // @Mutation(returns => SubscriptionResponse)
+  // async subscribeToPlan(@Args("info") info: CreatePlatformSubscriptionInput): Promise<SubscriptionResponse> {
+  //   let response = await this.subscriptionService.subscribeToPlatformServices(info);
+  //   return response
+  // }
 
   @UseGuards(AuthzGuard)
   @Mutation(returns => SubscriptionResponse)

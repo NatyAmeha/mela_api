@@ -11,7 +11,11 @@ export const Configuration = () => ({
         },
         businessAccessFetchEndpoint: (businessId: string) => {
             return `http://localhost:3002/access/business?id=${businessId}`;
+        },
+        businessSubscriptionEndpoint: (businessId: string) => {
+            return `http://localhost:3002/subscription/business?id=${businessId}`
         }
+
     },
 
 });

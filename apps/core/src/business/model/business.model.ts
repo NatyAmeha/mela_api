@@ -8,6 +8,7 @@ import { Branch } from "../../branch/model/branch.model";
 import { Product } from "../../product/model/product.model";
 import { Staff } from "../../staff/model/staff.model";
 import { BaseModel } from "@app/common/model/base.model";
+import { includes } from "lodash";
 
 @ObjectType()
 export class Business extends BaseModel {
@@ -80,78 +81,15 @@ export class Business extends BaseModel {
     @Field(types => [Customer])
     customers?: Customer[];
 
+    platformServiceTrialPeriodUsed(platformServiceId: string) {
+        return includes(this.trialPeriodUsedServiceIds, platformServiceId)
+    }
+
     constructor(partial?: Partial<Business>) {
         super();
         Object.assign(this, partial);
     }
 }
-
-@InputType()
-export class BusinessInput {
-
-    @Field(types => [LocalizedFieldInput])
-    name: LocalizedFieldInput[];
-
-    @Field(types => [LocalizedFieldInput])
-    description?: LocalizedFieldInput[];
-
-    @Field(types => [String])
-    categories: string[];
-
-    @Field()
-    creator: string;
-
-    @Field(types => [String])
-    customersId?: string[];
-
-    @Field(types => OpeningStatus)
-    openingStatus: string;
-
-    @Field(types => [ProductGroupInput])
-    group?: ProductGroupInput[];
-
-    @Field(types => [String])
-    productIds?: string[];
-
-    @Field(types => AddressInput)
-    mainAddress: AddressInput;
-
-    @Field()
-    phoneNumber: string;
-    @Field()
-
-    email?: string;
-    @Field()
-    website?: string;
-    @Field(types => [String], { defaultValue: [] })
-    branchIds?: string[];
-
-
-    @Field()
-    activeSubscriptionId?: string
-
-    @Field(types => [String])
-    subscriptionIds?: string[]
-
-    @Field(types => [String])
-    trialPeriodUsedServiceIds?: string[] = [];
-
-    @Field(types => GalleryInput)
-    gallery: GalleryInput;
-
-    @Field(types => [CustomerInput])
-    customers?: CustomerInput[];
-
-    constructor(partial?: Partial<Business>) {
-        Object.assign(this, partial);
-    }
-
-    toBusiness(): Business {
-        const business = new Business({ ...this, stage: BusinessRegistrationStage.BUSINESS_CREATED });
-        return business;
-    }
-}
-
 
 
 enum OpeningStatus {

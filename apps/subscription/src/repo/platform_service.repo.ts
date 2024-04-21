@@ -7,6 +7,7 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 export interface IPlatformServiceRepo {
     createPlatformService(serviceInfo: PlatformService): Promise<PlatformService>
     findPlatfromServices(queryHelper: QueryHelper<PlatformService>): Promise<PlatformService[]>
+    findPlatformServicesByIds(serviceIds: string[]): Promise<PlatformService[]>
     getPlatformService(platformServiceId: string): Promise<PlatformService | undefined>
     getAllPlatformServices(): Promise<PlatformService[]>
 

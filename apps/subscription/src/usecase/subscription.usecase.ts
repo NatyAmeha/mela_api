@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ISubscritpionRepository, SubscriptionRepository } from '../repo/subscription.repository';
 import { SubscriptionPlan } from '../model/subscription_plan.model';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
-import { CreatePlatformServiceSubscriptionInput, CreateSubscriptionInput } from '../dto/subscription.input';
+import { SelectedPlatformServiceForSubscription, CreatePlatformSubscriptionInput } from '../dto/platform_service_subscription.input';
 import { PlatfromServiceSubscription, Subscription } from '../model/subscription.model';
-import { SubscriptionResponse } from '../model/response/subscription.response';
+import { SubscriptionResponse, SubscriptionResponseBuilder } from '../model/response/subscription.response';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { IPlatformServiceRepo, PlatformServiceRepository } from '../repo/platform_service.repo';
 import { SubscriptionHelper } from '../utils/subscription.helper';
@@ -12,6 +12,9 @@ import { ISubscriptionOption, SubscriptionFactory } from '../utils/subscrption_f
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
 import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
 import { SubscriptionUpgradeResponse } from '../model/response/subscription_upgrade.response';
+import { query } from 'express';
+import { first } from 'lodash';
+import { Business } from 'apps/core/src/business/model/business.model';
 
 @Injectable()
 export class SubscriptionService {
@@ -60,11 +63,12 @@ export class SubscriptionService {
     return result;
   }
 
-  async subscribeToPlan(info: CreateSubscriptionInput): Promise<SubscriptionResponse> {
-    let response = await this.subscriptionFactory.create(info.type).createSubscriptionInfo(info, 250);
+  async subscribeToPlatformServices(info: CreatePlatformSubscriptionInput, business: Business): Promise<SubscriptionResponse> {
+
+    let response = await this.subscriptionFactory.create(SubscriptionType.PLATFORM).createSubscriptionInfo(info, business);
     if (response.success) {
-      let saveSubscriptionResult = await this.subscriptionRepo.createSubscription(response.createdSubscription)
-      response.createdSubscription = saveSubscriptionResult;
+      let saveSubscriptionResult = await this.subscriptionRepo.createSubscription(response.subscription)
+      response.subscription = saveSubscriptionResult;
       return response
     }
     else {
@@ -97,11 +101,18 @@ export class SubscriptionService {
   // }
 
   async getSubscriptionUpgradeInfo(subscriptionId: string, subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse> {
-    let subscriptionInfo = await this.subscriptionRepo.getSubscriptionInfo(subscriptionId)
+    let subscriptionInfo = await this.subscriptionRepo.getSubscriptionById(subscriptionId)
     let platformServices = await this.platformServcieRepo.getAllPlatformServices();
     let subscriptionOption = this.subscriptionFactory.create(subscriptionInfo.type);
     let result = await subscriptionOption.getSubscriptionUpgradeInfo(subscriptionInfo, platformServices, subscriptionInput)
     return result;
+  }
+
+  async getBusinessSubscription(owner: string): Promise<SubscriptionResponse> {
+    let ownerSubscriptionQuery = { query: { owner: owner, type: SubscriptionType.PLATFORM } } as QueryHelper<Subscription>
+    let subscriptions = await this.subscriptionRepo.findSubscriptionInfo(ownerSubscriptionQuery)
+    let activeSubscription = first(subscriptions)
+    return new SubscriptionResponseBuilder().withSubscriptions(subscriptions).withSubscription(activeSubscription).build()
   }
 
   async renewSubscription(subscriptionId: string, subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionResponse> {
@@ -112,8 +123,8 @@ export class SubscriptionService {
     let subscriptionUpgradeInfo = await this.getSubscriptionUpgradeInfo(subscriptionId, subscriptionInput)
     let newSubscriptionInfo = await this.subscriptionFactory.create(SubscriptionType.PLATFORM).createSubscriptionInfoFromSubscriptionUpgradeInfo(subscriptionUpgradeInfo)
     if (newSubscriptionInfo.success) {
-      let saveSubscriptionResult = await this.subscriptionRepo.createSubscription(newSubscriptionInfo.createdSubscription)
-      newSubscriptionInfo.createdSubscription = saveSubscriptionResult;
+      let saveSubscriptionResult = await this.subscriptionRepo.createSubscription(newSubscriptionInfo.subscription)
+      newSubscriptionInfo.subscription = saveSubscriptionResult;
       return newSubscriptionInfo
     }
     else {

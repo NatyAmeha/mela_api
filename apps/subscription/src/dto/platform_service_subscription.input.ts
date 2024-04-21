@@ -1,59 +1,50 @@
-import { Field, InputType, OmitType, PickType } from "@nestjs/graphql";
-import { PlatfromServiceSubscription, Subscription, PlatfromServiceSubscriptionInput, CustomizationInfoInput } from "../model/subscription.model";
+import { Field, InputType } from "@nestjs/graphql";
+import { Subscription, CustomizationInfoInput } from "../model/subscription.model";
 import { SubscriptionPlan } from "../model/subscription_plan.model";
-import { gt, isArray, isEmpty, remove } from "lodash";
-import { IsArray, IsNotEmpty, IsString, IsUUID, ValidateIf, isNotEmpty } from "class-validator";
-import { SubscriptionType } from "../model/subscription_type.enum";
-import { RequestValidationException } from "@app/common/errors/request_validation_exception";
-import { IPlatformServiceRepo } from "../repo/platform_service.repo";
+import { gt } from "lodash";
+import { IsArray, IsNotEmpty, IsString, IsUUID } from "class-validator";
 
-@InputType()
-export class CreateSubscriptionInput extends PickType(Subscription, ["owner", "type", "subscriptioinPlanId"] as const, InputType) {
-
-    @Field(type => [CreatePlatformServiceSubscriptionInput])
-    @ValidateIf((obj: CreateSubscriptionInput, value) => obj.type != SubscriptionType.PLATFORM)
-    @IsNotEmpty()
-    selectedPlatformServices?: CreatePlatformServiceSubscriptionInput[]
-
-    constructor(data: Partial<CreateSubscriptionInput>) {
-        super()
-        Object.assign(this, data)
-    }
-
-    getSubscriptionInfoFromPlan(plan: SubscriptionPlan): Subscription {
-        var startDate = new Date(Date.now())
-        var endDate = new Date(Date.now())
-        endDate.setDate(endDate.getDate() + plan.duration)
-        return new Subscription({
-            isTrialPeriod: gt(plan.trialPeriod, 0),
-            type: plan.type,
-            subscriptioinPlanId: plan.id,
-            owner: this.owner,
-            startDate: startDate,
-            endDate: endDate,
-            createdAt: startDate,
-            updatedAt: startDate,
-        })
-    }
-
+export interface SubscriptionInput {
 
 }
 
 @InputType()
-export class CreatePlatformServiceSubscriptionInput {
+export class CreatePlatformSubscriptionInput implements SubscriptionInput {
+    @Field()
+    @IsString()
+    @IsNotEmpty()
+    owner: string;
+
+    @Field(type => [SelectedPlatformServiceForSubscription])
+    @IsNotEmpty()
+    selectedPlatformServices?: SelectedPlatformServiceForSubscription[]
+
+    constructor(data: Partial<CreatePlatformSubscriptionInput>) {
+        Object.assign(this, data)
+    }
+
+
+
+}
+@InputType()
+export class SelectedPlatformServiceForSubscription {
+    @Field()
     @IsString()
     serviceId: string;
+
+    @Field()
     @IsString()
     serviceName: string;
 
     @Field(type => [CustomizationInfoInput])
     @IsArray()
+    @IsNotEmpty()
     @IsUUID()
     selectedCustomizationInfo: CustomizationInfoInput[];
 
     @Field()
     selectedRenewalId: string;
-    constructor(data: Partial<CreatePlatformServiceSubscriptionInput>) {
+    constructor(data: Partial<SelectedPlatformServiceForSubscription>) {
         Object.assign(this, data);
     }
 

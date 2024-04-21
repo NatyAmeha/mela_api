@@ -2,14 +2,13 @@ import { BaseModel } from "@app/common/model/base.model";
 import { Directive, Field, Float, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { SubscriptionPlan } from "./subscription_plan.model";
 import { SubscriptionType } from "./subscription_type.enum";
-import { types } from "joi";
-import { Access, AccessOwnerType, AppResourceAction, Permission } from "apps/auth/src/authorization/model/access.model";
-import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
-import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
-import { includes } from "lodash";
+import { includes, sumBy } from "lodash";
 import { PlatformService } from "./platform_service.model";
 import { Injectable } from "@nestjs/common";
-import { CreateSubscriptionInput } from "../dto/subscription.input";
+import { CreatePlatformSubscriptionInput } from "../dto/platform_service_subscription.input";
+import { AppResourceAction } from "apps/mela_api/src/const/app_resource.constant";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { Business } from "apps/core/src/business/model/business.model";
 
 
 @ObjectType({ isAbstract: true })
@@ -85,9 +84,6 @@ export class Subscription extends BaseModel {
 
 }
 
-@InputType()
-export class SubscriptionInput extends Subscription { }
-
 @ObjectType({ isAbstract: true })
 @Directive('@extends')
 @Directive('@key(fields: "id")')
@@ -102,7 +98,7 @@ export class PlatfromServiceSubscription {
     startDate: Date
     @Field(type => Date)
     endDate: Date
-    @Field()
+    @Field({ defaultValue: false })
     isTrialPeriod?: boolean
     @Field(type => Date)
     createdAt?: Date
@@ -135,6 +131,9 @@ export class CustomizationInfo {
 @InputType()
 export class CustomizationInfoInput extends CustomizationInfo {
 
+    @Field()
+    customizationId: string
+
     @Field(type => String)
     action: string | AppResourceAction
 
@@ -156,35 +155,60 @@ export class PlatformSubscriptionBuilder implements ISubscriptionInfoBuilder {
         this.subscription = new Subscription({})
     }
 
-    generateBaseSubscription(owner: string, amountPaid: number): PlatformSubscriptionBuilder {
+    generateBaseSubscription(owner: string): PlatformSubscriptionBuilder {
         this.subscription.type = SubscriptionType.PLATFORM
         this.subscription.owner = owner
-        this.subscription.amountPaid = amountPaid
         this.subscription.isActive = false
         return this
     }
 
 
-    addPlatformServices(subscriptionInput: CreateSubscriptionInput) {
+    addPlatformServices(subscriptionInput: CreatePlatformSubscriptionInput, businessInfo: Business): PlatformSubscriptionBuilder {
         let startDate = new Date(Date.now())
         let serviceSubscriptionInfo = subscriptionInput.selectedPlatformServices.map(selectedServiceInput => {
             let serviceInfo = this.allPlatformServices.find(platformService => platformService.id == selectedServiceInput.serviceId)
+            if (!serviceInfo) {
+                throw new RequestValidationException({ message: "platform service not found" })
+            }
             var selectedSubscriptionRenewalInfo = serviceInfo?.subscriptionRenewalInfo.find(info => info.id == selectedServiceInput.selectedRenewalId)
+            if (!selectedSubscriptionRenewalInfo) {
+                throw new RequestValidationException({ message: "Subscription renewal info is not set or incorrect" })
+            }
             if (serviceInfo && selectedSubscriptionRenewalInfo) {
                 let endDate = new Date(Date.now())
-                endDate.setDate(endDate.getDate() + selectedSubscriptionRenewalInfo.duration)
+                let serviceTrialPeriodAlreadyUsed = includes(businessInfo.trialPeriodUsedServiceIds, serviceInfo.id)
+                if (serviceTrialPeriodAlreadyUsed) {
+                    endDate.setDate(endDate.getDate() + selectedSubscriptionRenewalInfo.duration)
+                }
+                else {
+                    endDate.setDate(endDate.getDate() + selectedSubscriptionRenewalInfo.trialPeriod)
+                }
                 return <PlatfromServiceSubscription>{
                     serviceId: serviceInfo.id,
                     serviceName: selectedServiceInput.serviceName,
                     selectedCustomizationInfo: selectedServiceInput.selectedCustomizationInfo,
                     startDate: startDate,
                     endDate: endDate,
-                    isTrialPeriod: serviceInfo.hasTrialPeriod(selectedSubscriptionRenewalInfo.id)
+                    isTrialPeriod: serviceInfo.hasTrialPeriod(selectedSubscriptionRenewalInfo.id) && !serviceTrialPeriodAlreadyUsed
                 }
             }
         })
         this.subscription.platformServices = serviceSubscriptionInfo
+
         return this
+    }
+
+    addTotalAmount(subscriptionInput: CreatePlatformSubscriptionInput, allPlatformServices: PlatformService[]) {
+        let platformServiceIdInsideSubscription = subscriptionInput.selectedPlatformServices.map(input => input.serviceId);
+
+        let allCustomizationIdInsideSubscription = subscriptionInput.selectedPlatformServices.map(service => service.selectedCustomizationInfo.map(customization => customization.customizationId)).flat()
+        let customizationInsideSubscriptionFullInfo = allPlatformServices.map(service => service.customizationCategories.map(category => category.customizations).flat()).flat().filter(customization => allCustomizationIdInsideSubscription.includes(customization.id))
+
+        let basePrice = sumBy(allPlatformServices, service => service.basePrice);
+        let selectedCustomizationPrice = sumBy(customizationInsideSubscriptionFullInfo, customization => customization.additionalPrice)
+        let totalAmount = basePrice + selectedCustomizationPrice
+        this.subscription.amountPaid = totalAmount
+        return this;
     }
 
     build() {

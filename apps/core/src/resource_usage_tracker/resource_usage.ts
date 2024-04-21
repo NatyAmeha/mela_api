@@ -1,4 +1,4 @@
-import { AppResources } from "apps/auth/src/authorization/model/access.model"
+import { AppResources } from "apps/mela_api/src/const/app_resource.constant"
 
 export class ResourceUsage {
     success: boolean

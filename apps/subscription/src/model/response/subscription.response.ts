@@ -7,7 +7,7 @@ import { PlatformService } from "../platform_service.model";
 @ObjectType()
 export class SubscriptionResponse extends BaseResponse {
     @Field(type => Subscription, { description: "subscription info created" })
-    createdSubscription?: Subscription;
+    subscription?: Subscription;
     @Field(type => SubscriptionPlan, { description: "Subscription plan info that is subscribed" })
     plan?: SubscriptionPlan
     @Field(type => [Subscription], { description: "subscriptions" })
@@ -20,6 +20,10 @@ export class SubscriptionResponse extends BaseResponse {
     addedPlatformServices?: PlatfromServiceSubscription[]
     @Field(type => [PlatfromServiceSubscription])
     existingPlatformService?: PlatfromServiceSubscription[]
+
+    @Field(type => [PlatformService])
+    platformServices?: PlatformService[]
+
     @Field(type => [String])
     platformServicehavingFreeTrial?: string[]
 
@@ -29,7 +33,24 @@ export class SubscriptionResponse extends BaseResponse {
     }
 
     changeSubscritpioStatus(status: boolean) {
-        this.createdSubscription.isActive = status;
+        this.subscription.isActive = status;
+    }
+
+    setPlatformServicesHavingFreetrial(servicesInsideSubscription: PlatfromServiceSubscription[]) {
+        let servicesHavingFreeTrial = servicesInsideSubscription.filter(service => service.isTrialPeriod)
+    }
+
+    isSafeErrorIfExist(): boolean {
+        if (this.success == true) {
+            return true
+        }
+        if (this.message) {
+            switch (this.message) {
+                default:
+                    return false;
+            }
+        }
+        return false;
     }
 }
 
@@ -39,15 +60,21 @@ export class SubscriptionResponseBuilder {
         this.response = new SubscriptionResponse({})
     }
 
-    withCreatedSubscription(subscription: Subscription) {
+    withSubscription(subscription: Subscription) {
         this.response.success = true
-        this.response.createdSubscription = subscription
+        this.response.subscription = subscription
         return this
     }
 
     withError(message: string) {
         this.response.success = false
         this.response.message = message
+        return this
+    }
+
+    withPlatformServices(platformServices: PlatformService[]) {
+        this.response.success = true
+        this.response.platformServices = platformServices
         return this
     }
 

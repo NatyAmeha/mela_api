@@ -49,11 +49,9 @@ export class PlatformService extends BaseModel {
     id?: string
 
     @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
     name: LocalizedData[]
 
     @Field(type => [LocalizedData], { nullable: true })
-    @Type(() => LocalizedData)
     description?: LocalizedData[]
 
 
@@ -64,27 +62,21 @@ export class PlatformService extends BaseModel {
     image?: string
 
     @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
     features?: LocalizedData[]
 
     @Field(type => [CustomizationCategory])
-    @Type(() => CustomizationCategory)
     customizationCategories?: CustomizationCategory[]
 
     @Field(type => [String])
     relatedServicesId?: string[]
 
     @Field(type => [PlatformService])
-    @Type(() => PlatformService)
     relatedServices?: PlatformService[]
 
 
 
 
     @Field(type => [SubscriptionRenewalInfo])
-    @Type(() => SubscriptionRenewalInfo)
-    @IsNotEmpty()
-    @IsArray()
     subscriptionRenewalInfo: SubscriptionRenewalInfo[]
 
 
@@ -112,7 +104,7 @@ export class PlatformService extends BaseModel {
 }
 
 @InputType()
-export class PlatformServiceInput {
+export class CreatePlatformServiceInput {
 
     @Field(type => [LocalizedFieldInput])
     @Type(() => LocalizedFieldInput)
@@ -135,18 +127,13 @@ export class PlatformServiceInput {
     customizationCategories?: CustomizationCategoryInput[]
 
 
-    @Field(type => [PlatformServiceInput])
-    @Type(() => PlatformServiceInput)
-    relatedServices?: PlatformServiceInput[]
-
-
     @Field(type => [SubscriptionRenewalInfoInput])
     @Type(() => SubscriptionRenewalInfoInput)
     @IsNotEmpty()
     @IsArray()
     subscriptionRenewalInfo: SubscriptionRenewalInfoInput[]
 
-    constructor(data: Partial<PlatformServiceInput>) {
+    constructor(data: Partial<CreatePlatformServiceInput>) {
         Object.assign(this, data)
     }
 }

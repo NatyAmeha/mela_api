@@ -1,3 +1,5 @@
 export class CacheRepository {
-    // getBusinessSubscriptionInfo(businessId : string)
+    getBusinessSubscriptionInfo(businessId: string) {
+
+    }
 }

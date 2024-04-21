@@ -71,7 +71,7 @@ import { SubscriptionMsgProcessosor } from './msg_brocker_client/subscription_se
     { provide: SubscriptionMsgProcessosor.InjectName, useClass: SubscriptionMsgProcessosor },
 
     SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase, SubscriptionHelper,
-    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption,
+    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository
 
 
   ],

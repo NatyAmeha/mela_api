@@ -19,18 +19,27 @@ export class BusinessService {
         return await this.businessRepo.getBusiness(id);
     }
 
+    async getBusinessResponse(id: string): Promise<BusinessResponse> {
+        try {
+            let business = await this.getBusiness(id);
+            return new BusinessResponse({ business: business, success: true });
+        } catch (error) {
+            return new BusinessResponse({ success: false, message: "Business not found" });
+        }
+    }
+
     async updateBusinessInfo(businessId: string, data: Partial<Business>) {
         return await this.businessRepo.updateBusiness(businessId, data);
     }
 
     async handleUpdateBusienssSubscriptionEvent(subscriptionInfo: SubscriptionResponse,): Promise<BusinessResponse> {
         try {
-            let businessId = subscriptionInfo.createdSubscription.owner
+            let businessId = subscriptionInfo.subscription.owner
             var updatedBusinessInfo = await this.businessRepo.updatedBusinessSubscriptionInfo(
                 businessId, BusinessRegistrationStage.PAYMENT_STAGE,
                 {
                     canActivate: false,
-                    subscriptionId: subscriptionInfo.createdSubscription.id,
+                    subscriptionId: subscriptionInfo.subscription.id,
                     trialPeriodUsedServiceIds: subscriptionInfo.platformServicehavingFreeTrial
                 }
             );
@@ -43,8 +52,8 @@ export class BusinessService {
 
 
 
-    async updateBusinessRegistrationStage(businessId: string, stage: BusinessRegistrationStage): Promise<BusinessResponse> {
-        var result = await this.businessRepo.updatedBusinessSubscriptionInfo(businessId, stage, { canActivate: stage == BusinessRegistrationStage.COMPLETED ? true : false });
+    async checkBusinessRegistrationFlow(businessId: string): Promise<BusinessResponse> {
+        var result = await this.businessRepo.updatedBusinessSubscriptionInfo(businessId, BusinessRegistrationStage.COMPLETED, { canActivate: true });
         return new BusinessResponse({ business: result, success: true });
     }
 

@@ -15,7 +15,6 @@ export enum PermissionSelectionCriteria {
 export interface PermissionConfiguration {
     permissions: RequestedPermissionInfo[],
     selectionCriteria?: PermissionSelectionCriteria,
-    getResourceTargetFromSubscription?: boolean
 }
 
 export const RequiresPermission = (permissionConfig: PermissionConfiguration) => SetMetadata<symbol, PermissionConfiguration>(PermissionGuard.PERMISSION_CONFIGURATION, permissionConfig) 

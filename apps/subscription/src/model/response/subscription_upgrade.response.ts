@@ -4,7 +4,7 @@ import { PlatformService } from "../platform_service.model"
 import { SubscriptionUpgradeInput } from "../../dto/update_subscription.input"
 import { PlatfromServiceSubscription, Subscription } from "../subscription.model"
 import { sumBy } from "lodash"
-import { CreateSubscriptionInput } from "../../dto/subscription.input"
+import { CreatePlatformSubscriptionInput } from "../../dto/platform_service_subscription.input"
 import { type } from "os"
 import { SubscriptionType } from "../subscription_type.enum"
 

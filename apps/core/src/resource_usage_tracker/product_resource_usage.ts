@@ -1,9 +1,9 @@
-import { AppResourceAction, AppResources, ProductResourceAction } from "apps/auth/src/authorization/model/access.model";
 import { ProductRepository } from "../product/repo/product.repository"
 import { ResourceUsage } from "./resource_usage"
 import { Inject, Injectable } from "@nestjs/common";
 import { PlatformServiceRepository } from "apps/subscription/src/repo/platform_service.repo";
 import { CustomizationGateway, PlatformServiceGateway, SubscriptionGateway } from "apps/mela_api/src/model/subscription.gateway.model";
+import { AppResources, ProductResourceAction } from "apps/mela_api/src/const/app_resource.constant";
 
 export interface IResourceUsageTracker {
     getAllowedPlatformServiceCusomizationFromSubscription(subscription: SubscriptionGateway, platformServices: PlatformServiceGateway[], requiredAction: string[]): Promise<CustomizationGateway>

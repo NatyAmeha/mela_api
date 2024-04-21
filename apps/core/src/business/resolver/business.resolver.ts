@@ -1,6 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { BusinessService } from "../usecase/business.service";
-import { Business, BusinessInput, BusinessRegistrationStage } from "../model/business.model";
+import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
 import { ProductService } from "../../product/product.service";
 import { BranchService } from "../../branch/usecase/branch.service";
@@ -9,7 +9,7 @@ import { Branch } from "../../branch/model/branch.model";
 import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
 import { AppMsgQueues, ExchangeTopics } from "libs/rmq/constants";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
-import { Access, AppResources, DefaultRoles } from "apps/auth/src/authorization/model/access.model";
+import { Access, DefaultRoles, Permission } from "apps/auth/src/authorization/model/access.model";
 import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
@@ -19,7 +19,8 @@ import { CurrentUser } from "libs/common/get_user_decorator";
 import { User } from "apps/auth/prisma/generated/prisma_auth_client";
 import { BusinessAccessGenerator } from "../business_access_factory";
 import { IAccessGenerator } from "@app/common/permission_helper/access_factory.interface";
-import { UpdateBusinessInput } from "../dto/business.input";
+import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
+import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 
 
 @Resolver(of => Business)
@@ -46,7 +47,7 @@ export class BusinessResolver {
 
     @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
-    async createBusiness(@Args('data') data: BusinessInput): Promise<BusinessResponse> {
+    async createBusiness(@Args('data') data: CreateBusinessInput): Promise<BusinessResponse> {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());
         let businessOwnerAccess = await this.businessAccessGenerator.createAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
         let reply = await this.coreServiceMsgBrocker.sendCreateAccessPermissionMessage(businessOwnerAccess);
@@ -66,9 +67,12 @@ export class BusinessResolver {
         return response;
     }
 
+
+
+    @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
-    async changeBusinessRegistrationStatus(@Args('businessId') businessId: string, @Args('stage', { type: () => BusinessRegistrationStage }) stage: BusinessRegistrationStage): Promise<BusinessResponse> {
-        let result = await this.businessService.updateBusinessRegistrationStage(businessId, stage);
+    async verifyBusinessRegistration(@Args('businessId') businessId: string): Promise<BusinessResponse> {
+        let result = await this.businessService.checkBusinessRegistrationFlow(businessId);
         return result;
     }
 

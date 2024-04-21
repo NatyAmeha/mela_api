@@ -15,7 +15,8 @@ export interface ISubscritpionRepository {
     deleteSubscriptionPlan(planId: string): Promise<SubscriptionResponse>
 
     createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
-    getSubscriptionInfo(id: string): Promise<Subscription>
+    getSubscriptionById(id: string): Promise<Subscription>
+    findSubscriptionInfo(query: QueryHelper<Subscription>): Promise<Subscription[]>
     getSubscriptions(queryInfo: QueryHelper<Subscription>): Promise<SubscriptionResponse>
 
     ownerHasSubscription(ownerId: string, subsciptionId: string): Promise<boolean>
@@ -101,13 +102,20 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
         return trResult;
     }
 
-    async getSubscriptionInfo(id: string): Promise<Subscription> {
+    async getSubscriptionById(id: string): Promise<Subscription> {
         var result = await this.subscription.findFirst({ where: { id: id } })
         if (!result.id) {
             throw new RequestValidationException({ message: "Unable to find subscritpion Info with this id" })
         }
         return new Subscription({ ...result });
     }
+
+    async findSubscriptionInfo(query: QueryHelper<Subscription>): Promise<Subscription[]> {
+        var result = await this.subscription.findMany({ where: { ...query.query as any } })
+        return result.map(sub => new Subscription({ ...sub }))
+    }
+
+
 
     async getSubscriptions(queryInfo: QueryHelper<Subscription>): Promise<SubscriptionResponse> {
         var result = await this.subscription.findMany({ where: { ...queryInfo.query as any } })

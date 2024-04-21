@@ -1,6 +1,7 @@
 import { Business } from "apps/core/src/business/model/business.model"
-import { Access, AccessOwnerType, AppResources, DefaultRoles, Permission } from "../model/access.model"
+import { Access, AccessOwnerType, DefaultRoles, Permission } from "../model/access.model"
 import { PermissionEffectType } from "@app/common/permission_helper/permission_constants"
+import { AppResources } from "apps/mela_api/src/const/app_resource.constant"
 // import { PlatformService } from "apps/subscription/src/model/platform_service.model"
 
 export interface IPermissionGenerator<T> {

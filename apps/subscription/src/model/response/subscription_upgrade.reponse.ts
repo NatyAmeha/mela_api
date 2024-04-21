@@ -28,7 +28,7 @@ export class SubscriptionResponseBuilder {
 
     withCreatedSubscription(subscription: Subscription) {
         this.response.success = true
-        this.response.createdSubscription = subscription
+        this.response.subscription = subscription
         return this
     }
 

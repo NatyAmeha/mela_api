@@ -32,6 +32,12 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
         return reply;
     }
 
+    async getBusinessSubscription(businessId: string): Promise<SubscriptionResponse> {
+        let messageInfo = new MessageBrockerMsgBuilder<string>().withData(businessId).withReplyQueue(AppMsgQueues.CORE_SERVICE_REPLY_QUEUE).withCoorelationId(SubscriptionServiceMessageType.GET_BUSINESS_SUBSCRIPTION_WITH_ALL_PLATFORM_SERVICES).build();
+        let reply = await this.sendMessageGetReply<string, IMessageBrockerResponse<SubscriptionResponse>>(AppMsgQueues.SUBSCRIPTION_SERVICE_REQUEST_QUEUE, messageInfo);
+        return reply.data;
+    }
+
     async onModuleInit() {
         try {
             console.log("channel opened")
@@ -45,10 +51,11 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
     }
 
     async listenCoreServiceRequestAndReply() {
-        this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (messageResult) => {
-            if (messageResult.properties.correlationId == CoreServiceMessageType.UPDATE_BUSINESS_REGISTRATION_STAGE) {
-                console.log("Core service message received", messageResult.content.toString());
-            }
+        this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (message) => {
+            console.log("Reply message received in Subscription service", message.content.toString());
+            let replyCoorelationId = message.properties.correlationId;
+            let msgProcessResult = await this.messageProcessor.processMessage(this.channel, message)
+            await this.sendMessage(message.properties.replyTo, msgProcessResult, replyCoorelationId)
         })
     }
 

@@ -1,9 +1,10 @@
 import { Product } from "../../product/model/product.model";
 import { Address, AddressInput } from "../../business/model/address.model";
-import { Business, BusinessInput } from "../../business/model/business.model";
+
 import { Staff, StaffInput } from "../../staff/model/staff.model";
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
+import { Business } from "../../business/model/business.model";
 @ObjectType()
 export class Branch {
     @Field(types => ID)

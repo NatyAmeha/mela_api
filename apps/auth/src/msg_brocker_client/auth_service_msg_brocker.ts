@@ -46,7 +46,8 @@ export class AuthServiceMsgBrocker extends AppMessageBrocker implements OnModule
             console.log("Reply message received in Auth service", messageResult.content.toString());
             let replyResponse: IMessageBrockerResponse<any> = { success: false }
             let replyCoorelationId = messageResult.properties.correlationId;
-            replyResponse.success = await this.authMessageProcessor.processMessage(this.channel, messageResult)
+            let processedMsgResult = await this.authMessageProcessor.processMessage(this.channel, messageResult)
+            replyResponse.success = processedMsgResult.success;
             await this.sendMessage(messageResult.properties.replyTo, replyResponse, replyCoorelationId)
         })
     }

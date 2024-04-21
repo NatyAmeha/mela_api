@@ -12,6 +12,7 @@ export class AuthController {
     async getUserAccess(@Query("id") userId: string): Promise<UserResponse | undefined> {
         var userResult = await this.authservice.getUserInfo(userId)
         let userAccesses = await this.authorizationService.getAllUserAccesses(userId)
+
         return {
             user: userResult,
             accesses: userAccesses
