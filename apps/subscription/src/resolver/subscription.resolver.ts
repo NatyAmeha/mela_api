@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
+import { Inject, UseGuards } from '@nestjs/common';
 import { SubscriptionService } from '../usecase/subscription.usecase';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { SubscriptionPlan } from '../model/subscription_plan.model';
@@ -6,26 +6,19 @@ import { Subscription } from '../model/subscription.model';
 import { CreateSubscriptionPlanInput, UpdateSubscriptionPlanInput } from '../dto/subscription_plan.input';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
-import { SelectedPlatformServiceForSubscription, CreatePlatformSubscriptionInput } from '../dto/platform_service_subscription.input';
+import { CreatePlatformSubscriptionInput } from '../dto/platform_service_subscription.input';
 import { SubscriptionResponse } from '../model/response/subscription.response';
 import { SubscriptionMessageBrocker } from '../msg_brocker_client/subscription_message_brocker';
-import { AppMsgQueues } from 'libs/rmq/constants';
-import { IMessageBrocker, MessageBrockerMsgBuilder } from 'libs/rmq/message_brocker';
-import { AuthServiceMessageType } from 'libs/rmq/app_message_type';
 import { AuthzGuard } from 'libs/common/authorization.guard';
 import { CurrentUser } from 'libs/common/get_user_decorator';
 import { UserInfo } from '@app/common/model/gateway_user.model';
-import { IMessageBrockerResponse } from 'libs/rmq/message_brocker.response';
-import { DefaultRoles } from 'apps/auth/src/authorization/model/access.model';
-import { SubscriptionHelper } from '../utils/subscription.helper';
 import { IAccessGenerator } from '@app/common/permission_helper/access_factory.interface';
 import { SubscriptionAccessGenerator } from '../utils/subscription_access_generator';
-import { PermissionSelectionCriteria, RequiresPermission } from '@app/common/permission_helper/require_permission.decorator';
+import { RequiresPermission } from '@app/common/permission_helper/require_permission.decorator';
 import { PERMISSIONACTION } from '@app/common/permission_helper/permission_constants';
 import { PermissionGuard } from '@app/common/permission_helper/permission.guard';
 import { SubscriptionUpgradeResponse } from '../model/response/subscription_upgrade.response';
 import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
-import { AuthGuard } from '@nestjs/passport';
 import { AppResources } from 'apps/mela_api/src/const/app_resource.constant';
 
 
@@ -35,7 +28,6 @@ export class SubscriptionResolver {
   constructor(
     @Inject(SubscriptionMessageBrocker.InjectName) private subscriptionBroker: SubscriptionMessageBrocker,
     private readonly subscriptionService: SubscriptionService,
-    private subscriptionHelper: SubscriptionHelper,
     @Inject(SubscriptionAccessGenerator.injectName) private subscriptionAccessGenerator: IAccessGenerator<Subscription>
 
   ) { }

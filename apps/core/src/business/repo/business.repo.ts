@@ -5,6 +5,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
+import { uniq, uniqBy, uniqWith } from "lodash";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
@@ -63,13 +64,15 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
 
             let result
             if (subscriptionId && trialPeriodUsedServiceIds) {
+                var trialPeriodUsedServiceIds = uniq([...businessInfo.trialPeriodUsedServiceIds, ...trialPeriodUsedServiceIds]);
+                var businessSubscriptionIds = uniq([...businessInfo.subscriptionIds, subscriptionId]);
                 result = await this.business.update({
                     where: { id: businessId }, data: {
                         stage: stage,
                         isActive: canActivate,
-                        trialPeriodUsedServiceIds: { push: trialPeriodUsedServiceIds },
+                        trialPeriodUsedServiceIds: trialPeriodUsedServiceIds,
                         activeSubscriptionId: subscriptionId,
-                        subscriptionIds: [subscriptionId, ...businessInfo.subscriptionIds]
+                        subscriptionIds: businessSubscriptionIds
                     }
                 });
             }

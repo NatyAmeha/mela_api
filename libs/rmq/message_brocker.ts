@@ -7,7 +7,7 @@ export interface IMessageBrocker<T> {
     messageId?: string
     replyCoorelationId?: string
     replyQueue?: string,  // to listen and filter message reply by id
-    expirationInSecond?: number,
+    expirationInSecond?: string,
     persistMessage?: boolean
 }
 
@@ -43,7 +43,7 @@ export class MessageBrockerMsgBuilder<T> {
         this.messageInfo.replyQueue = replyQueue;
         return this;
     }
-    withExpiration(expirationInSecond: number): MessageBrockerMsgBuilder<T> {
+    withExpiration(expirationInSecond: string): MessageBrockerMsgBuilder<T> {
         this.messageInfo.expirationInSecond = expirationInSecond;
         return this;
     }

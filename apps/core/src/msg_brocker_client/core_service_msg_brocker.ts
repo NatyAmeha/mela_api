@@ -1,8 +1,8 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
-import { CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
-import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
+import { CoreServiceMessageType, DEFAULT_REPLY_RESPONSE_TIMEOUT, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
+import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/const/constants";
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
 import { BusinessService } from "../business/usecase/business.service";
@@ -28,14 +28,19 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
     }
     async sendCreateAccessPermissionMessage(accessList: Access[]): Promise<IMessageBrockerResponse> {
         let messageInfo = this.generateAccessMessageToSendToAuthService(accessList, AppMsgQueues.CORE_SERVICE_REPLY_QUEUE);
-        let reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo);
+        let reply = await this.sendMessageGetReply<Access[], any>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo);
         return reply;
     }
 
-    async getBusinessSubscription(businessId: string): Promise<SubscriptionResponse> {
-        let messageInfo = new MessageBrockerMsgBuilder<string>().withData(businessId).withReplyQueue(AppMsgQueues.CORE_SERVICE_REPLY_QUEUE).withCoorelationId(SubscriptionServiceMessageType.GET_BUSINESS_SUBSCRIPTION_WITH_ALL_PLATFORM_SERVICES).build();
-        let reply = await this.sendMessageGetReply<string, IMessageBrockerResponse<SubscriptionResponse>>(AppMsgQueues.SUBSCRIPTION_SERVICE_REQUEST_QUEUE, messageInfo);
-        return reply.data;
+    async getBusinessSubscription(businessId: string): Promise<IMessageBrockerResponse<SubscriptionResponse>> {
+        let messageInfo = new MessageBrockerMsgBuilder<string>().withData(businessId)
+            .withReplyQueue(AppMsgQueues.CORE_SERVICE_REPLY_QUEUE)
+            .withMessageId(`${SubscriptionServiceMessageType.GET_BUSINESS_SUBSCRIPTION_WITH_ALL_PLATFORM_SERVICES}-${businessId}`)
+            .withCoorelationId(SubscriptionServiceMessageType.GET_BUSINESS_SUBSCRIPTION_WITH_ALL_PLATFORM_SERVICES)
+            .withExpiration(DEFAULT_REPLY_RESPONSE_TIMEOUT)
+            .build();
+        let reply = await this.sendMessageGetReply<string, SubscriptionResponse>(AppMsgQueues.SUBSCRIPTION_SERVICE_REQUEST_QUEUE, messageInfo);
+        return reply;
     }
 
     async onModuleInit() {
@@ -51,6 +56,7 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
     }
 
     async listenCoreServiceRequestAndReply() {
+        var messageINfo = new MessageBrockerMsgBuilder().withExchange(ExchangeNames.CORE_DIRECT_EXCHANGE, ExchangeType.DIRECT).withRoutingKey(RoutingKey.CORE_SERVICE_ROUTING_KEY).build();
         this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (message) => {
             console.log("Reply message received in Subscription service", message.content.toString());
             let replyCoorelationId = message.properties.correlationId;

@@ -27,7 +27,7 @@ export class RequestValidationException implements AppException {
             })
         })
         console.log(this.validationErrors)
-        var finalMessage = validationErrorMsg.length > 0 ? `${validationErrorMsg.join(", ")}` : this.message;
+        var finalMessage = validationErrorMsg.length > 0 ? `${validationErrorMsg.join(", ")}` : this?.message;
         return new ErrorResponse([<AppException>{ message: finalMessage }])
     }
 

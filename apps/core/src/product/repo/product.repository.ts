@@ -37,7 +37,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                             },
                         },
                         branches: {
-                            connect: product.branchIds.map((id) => ({ id }))
+                            connect: product.branchIds?.map((id) => ({ id }))
                         }
                     }
                 });
@@ -46,6 +46,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
             return new Product({ ...createdProduct });
         } catch (error) {
+            console.log("error", error)
             throw new PrismaException({ source: "Create product", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
@@ -66,18 +67,18 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async addProductToBranch(productIds: string[], branchId: string[]): Promise<Product[]> {
         try {
             const updatedProducts = await this.$transaction(
-                productIds.map(productId =>
+                productIds?.map(productId =>
                     this.product.update({
                         where: { id: productId },
                         data: {
                             branches: {
-                                connect: branchId.map(id => ({ id })),
+                                connect: branchId?.map(id => ({ id })),
                             },
                         },
                     })
                 )
             );
-            return updatedProducts.map(product => new Product({ ...product }));
+            return updatedProducts?.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Add product to branch", statusCode: 400, code: error.code, meta: error.meta });
         }
@@ -86,15 +87,15 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
     async removeProductFromBranch(productIds: string[], branchIds: string[]): Promise<Product[]> {
         try {
-            const updatedProducts = await this.$transaction(productIds.map(pId => {
+            const updatedProducts = await this.$transaction(productIds?.map(pId => {
                 return this.product.update({
                     where: { id: pId },
                     data: {
-                        branches: { disconnect: branchIds.map(id => ({ id })) }
+                        branches: { disconnect: branchIds?.map(id => ({ id })) }
                     },
                 });
             }));
-            return updatedProducts.map(product => new Product({ ...product }));
+            return updatedProducts?.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Remove product from branch", statusCode: 400, code: error.code, meta: error.meta });
         }
@@ -111,7 +112,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                     }
                 }
             });
-            return products.map(product => new Product({ ...product }));
+            return products?.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Get branch products", statusCode: 400, code: error.code, meta: error.meta });
         }
@@ -124,7 +125,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                     businessId: businessId
                 }
             });
-            return products.map(product => new Product({ ...product }));
+            return products?.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Get business products", statusCode: 400, code: error.code, meta: error.meta });
         }

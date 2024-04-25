@@ -8,7 +8,7 @@ export class ResourceUsage {
     usage: number | string
     maxUsage: number | string
 
-    construct(data: Partial<ResourceUsage>) {
+    constructor(data: Partial<ResourceUsage>) {
         Object.assign(this, data)
     }
 

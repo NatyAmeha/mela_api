@@ -2,18 +2,19 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import { ChannelWrapper } from "amqp-connection-manager";
 import { Access, AccessOwnerType } from "apps/auth/src/authorization/model/access.model";
-import { AppMsgQueues, ExchangeNames, RoutingKey } from "libs/rmq/constants";
+import { AppMsgQueues, ExchangeNames, RoutingKey } from "libs/rmq/const/constants";
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
-import { AuthServiceMessageType } from "./app_message_type";
+import { AuthServiceMessageType } from "./const/app_message_type";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 import { AccessQueryMetadata, AccessRenewalInfo } from "apps/auth/src/authorization/model/revoke_access.metadata";
-import { IMessageBrockerResponse } from "./message_brocker.response";
+import { IMessageBrockerResponse, MessageBrockerResponseBuilder } from "./message_brocker.response";
+import { Observable, map } from "rxjs";
 
 export interface IAppMessageBrocker {
     connectMessageBrocker(): Promise<void>
     sendMessage<T, K>(queue: string, message: T, messageId: string): Promise<boolean>
-    sendMessageGetReply<T, K>(queue: string, message: T, messageId: string, replyQueue: string): Promise<K>
+    sendMessageGetReply<T, K>(queue: string, messageInfo: IMessageBrocker<T>, waitForInSecond: number): Promise<IMessageBrockerResponse<K>>
     publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string }): Promise<boolean>
     // common message brocker methods
     generateAccessMessageToSendToAuthService(access: Access[], replyQueue: string): IMessageBrocker<Access[]>
@@ -57,27 +58,38 @@ export class AppMessageBrocker implements IAppMessageBrocker {
     }
 
 
-    async sendMessageGetReply<T, K>(queue: string, messageInfo: IMessageBrocker<T>): Promise<K> {
-        try {
-            this.channel = await this.rmqService.createChannel([this.eventQueue, this.requestQueue, this.replyQueue])
-            let sendResult = await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo.replyQueue, messageInfo)
-            let reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
-            if (reply?.content) {
-                let response = reply.content.toString()
-                this.channel.ack(reply)
-                return JSON.parse(response) as K
+
+    async sendMessageGetReply<T, K>(queue: string, messageInfo: IMessageBrocker<T>, waitForInSecond: number = 10): Promise<IMessageBrockerResponse<K>> {
+        const timeoutPromise = new Promise<IMessageBrockerResponse<K>>((resolve, reject) => {
+            setTimeout(() => {
+                const replyFaiedResponse = MessageBrockerResponseBuilder.create(false, "Unable to get response from related services, please try again later").build()
+                resolve(replyFaiedResponse);
+            }, waitForInSecond * 1000);
+        });
+
+        const operationPromise = (async () => {
+            try {
+                this.channel = await this.rmqService.createChannel([this.requestQueue])
+                await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo)
+                let reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
+                if (reply?.content) {
+                    let response = reply.content.toString()
+                    this.channel.ack(reply)
+                    return JSON.parse(response) as IMessageBrockerResponse<K>
+                }
+                return undefined;
+            } catch (error) {
+                console.log("error occured while sending message and waiting response")
+            } finally {
+                await this.channel.close();
             }
-            return undefined;
-        } catch (error) {
-            console.log("error occured while sending message and waiting response")
-        } finally {
-            await this.channel.close();
-        }
+        })();
+        return Promise.race([operationPromise, timeoutPromise]);
     }
 
     async publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string }): Promise<boolean> {
         try {
-            this.channel = await this.rmqService.createChannel([this.eventQueue, this.requestQueue, this.replyQueue])
+            this.channel = await this.rmqService.createChannel([this.eventQueue])
             let messageInfo: IMessageBrocker<T> = {
                 data: message,
                 routingKey: RoutingKey.CORE_SERVICE_EVENT,
@@ -100,7 +112,6 @@ export class AppMessageBrocker implements IAppMessageBrocker {
             data: accesses,
             coorelationId: AuthServiceMessageType.CREATE_ACCESS_PERMISSION,
             replyQueue: replyQueue,
-            expirationInSecond: 60 * 1,
             persistMessage: true,
         }
         return messageInfo;
@@ -112,7 +123,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         var messageContent: AccessRenewalInfo = { newAccesses: newBusinessAccess, revokeAccessCommand: revokeAccessCommand }
         let messageId = `${businessId}-${AuthServiceMessageType.REVOKE_PREVIOUS_PLATFORM_ACCESS_PERMISSION_AND_CREATE_NEW_ACCESS}`
         let messageInfo = new MessageBrockerMsgBuilder().withData(messageContent).withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withCoorelationId(AuthServiceMessageType.REVOKE_PREVIOUS_PLATFORM_ACCESS_PERMISSION_AND_CREATE_NEW_ACCESS).withMessageId(messageId).build()
-        let reply = await this.sendMessageGetReply<any, IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        let reply = await this.sendMessageGetReply<any, AccessRenewalInfo>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;
     }
 

@@ -1,4 +1,4 @@
-import { AppMsgQueues } from "libs/rmq/constants";
+import { AppMsgQueues } from "libs/rmq/const/constants";
 
 export const Configuration = () => ({
     auth: {

@@ -7,7 +7,6 @@ import { PlatfromServiceSubscription, Subscription } from '../model/subscription
 import { SubscriptionResponse, SubscriptionResponseBuilder } from '../model/response/subscription.response';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { IPlatformServiceRepo, PlatformServiceRepository } from '../repo/platform_service.repo';
-import { SubscriptionHelper } from '../utils/subscription.helper';
 import { ISubscriptionOption, SubscriptionFactory } from '../utils/subscrption_factory';
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
 import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
@@ -112,7 +111,7 @@ export class SubscriptionService {
     let ownerSubscriptionQuery = { query: { owner: owner, type: SubscriptionType.PLATFORM } } as QueryHelper<Subscription>
     let subscriptions = await this.subscriptionRepo.findSubscriptionInfo(ownerSubscriptionQuery)
     let activeSubscription = first(subscriptions)
-    return new SubscriptionResponseBuilder().withSubscriptions(subscriptions).withSubscription(activeSubscription).build()
+    return new SubscriptionResponseBuilder().withSubscriptions(subscriptions).withSingleSubscription(activeSubscription).build()
   }
 
   async renewSubscription(subscriptionId: string, subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionResponse> {

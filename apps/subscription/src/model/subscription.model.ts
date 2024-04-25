@@ -65,23 +65,30 @@ export class Subscription extends BaseModel {
         return this.platformServices.map(service => service.serviceId)
     }
 
+    getPlatformServiceSubscription(platformServiceId: string) {
+        return this.platformServices.find(service => service.serviceId == platformServiceId)
+    }
 
     changeSubscriptionStatus(status: boolean) {
         this.isActive = status;
-    }
-
-    getPlatformServiceAlreadyInSubscriptioin(info: PlatfromServiceSubscription[]): PlatfromServiceSubscription[] {
-        let result: PlatfromServiceSubscription[] = []
-        var existingPlatformServiceIds = this.platformServices.map(service => service.serviceId);
-        let newPlatformServiceIdToAddToSubscription = info.map(service => service.serviceId);
-        result = this.platformServices.filter(service => includes(newPlatformServiceIdToAddToSubscription, service.serviceId))
-        return result
     }
 
     getPlatformServicesHavingFreeTier(): string[] {
         return this.platformServices.filter(service => service.isTrialPeriod).map(service => service.serviceId)
     }
 
+    isSubscriptionValid() {
+        var currentDate = new Date(Date.now())
+        return this.endDate > currentDate
+    }
+
+
+
+    checkSubscriptionValidity() {
+        if (!this.isSubscriptionValid()) {
+            throw new RequestValidationException({ message: "Subscription Expired" })
+        }
+    }
 }
 
 @ObjectType({ isAbstract: true })
@@ -151,8 +158,13 @@ export interface ISubscriptionInfoBuilder {
 @Injectable()
 export class PlatformSubscriptionBuilder implements ISubscriptionInfoBuilder {
     private subscription: Subscription
-    constructor(private allPlatformServices: PlatformService[]) {
+    constructor(private allPlatformServices?: PlatformService[]) {
         this.subscription = new Subscription({})
+    }
+
+    fromSubscriptionObject(subscriptionObj: Subscription) {
+        this.subscription = new Subscription({ ...subscriptionObj })
+        return this.subscription
     }
 
     generateBaseSubscription(owner: string): PlatformSubscriptionBuilder {

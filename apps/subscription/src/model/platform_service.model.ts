@@ -51,6 +51,9 @@ export class PlatformService extends BaseModel {
     @Field(type => [LocalizedData])
     name: LocalizedData[]
 
+    @Field(types => PlatformServiceType)
+    type: string
+
     @Field(type => [LocalizedData], { nullable: true })
     description?: LocalizedData[]
 
@@ -231,4 +234,11 @@ export enum SelectionType {
     MULTI_SELECTION = "MULTI_SELECTION"
 }
 
+export enum PlatformServiceType {
+    POINT_OF_SALE = "POINT_OF_SALE",
+    INVENTORY = "INVENTORY",
+    ONLINE_STORE = "ONLINE_STORE",
+}
+
 registerEnumType(SelectionType, { name: "SelectionType" })
+registerEnumType(PlatformServiceType, { name: "PlatformServiceType" })

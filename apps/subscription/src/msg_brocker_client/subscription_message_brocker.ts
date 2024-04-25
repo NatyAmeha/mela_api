@@ -2,8 +2,8 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import { Access, AccessOwnerType } from "apps/auth/src/authorization/model/access.model";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
-import { AuthServiceMessageType, CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
-import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/constants";
+import { AuthServiceMessageType, CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
+import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/const/constants";
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
@@ -47,14 +47,14 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
 
     async createPlatformServiceAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>> {
         let messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
-        let reply = await this.sendMessageGetReply<Access[], IMessageBrockerResponse<any>>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        let reply = await this.sendMessageGetReply<Access[], any>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
         return reply;
     }
 
     async getBusinessInformationFromCoreService(businessId: string): Promise<BusinessResponse> {
         var messageId = `${CoreServiceMessageType.GET_BUSINESS_INFO}-${businessId}`;
         let messageInfo = new MessageBrockerMsgBuilder<string>().withData(businessId).withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withMessageId(messageId).withCoorelationId(CoreServiceMessageType.GET_BUSINESS_INFO).build();
-        let reply = await this.sendMessageGetReply<string, IMessageBrockerResponse<BusinessResponse>>(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo)
+        let reply = await this.sendMessageGetReply<string, BusinessResponse>(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo)
         if (!reply.success || !reply.data) {
             throw new RequestValidationException({ message: "Error occured, please try again later" })
         }
@@ -67,13 +67,14 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
     }
 
     async listenSubscriptionRequestAndReply() {
-        this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (messageResult) => {
-            console.log("Reply message received in Subscription service", messageResult.content.toString());
+        this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (incommingMessage) => {
+            // this.channel.ack(incommingMessage)
+            console.log("Reply message received in Subscription service", incommingMessage.content.toString());
             let replyResponse: IMessageBrockerResponse<any> = { success: false }
-            let replyCoorelationId = messageResult.properties.correlationId;
-            let msgProcessResult = await this.subscriptionMessageProcessor.processMessage(this.channel, messageResult)
+            let replyCoorelationId = incommingMessage.properties.correlationId;
+            let msgResult = await this.subscriptionMessageProcessor.processMessage(this.channel, incommingMessage)
 
-            await this.sendMessage(messageResult.properties.replyTo, messageResult, replyCoorelationId)
+            await this.sendMessage(incommingMessage.properties.replyTo, msgResult, replyCoorelationId)
         })
     }
 

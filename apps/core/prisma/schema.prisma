@@ -27,6 +27,7 @@ model Product {
     tag              String[]
     gallery          Gallery
     loyaltyPoint     Int             @default(0)
+    minimumOrderQty  Int             @default(0)
     business         Business        @relation(fields: [businessId], references: [id])
     businessId       String          @db.ObjectId
     productGroupId   String[]

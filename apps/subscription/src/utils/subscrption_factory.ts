@@ -31,6 +31,9 @@ export class SubscriptionFactory {
             return new BusinessSubscriptionOption(this.subscriptionRepo)
         }
     }
+    getSubscritpionFromObj(subscriptionObj: Subscription): Subscription {
+        return new Subscription({ ...subscriptionObj })
+    }
 }
 
 export interface ISubscriptionOption {

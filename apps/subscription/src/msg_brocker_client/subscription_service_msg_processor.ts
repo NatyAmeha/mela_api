@@ -3,7 +3,7 @@ import { ChannelWrapper } from "amqp-connection-manager";
 import { ConsumeMessage } from "amqplib";
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 
-import { AuthServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/app_message_type";
+import { AuthServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
 
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { SubscriptionService } from "../usecase/subscription.usecase";
@@ -36,8 +36,9 @@ export class SubscriptionMsgProcessosor implements IReceivedMessageProcessor {
                     replyResponse = { success: true, data: subscritpionResult };
                 }
             }
+            console.log("can ack message", canAckMessage)
             if (canAckMessage) {
-                channel.ack(messageResult)
+                // channel.ack(messageResult)
                 this.processedMessageIds.delete(messageId);
             }
             return replyResponse;

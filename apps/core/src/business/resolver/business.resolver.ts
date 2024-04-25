@@ -7,7 +7,7 @@ import { BranchService } from "../../branch/usecase/branch.service";
 import { Product } from "../../product/model/product.model";
 import { Branch } from "../../branch/model/branch.model";
 import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
-import { AppMsgQueues, ExchangeTopics } from "libs/rmq/constants";
+import { AppMsgQueues, ExchangeTopics } from "libs/rmq/const/constants";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Access, DefaultRoles, Permission } from "apps/auth/src/authorization/model/access.model";
 import { Inject, UseGuards } from "@nestjs/common";

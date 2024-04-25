@@ -17,19 +17,15 @@ export class Product extends BaseModel {
     id?: string;
 
     @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
     name: LocalizedData[]
 
     @Field(types => [LocalizedData])
-    @Type(() => LocalizedData)
     description: LocalizedData[];
 
     @Field(types => Gallery)
-    @Type(() => Gallery)
     gallery: Gallery;
 
     @Field(types => Business)
-    @Type(() => Business)
     business: Business
 
     @Field(types => [String])
@@ -69,106 +65,29 @@ export class Product extends BaseModel {
     @Field(types => Boolean, { defaultValue: false })
     canOrderOnline: boolean;
 
-    @Field(types => String)
+    @Field(types => ProductUnitType, { defaultValue: "Unit" })
     unit?: string;
 
     @Field(types => [String])
     reviewTopics?: string[];
 
-    @Field(types => String)
+    @Field(types => CallToActionType, { defaultValue: "Order" })
     callToAction?: string;
 
     @Field(types => [String])
     branchIds?: string[];
 
     @Field(types => DeliveryInfo)
-    @Type(() => DeliveryInfo)
     @ValidateNested()
     deliveryInfo?: DeliveryInfo;
 
     @Field(types => [Branch])
-    @Type(() => Branch)
     branches?: Branch[];
 
     constructor(partial?: Partial<Product>) {
         super()
         Object.assign(this, partial);
     }
-}
-
-@InputType()
-export class ProductInput {
-
-    @Field(type => [LocalizedFieldInput])
-    @Type(() => LocalizedFieldInput)
-    name: LocalizedFieldInput[]
-
-    @Field(types => [LocalizedFieldInput])
-    @Type(() => LocalizedFieldInput)
-    description: LocalizedFieldInput[];
-
-    @Field(types => GalleryInput)
-    @Type(() => GalleryInput)
-    gallery: GalleryInput;
-
-    @Field(types => [String])
-    tag?: string[];
-
-
-    @Field(types => Int, { defaultValue: 1 })
-    minimumOrderQty?: number
-
-    @Field(types => Int, { defaultValue: 0 })
-    loyaltyPoint: number;
-
-    @Field(types => String)
-    businessId: string;
-
-    @Field(types => [String])
-    productGroupId?: string[];
-
-    @Field(types => Boolean, { defaultValue: false })
-    isActive: boolean;
-
-    @Field(types => [String])
-    category: string[];
-
-    @Field(types => Float)
-    price: number;
-
-    @Field(types => ProductType)
-    type: string;
-
-
-    @Field(types => Boolean, { defaultValue: false })
-    canOrderOnline: boolean;
-
-    @Field(types => String)
-    unit?: string;
-
-    @Field(types => [String])
-    reviewTopics?: string[];
-
-    @Field(types => String)
-    callToAction?: string;
-
-    @Field(types => [String])
-    branchIds?: string[];
-
-    @Field(types => DeliveryInfoInput)
-    @Type(() => DeliveryInfoInput)
-    @ValidateNested()
-    deliveryInfo?: DeliveryInfoInput;
-
-    constructor(partial?: Partial<ProductInput>) {
-        Object.assign(this, partial);
-    }
-
-    toProduct(): Product {
-        var product = new Product({ ...this });
-        return product;
-    }
-
 }
 
 export enum ProductType {
@@ -178,5 +97,22 @@ export enum ProductType {
     MEMBERSHIP = "MEMBERSHIP",
 }
 
+export enum ProductUnitType {
+    Unit = "Unit",
+    Kg = "Kg",
+    Litre = "Litre",
+}
+
+export enum CallToActionType {
+    Order = "Order",
+    Call = "Call",
+    Book = "Book",
+    Reserve = "Reserve",
+}
+
 registerEnumType(ProductType, { name: "ProductType" });
+registerEnumType(ProductUnitType, { name: "ProductUnitType" });
+registerEnumType(CallToActionType, { name: "CallToActionType" });
+
+
 

@@ -2,7 +2,7 @@ import { ChannelWrapper } from "amqp-connection-manager";
 import { ConsumeMessage } from "amqplib";
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 import { AuthorizationService } from "../authorization";
-import { AuthServiceMessageType } from "libs/rmq/app_message_type";
+import { AuthServiceMessageType } from "libs/rmq/const/app_message_type";
 import { Access } from "../authorization/model/access.model";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Injectable } from "@nestjs/common";

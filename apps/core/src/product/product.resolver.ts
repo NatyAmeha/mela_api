@@ -1,7 +1,7 @@
 import { Args, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql";
-import { Product, ProductInput } from "./model/product.model";
+import { Product } from "./model/product.model";
 import { ProductService } from "./product.service";
-import { UpdateProductInput } from "./dto/product.input";
+import { CreateProductInput, UpdateProductInput } from "./dto/product.input";
 import { ProductResponse } from "./model/product.response";
 import { Branch } from "../branch/model/branch.model";
 import { BranchService } from "../branch/usecase/branch.service";
@@ -36,9 +36,17 @@ export class ProductResolver {
     })
     @UseGuards(PermissionGuard)
     @Mutation(returns => ProductResponse)
-    async createBusinessProduct(@Args("businessId") businessId: string, @Args('productInfo') product: ProductInput): Promise<ProductResponse> {
+    async createBusinessProduct(@Args("businessId") businessId: string, @Args('productInfo') product: CreateProductInput): Promise<ProductResponse> {
+        let productCreateInfo = product.toProduct(businessId);
         let businessSubscriptionResponse = await this.coreServiceMsgBrocker.getBusinessSubscription(businessId);
-        var productResult = await this.productService.createProduct(product, businessSubscriptionResponse.subscription, businessSubscriptionResponse.platformServices);
+        if (!businessSubscriptionResponse || !businessSubscriptionResponse.success) {
+            return {
+                success: false,
+                message: businessSubscriptionResponse.message
+            }
+        }
+        let subscriptionInfo = businessSubscriptionResponse.data;
+        var productResult = await this.productService.createProduct(productCreateInfo, subscriptionInfo.subscription, subscriptionInfo.platformServices);
         return productResult;
     }
 

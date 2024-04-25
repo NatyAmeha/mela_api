@@ -1,10 +1,11 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { IProductRepository, ProductRepository } from "./repo/product.repository";
-import { Product, ProductInput } from "./model/product.model";
+import { Product } from "./model/product.model";
 import { ProductResourceUsageTracker } from "../resource_usage_tracker/product_resource_usage";
 import { ProductResponse } from "./model/product.response";
-import { PlatformServiceGateway, SubscriptionGateway } from "apps/mela_api/src/model/subscription.gateway.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { PlatformSubscriptionBuilder, Subscription } from "apps/subscription/src/model/subscription.model";
+import { PlatformService } from "apps/subscription/src/model/platform_service.model";
 
 @Injectable()
 export class ProductService {
@@ -13,17 +14,19 @@ export class ProductService {
         @Inject(ProductResourceUsageTracker.injectName) private productUsageTracker: ProductResourceUsageTracker
     ) {
     }
-    async createProduct(productInput: ProductInput, subscriptionInfo: SubscriptionGateway, platformServices: PlatformServiceGateway[]): Promise<ProductResponse> {
-        if (subscriptionInfo == undefined || !platformServices || platformServices?.length == 0) {
-            throw new RequestValidationException({ message: "No subscription informatioin found" })
+    async createProduct(productInput: Product, subscriptionInput: Subscription, platformServices: PlatformService[]): Promise<ProductResponse> {
+
+        if (subscriptionInput == undefined || !platformServices || platformServices?.length == 0) {
+            throw new RequestValidationException({ message: "No subscription information found" })
         }
+        let subscriptionInfo = new PlatformSubscriptionBuilder(platformServices).fromSubscriptionObject(subscriptionInput)
         let productUsageTracker = await this.productUsageTracker.getBusinessProductCreationUsage(productInput.businessId, subscriptionInfo, platformServices);
+        console.log("productUsageTracker", productUsageTracker)
         if (productUsageTracker.isAtMaxUsage()) {
             return new ProductResponse({ success: false, message: "You have reached the maximum number of products you can create." })
         }
-        let product = await this.productRepository.createProduct(productInput.toProduct());
-        return new ProductResponse({ product: product })
-
+        let product = await this.productRepository.createProduct(productInput);
+        return new ProductResponse({ success: true, product: product, })
     }
 
     async updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product> {

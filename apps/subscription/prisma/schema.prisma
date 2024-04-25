@@ -45,6 +45,7 @@ model Subscription {
 model PlatformService {
     id                      String                    @id @default(auto()) @map("_id") @db.ObjectId
     name                    LocalizedField[]
+    type                    String
     description             LocalizedField[]
     image                   String?
     basePrice               Float

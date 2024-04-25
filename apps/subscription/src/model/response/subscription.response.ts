@@ -60,7 +60,7 @@ export class SubscriptionResponseBuilder {
         this.response = new SubscriptionResponse({})
     }
 
-    withSubscription(subscription: Subscription) {
+    withSingleSubscription(subscription: Subscription) {
         this.response.success = true
         this.response.subscription = subscription
         return this
