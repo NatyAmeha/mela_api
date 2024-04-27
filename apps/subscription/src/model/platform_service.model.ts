@@ -2,7 +2,7 @@ import { BaseModel } from "@app/common/model/base.model";
 import { Directive, Field, Float, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
 import { IsArray, IsNotEmpty } from "class-validator";
-import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
+import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 
 @ObjectType({ isAbstract: true })
 @Directive('@extends')
@@ -11,9 +11,9 @@ export class SubscriptionRenewalInfo {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    name: LocalizedData[]
+    @Field(type => [LocalizedField])
+    @Type(() => LocalizedField)
+    name: LocalizedField[]
 
     @Field(type => Int, { defaultValue: 90 })
     duration: number
@@ -48,14 +48,14 @@ export class PlatformService extends BaseModel {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    name: LocalizedData[]
+    @Field(type => [LocalizedField])
+    name: LocalizedField[]
 
     @Field(types => PlatformServiceType)
     type: string
 
-    @Field(type => [LocalizedData], { nullable: true })
-    description?: LocalizedData[]
+    @Field(type => [LocalizedField], { nullable: true })
+    description?: LocalizedField[]
 
 
     @Field(type => Float)
@@ -64,8 +64,8 @@ export class PlatformService extends BaseModel {
     @Field()
     image?: string
 
-    @Field(type => [LocalizedData])
-    features?: LocalizedData[]
+    @Field(type => [LocalizedField])
+    features?: LocalizedField[]
 
     @Field(type => [CustomizationCategory])
     customizationCategories?: CustomizationCategory[]
@@ -149,9 +149,9 @@ export class Customization {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    name: LocalizedData[]
+    @Field(type => [LocalizedField])
+    @Type(() => LocalizedField)
+    name: LocalizedField[]
 
     @Field(type => String)
     actionIdentifier: string
@@ -190,13 +190,13 @@ export class CustomizationCategory {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    name: LocalizedData[]
+    @Field(type => [LocalizedField])
+    @Type(() => LocalizedField)
+    name: LocalizedField[]
 
-    @Field(type => [LocalizedData], { nullable: true })
-    @Type(() => LocalizedData)
-    description?: LocalizedData[]
+    @Field(type => [LocalizedField], { nullable: true })
+    @Type(() => LocalizedField)
+    description?: LocalizedField[]
 
     @Field(type => SelectionType)
     selectionType?: string

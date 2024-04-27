@@ -2,7 +2,7 @@
 import { Field, Float, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { DeliveryInfo, DeliveryInfoInput } from "./delivery.model";
 import { Business } from "../../business/model/business.model";
-import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
+import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Branch } from "../../branch/model/branch.model";
 import { Customer } from "../../customer/model/customer.model";
 import { Gallery, GalleryInput } from "../../business/model/gallery.model";
@@ -16,11 +16,11 @@ export class Product extends BaseModel {
     @Field(types => String)
     id?: string;
 
-    @Field(type => [LocalizedData])
-    name: LocalizedData[]
+    @Field(type => [LocalizedField])
+    name: LocalizedField[]
 
-    @Field(types => [LocalizedData])
-    description: LocalizedData[];
+    @Field(types => [LocalizedField])
+    description: LocalizedField[];
 
     @Field(types => Gallery)
     gallery: Gallery;

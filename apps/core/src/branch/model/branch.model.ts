@@ -3,15 +3,15 @@ import { Address, AddressInput } from "../../business/model/address.model";
 
 import { Staff, StaffInput } from "../../staff/model/staff.model";
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
-import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
+import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Business } from "../../business/model/business.model";
 @ObjectType()
 export class Branch {
     @Field(types => ID)
     id?: string;
 
-    @Field(types => [LocalizedData])
-    name: LocalizedData[];
+    @Field(types => [LocalizedField])
+    name: LocalizedField[];
 
     @Field()
     phoneNumber: string;

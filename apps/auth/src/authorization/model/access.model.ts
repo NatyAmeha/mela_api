@@ -5,7 +5,7 @@ import { IsArray, IsOptional } from "class-validator";
 import { CreatePermissionInput, PermissionGroupInput } from "../dto/permission.input";
 import { PermissionType } from "./permission_type.enum";
 import { PERMISSIONACTION, PermissionEffectType, PermissionResourceType } from "@app/common/permission_helper/permission_constants";
-import { LocalizedData } from "@app/common/model/localized_model";
+import { LocalizedField } from "@app/common/model/localized_model";
 
 
 @ObjectType()
@@ -14,8 +14,8 @@ import { LocalizedData } from "@app/common/model/localized_model";
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
-    @Field(type => [LocalizedData])
-    name?: LocalizedData[]
+    @Field(type => [LocalizedField])
+    name?: LocalizedField[]
     @Field()
     resourceId?: string
     @Field()
@@ -53,8 +53,8 @@ export class Access extends BaseModel {
 export class Permission {
     @Field(types => ID)
     id?: string
-    @Field(types => [LocalizedData])
-    name?: LocalizedData[]
+    @Field(types => [LocalizedField])
+    name?: LocalizedField[]
     @Field()
     action: string = PERMISSIONACTION.ANY.toString()
     @Field()
@@ -85,14 +85,14 @@ export class PermissionGroup {
     id: string
     @Field()
     key: string
-    @Field(type => [LocalizedData])
-    name: LocalizedData[]
+    @Field(type => [LocalizedField])
+    name: LocalizedField[]
     constructor(data: Partial<PermissionGroup>) {
         Object.assign(this, data)
     }
 
     static getPermissionGroupFromInput(inputs: PermissionGroupInput[]): PermissionGroup[] {
-        return inputs.map(grp => new PermissionGroup({ name: grp.name as LocalizedData[], key: grp.key }))
+        return inputs.map(grp => new PermissionGroup({ name: grp.name as LocalizedField[], key: grp.key }))
     }
 }
 

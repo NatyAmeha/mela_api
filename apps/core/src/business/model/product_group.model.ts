@@ -1,6 +1,6 @@
 import { ObjectType, Field, InputType } from '@nestjs/graphql';
 
-@ObjectType()
+@ObjectType({ isAbstract: true })
 export class ProductGroup {
     @Field()
     id: string;
@@ -11,7 +11,7 @@ export class ProductGroup {
     @Field(types => [String])
     images?: string[];
 
-    @Field({ nullable: true })
+    @Field()
     description?: string;
     constructor(partial?: Partial<ProductGroup>) {
         Object.assign(this, partial);

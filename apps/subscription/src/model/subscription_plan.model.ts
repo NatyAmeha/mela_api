@@ -4,7 +4,7 @@ import { Subscription } from "./subscription.model"
 import { SubscriptionType } from "./subscription_type.enum"
 import { Transform, Type } from "class-transformer"
 import { IsNotEmpty, IsNumber, IsOptional, ValidateIf, isNotEmpty, } from "class-validator"
-import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model"
+import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model"
 
 
 @ObjectType({ isAbstract: true })
@@ -14,11 +14,11 @@ export class SubscriptionPlan extends BaseModel {
     @Field(type => ID)
     id?: string
 
-    @Field(type => [LocalizedData])
-    name?: LocalizedData[]
+    @Field(type => [LocalizedField])
+    name?: LocalizedField[]
 
-    @Field(type => [LocalizedData])
-    description?: LocalizedData[]
+    @Field(type => [LocalizedField])
+    description?: LocalizedField[]
 
     @Field(type => Float)
     price?: number
@@ -59,9 +59,9 @@ export class SubscriptionPlan extends BaseModel {
 export class BenefitInfo {
     @Field(type => [String])
     tags?: string[]
-    @Field(type => [LocalizedData])
-    @Type(() => LocalizedData)
-    descriptions: LocalizedData[]
+    @Field(type => [LocalizedField])
+    @Type(() => LocalizedField)
+    descriptions: LocalizedField[]
 }
 
 @InputType()

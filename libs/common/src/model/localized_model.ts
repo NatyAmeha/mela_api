@@ -4,7 +4,7 @@ import { Transform } from "class-transformer"
 
 @ObjectType()
 @Directive('@key(fields: "key")')
-export class LocalizedData {
+export class LocalizedField {
     @Field(type => LanguageKey, { description: "the name of the language, ex. english, amharic" })
     @Transform((param) => param.value?.toUpperCase())
     key: string

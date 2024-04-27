@@ -1,7 +1,7 @@
 import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Customer, CustomerInput } from "../../customer/model/customer.model";
 import { ProductGroup, ProductGroupInput } from "./product_group.model";
-import { LocalizedData, LocalizedFieldInput } from "@app/common/model/localized_model";
+import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Gallery, GalleryInput } from "./gallery.model";
 import { Address, AddressInput } from "./address.model";
 import { Branch } from "../../branch/model/branch.model";
@@ -72,11 +72,11 @@ export class Business extends BaseModel {
     @Field(types => [String])
     trialPeriodUsedServiceIds?: string[] = [];
 
-    @Field(types => [LocalizedData])
-    name: LocalizedData[];
+    @Field(types => [LocalizedField])
+    name: LocalizedField[];
 
-    @Field(types => [LocalizedData])
-    description?: LocalizedData[];
+    @Field(types => [LocalizedField])
+    description?: LocalizedField[];
 
     @Field(types => [Customer])
     customers?: Customer[];
