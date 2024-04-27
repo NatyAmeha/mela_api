@@ -33,6 +33,7 @@ export class CreateBranchInput {
 
 @InputType()
 export class UpdateBranchInput extends PartialType(CreateBranchInput, InputType) {
+    phoneNumber?: string;
     toBranchInfo(): Branch {
         const branch = new Branch({ ...this });
         return branch;

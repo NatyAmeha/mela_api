@@ -53,7 +53,13 @@ export class BranchResolver {
         let branchCreateResult = await this.branchService.addBranchToBusiness(businessId, branchInfo, subscriptionInfo.subscription, subscriptionInfo.platformServices);
         return branchCreateResult;
     }
-
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.CREATE },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+        ],
+    })
+    @UseGuards(PermissionGuard)
     @Mutation(returns => BusinessResponse)
     async updateBranchInfo(@Args('branchId') branchId: string, @Args('branchInfo') branchInfo: UpdateBranchInput): Promise<BusinessResponse> {
         let branchResult = await this.branchService.updateBranchInfo(branchId, branchInfo.toBranchInfo());

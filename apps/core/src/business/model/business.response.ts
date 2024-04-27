@@ -92,7 +92,7 @@ export class BusinessResponseBuilder {
     }
 
     withBranchUpdated(...branch: Branch[]): BusinessResponseBuilder {
-
+        this.response.success = true
         if (!this.response.branchUpdated) {
             this.response.branchUpdated = [];
         }
