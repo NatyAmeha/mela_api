@@ -57,7 +57,6 @@ export class BusinessResolver {
     }
 
 
-    @UseGuards(AuthzGuard)
     @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE }] })
     @UseGuards(PermissionGuard)
     @Mutation(returns => BusinessResponse)
@@ -76,7 +75,6 @@ export class BusinessResolver {
         return result;
     }
 
-    @UseGuards(AuthzGuard)
     @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.READ }] })
     @UseGuards(PermissionGuard)
     @Query(returns => BusinessResponse)

@@ -99,7 +99,6 @@ export class SubscriptionResolver {
     return subscriptionUpgradeResponse
   }
 
-  @UseGuards(AuthzGuard)
   @RequiresPermission(
     {
       permissions: [
@@ -112,7 +111,7 @@ export class SubscriptionResolver {
   async renewBusienssPlatformSubscription(@Args("id") id: string, @Args("subscriptionUpdateInfo") data: SubscriptionUpgradeInput): Promise<SubscriptionResponse> {
     let subscriptionUpgradeResponse = await this.subscriptionService.renewSubscription(id, data);
     if (subscriptionUpgradeResponse.success) {
-      //Send  Revoke  previous permission and create new access message to Auth service
+      // Send  Revoke  previous permission and create new access message to Auth service
       let newplatformServiceAccessesForBusiness = await this.subscriptionAccessGenerator.createAccess(subscriptionUpgradeResponse.subscription, SubscriptionType.PLATFORM);
       let newAccessCreateResult = await this.subscriptionBroker.sendAccessRenewalMessageToAuthService(data.businessId, newplatformServiceAccessesForBusiness);
       if (newAccessCreateResult.success) {
