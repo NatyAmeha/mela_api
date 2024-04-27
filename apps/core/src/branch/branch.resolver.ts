@@ -13,6 +13,7 @@ import { RequiresPermission } from "@app/common/permission_helper/require_permis
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
+import { Product } from "../product/model/product.model";
 
 @Resolver(of => Branch)
 export class BranchResolver {
@@ -77,6 +78,11 @@ export class BranchResolver {
     async getBranchBusinesss(@Parent() branchInfo: Branch): Promise<Business> {
         let businessResponse = await this.businessService.getBranchBusiness(branchInfo.id);
         return businessResponse.business
+    }
+
+    @ResolveField('products', returns => [Product])
+    async getBranchProducts(@Parent() branchInfo: Branch): Promise<Product[]> {
+        return await this.productService.getBranchProducts(branchInfo.id);
     }
 
 }

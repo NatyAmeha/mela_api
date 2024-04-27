@@ -2,7 +2,7 @@ import { Args, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql"
 import { Product } from "./model/product.model";
 import { ProductService } from "./product.service";
 import { CreateProductInput, UpdateProductInput } from "./dto/product.input";
-import { ProductResponse } from "./model/product.response";
+import { ProductResponse, ProductResponseBuilder } from "./model/product.response";
 import { Branch } from "../branch/model/branch.model";
 import { BranchService } from "../branch/usecase/branch.service";
 import { BusinessService } from "../business/usecase/business.service";
@@ -59,15 +59,28 @@ export class ProductResolver {
         }
     }
 
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.ASSIGN_UNASSIGN },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+        ],
+    })
+    @UseGuards(PermissionGuard)
     @Mutation(returns => ProductResponse)
     async addProductToBranch(@Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
         var updatedProducts = await this.productService.addProductToBranch(productId, branchId);
-        return {
-            success: true,
-            products: updatedProducts
-        }
+        return new ProductResponseBuilder().withProducts(updatedProducts).build();
     }
 
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.ASSIGN_UNASSIGN },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+        ],
+    })
+    @UseGuards(PermissionGuard)
     @Mutation(returns => ProductResponse)
     async removeProductFromBranch(@Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
         var updatedProducts = await this.productService.removeProductFromBranch(productId, branchId);
