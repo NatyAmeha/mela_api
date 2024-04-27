@@ -12,6 +12,7 @@ export interface IBusinessRepository {
     updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business>;
     updatedBusinessSubscriptionInfo(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }?: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
     getProductBusiness(productId: string): Promise<Business>;
+    getBranchBusiness(branchId: string): Promise<BusinessResponse>;
     getBusinessInfoForStaff(staffId: string): Promise<Business>;
     getUserOwnedBusinesses(userId: string): Promise<BusinessResponse>;
 
@@ -103,6 +104,23 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             return new Business({ ...business });
         } catch (error) {
             throw new PrismaException({ source: "Get product business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getBranchBusiness(branchId: string): Promise<BusinessResponse> {
+        try {
+            const branch = await this.branch.findUnique({ where: { id: branchId } });
+            if (!branch) {
+                return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BRANCH_NOT_FOUND);
+            }
+            const business = await this.business.findUnique({ where: { id: branch.businessId } });
+            if (!business) {
+                return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BUSINESS_NOT_FOUND);
+            }
+            let businessInfo = new Business({ ...business });
+            return new BusinessResponseBuilder().withBusiness(businessInfo).build();
+        } catch (error) {
+            throw new PrismaException({ source: "Get branch business", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

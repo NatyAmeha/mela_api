@@ -15,6 +15,29 @@ export class ResourceUsage {
     isAtMaxUsage() {
         return this.usage >= this.maxUsage
     }
+}
 
+export class ResourceUsageBuilder {
+    private resourceUsage: ResourceUsage
+    constructor(resourceId: string, resourceType: AppResources) {
+        this.resourceUsage = new ResourceUsage({
+            resourceId: resourceId,
+            resourceType: resourceType
+        })
+    }
 
+    createInvalidResourceUsage(message: string) {
+        this.resourceUsage.success = false
+        this.resourceUsage.message = message
+        this.resourceUsage.usage = 0
+        this.resourceUsage.maxUsage = 0
+        return this.resourceUsage
+    }
+
+    createSuccessResourceUsage(usage: number, maxUsage: number) {
+        this.resourceUsage.success = usage < maxUsage,
+            this.resourceUsage.usage = usage
+        this.resourceUsage.maxUsage = maxUsage
+        return this.resourceUsage
+    }
 }

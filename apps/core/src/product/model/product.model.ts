@@ -1,7 +1,6 @@
 
 import { Field, Float, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { DeliveryInfo, DeliveryInfoInput } from "./delivery.model";
-import { Business } from "../../business/model/business.model";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Branch } from "../../branch/model/branch.model";
 import { Customer } from "../../customer/model/customer.model";
@@ -9,6 +8,7 @@ import { Gallery, GalleryInput } from "../../business/model/gallery.model";
 import { Type } from "class-transformer";
 import { ValidateNested } from "class-validator";
 import { BaseModel } from "@app/common/model/base.model";
+import { Business } from "../../business/model/business.model";
 
 @ObjectType()
 

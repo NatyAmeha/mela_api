@@ -1,10 +1,11 @@
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { LanguageKey } from "@app/common/model/localized_model";
 import { Customization, PlatformService, PlatformServiceType } from "apps/subscription/src/model/platform_service.model";
-import { Subscription } from "apps/subscription/src/model/subscription.model";
+import { PlatformSubscriptionBuilder, Subscription } from "apps/subscription/src/model/subscription.model";
 
 export interface IResourceUsageTracker {
     getAllowedPlatformServiceCusomizationFromSubscription(subscription: Subscription, platformServices: PlatformService[], requiredAction: string[]): Promise<Customization>
+    convertSubscriptionObjToInstance(subscriptionObj: Subscription): Subscription
 }
 
 export class BaseResourceUsageTracker implements IResourceUsageTracker {
@@ -20,17 +21,25 @@ export class BaseResourceUsageTracker implements IResourceUsageTracker {
         return fullCustomizationInfo;
     }
 
-    async isPlatformServiceSubscriptionValid(subscription: Subscription, platformServiceType: PlatformServiceType, platformServices: PlatformService[]): Promise<boolean> {
+    async isPlatformServiceSubscriptionValid(subscriptionObj: Subscription, platformServiceType: PlatformServiceType, platformServices: PlatformService[]): Promise<boolean> {
         let selecteServiceInfo = platformServices.find(service => service.type == platformServiceType);
         if (!selecteServiceInfo) {
             return false;
         }
+        let subscriptionInfo = new PlatformSubscriptionBuilder(platformServices).fromSubscriptionObject(subscriptionObj)
         let currentDate = new Date(Date.now());
-        let selectedPlatformSubscription = subscription.getPlatformServiceSubscription(selecteServiceInfo.id);
+        let selectedPlatformSubscription = subscriptionInfo.getPlatformServiceSubscription(selecteServiceInfo.id);
         if (!selectedPlatformSubscription) {
-            throw new RequestValidationException({ message: `No subscription found for ${selecteServiceInfo.name[LanguageKey.AMHARIC]}` })
+            throw new RequestValidationException({ message: `No subscription found for ${selecteServiceInfo.name[LanguageKey.ENGLISH]}` })
         }
         let endDate = new Date(selectedPlatformSubscription.endDate);
         return currentDate < endDate;
+    }
+
+    convertSubscriptionObjToInstance(subscriptionObj: Subscription): Subscription {
+        if (subscriptionObj == undefined) {
+            throw new RequestValidationException({ message: "No subscription information found" })
+        }
+        return new PlatformSubscriptionBuilder().fromSubscriptionObject(subscriptionObj)
     }
 }

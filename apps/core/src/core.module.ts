@@ -26,6 +26,7 @@ import { StaffResolver } from './staff/staff.resolver';
 import { StaffService } from './staff/staff.service';
 import { BusinessAccessGenerator } from './business/business_access_factory';
 import { ProductResourceUsageTracker } from './resource_usage_tracker/product_resource_usage';
+import { BranchResourceUsageTracker } from './resource_usage_tracker/branch_resource_usage_tracker';
 
 
 @Module({
@@ -65,6 +66,7 @@ import { ProductResourceUsageTracker } from './resource_usage_tracker/product_re
     BusinessResolver,
 
     { provide: BranchRepository.injectName, useClass: BranchRepository },
+    { provide: BranchResourceUsageTracker.injectName, useClass: BranchResourceUsageTracker },
     BranchService,
     BranchResolver,
 

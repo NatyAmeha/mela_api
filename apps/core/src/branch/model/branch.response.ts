@@ -5,10 +5,10 @@ import { Product } from "../../product/model/product.model";
 
 @ObjectType()
 export class BranchResponse extends BaseResponse {
-    @Field(type => Branch)
+    @Field(types => Branch)
     branch?: Branch;
-    @Field(type => [Product])
+    @Field(types => [Product])
     products?: Product[]
-    @Field(type => [Branch])
+    @Field(types => [Branch])
     branches?: Branch[];
 }

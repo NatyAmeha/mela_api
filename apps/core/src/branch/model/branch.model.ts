@@ -5,6 +5,7 @@ import { Staff, StaffInput } from "../../staff/model/staff.model";
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Business } from "../../business/model/business.model";
+
 @ObjectType()
 export class Branch {
     @Field(types => ID)
@@ -32,8 +33,10 @@ export class Branch {
 
     @Field()
     businessId: string;
+
     @Field(types => Business)
-    business?: Business
+    business: Business
+
 
     @Field(types => [String], { defaultValue: [] })
     staffsId?: string[];

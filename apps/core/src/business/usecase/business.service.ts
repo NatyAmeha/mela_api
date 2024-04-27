@@ -62,6 +62,10 @@ export class BusinessService {
         return await this.businessRepo.getProductBusiness(productId);
     }
 
+    async getBranchBusiness(branchId: string): Promise<BusinessResponse> {
+        return await this.businessRepo.getBranchBusiness(branchId);
+    }
+
     async getBusinessInfoForStaff(staffId: string): Promise<Business> {
         return await this.businessRepo.getBusinessInfoForStaff(staffId);
     }

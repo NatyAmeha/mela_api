@@ -13,7 +13,6 @@ import { CurrentSubscriptionUpgradeResponse, DowngradePlatformSubscriptionDecora
 import { LanguageKey } from "@app/common/model/localized_model"
 import { CreateBusinessSubscriptionInput } from "../dto/business.subscription.input"
 import { Business } from "apps/core/src/business/model/business.model"
-import { sumBy } from "lodash"
 
 
 
@@ -31,8 +30,12 @@ export class SubscriptionFactory {
             return new BusinessSubscriptionOption(this.subscriptionRepo)
         }
     }
-    getSubscritpionFromObj(subscriptionObj: Subscription): Subscription {
-        return new Subscription({ ...subscriptionObj })
+
+    getPlatformSubscriptionInstance(subscriptionObj: Subscription): Subscription {
+        if (subscriptionObj == undefined) {
+            throw new RequestValidationException({ message: "No subscription information found" })
+        }
+        return new PlatformSubscriptionBuilder().fromSubscriptionObject(subscriptionObj)
     }
 }
 
