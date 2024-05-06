@@ -14,13 +14,15 @@ import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
 import { PermissionSelectionCriteria, RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
-import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
+import { PERMISSIONACTION, PermissionResourceType } from "@app/common/permission_helper/permission_constants";
 import { CurrentUser } from "libs/common/get_user_decorator";
 import { User } from "apps/auth/prisma/generated/prisma_auth_client";
 import { BusinessAccessGenerator } from "../business_access_factory";
 import { IAccessGenerator } from "@app/common/permission_helper/access_factory.interface";
 import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
+import { CreateBusinessSectionInput } from "../model/business_section.model";
+import { BaseResponse } from "@app/common/model/base.response";
 
 
 @Resolver(of => Business)
@@ -54,6 +56,23 @@ export class BusinessResolver {
         console.log("reply", reply)
         var response = new BusinessResponseBuilder().withBusiness(createdBusiness).build();
         return response;
+    }
+
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BaseResponse)
+    async createBusinessSection(@Args("businessId") businessId: string, @Args({ name: "sections", type: () => [CreateBusinessSectionInput] }) sections: CreateBusinessSectionInput[]): Promise<BaseResponse> {
+        let result = await this.businessService.createBusienssSections(businessId, sections);
+        return result;
+    }
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BaseResponse)
+    async removeBusinessSection(@Args("businessId") businessId: string, @Args({ name: "sectionsId", type: () => [String] }) sectionId: string[]): Promise<BaseResponse> {
+        let result = await this.businessService.removeBusinessSection(businessId, sectionId);
+        return result;
     }
 
 

@@ -3,7 +3,10 @@ import { BusinessRepository, IBusinessRepository } from "../repo/business.repo";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
-import { BusinessResponse } from "../model/business.response";
+import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
+import { BusinessSection, CreateBusinessSectionInput } from "../model/business_section.model";
+import { BaseResponse } from "@app/common/model/base.response";
+import { plainToClass } from "class-transformer";
 
 @Injectable()
 export class BusinessService {
@@ -47,6 +50,19 @@ export class BusinessService {
         } catch (error) {
             return new BusinessResponse({ success: false, message: "Unable to update business registration stage" });
         }
+    }
+
+    async createBusienssSections(businessId: string, sections: CreateBusinessSectionInput[]): Promise<BusinessResponse | BaseResponse> {
+        let businessSectionInfo = sections?.map(section => CreateBusinessSectionInput.toBusinessSection(section));
+        let response = await this.businessRepo.createBusinessSection(businessId, businessSectionInfo);
+        if (response.success) {
+            return new BusinessResponseBuilder().basicResponse(response.success, response.message);
+        }
+    }
+
+    async removeBusinessSection(businessId: string, sectionIds: string[]) {
+        let response = await this.businessRepo.removeBusinessSection(businessId, sectionIds);
+        return new BusinessResponseBuilder().basicResponse(response.success, response.message);
     }
 
 

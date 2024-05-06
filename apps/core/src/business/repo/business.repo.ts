@@ -5,7 +5,8 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
-import { uniq, uniqBy, uniqWith } from "lodash";
+import { includes, isEqual, uniq, uniqBy, uniqWith } from "lodash";
+import { BusinessSection } from "../model/business_section.model";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
@@ -16,6 +17,8 @@ export interface IBusinessRepository {
     getBusinessInfoForStaff(staffId: string): Promise<Business>;
     getUserOwnedBusinesses(userId: string): Promise<BusinessResponse>;
 
+    createBusinessSection(businessId: string, sections: BusinessSection[]): Promise<BusinessResponse>
+    removeBusinessSection(businessId: string, sectionIds: string[]): Promise<BusinessResponse>
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -27,6 +30,55 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
         const { customers, branches, staffs, products, ...businessData } = data;
         var result = await this.business.create({ data: { ...businessData } });
         return new Business({ ...result })
+    }
+
+    async createBusinessSection(businessId: string, newSections: BusinessSection[]): Promise<BusinessResponse> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BUSINESS_NOT_FOUND);
+            }
+            const alreadyExistingSections = (business.sections ?? []) as BusinessSection[];
+            const filteredNewSections = newSections.filter((section) => {
+                var name = section.name.map((name) => name.value).join(" ");
+                var rsult = alreadyExistingSections.some((existingSection) => {
+                    let existingSectionName = existingSection.name.map((name) => name.value).join(" ");
+                    let result = isEqual(existingSectionName, name);
+                    console.log("is exist ", result, existingSectionName, name)
+                    return result;
+                });
+                return !rsult;
+            });
+            const businessUpdateResult = await this.business.update({
+                where: { id: businessId },
+                data: { sections: { push: filteredNewSections } }
+            });
+            return new BusinessResponseBuilder().withBusiness(new Business({ ...businessUpdateResult })).build();
+
+        } catch (error) {
+            throw new PrismaException({ source: "Create business section", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async removeBusinessSection(businessId: string, sectionIds: string[]): Promise<BusinessResponse> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            console.log("business info", business.name);
+            if (!business) {
+                return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BUSINESS_NOT_FOUND);
+            }
+            const alreadyExistingSections = business.sections;
+            const remainingSections = alreadyExistingSections.filter((section) => !sectionIds.includes(section.id));
+            const businessUpdateResult = await this.business.update({
+                where: { id: businessId },
+                data: { sections: { set: remainingSections } }
+            });
+            return new BusinessResponseBuilder().withBusiness(new Business({ ...businessUpdateResult })).build();
+
+        } catch (error) {
+            console.log("remove business section error", error)
+            throw new PrismaException({ source: "Remove business section", statusCode: 400, code: error.code, meta: error.meta });
+        }
     }
 
     async getBusiness(businessId: string): Promise<Business> {

@@ -49,33 +49,34 @@ model Product {
 
 // business.model.ts
 model Business {
-    id                        String          @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String            @id @default(auto()) @map("_id") @db.ObjectId
     name                      LocalizedData[]
     description               LocalizedData[]
+    type                      String            @default("RESTAURANT") // will be removed
     categories                String[]
-    isActive                  Boolean         @default(false)
+    isActive                  Boolean           @default(false)
     gallery                   Gallery
-    createdAt                 DateTime?       @default(now())
-    updatedAt                 DateTime?       @updatedAt
+    createdAt                 DateTime?         @default(now())
+    updatedAt                 DateTime?         @updatedAt
     creator                   String
-    customersId               String[]        @default([]) @db.ObjectId
+    customersId               String[]          @default([]) @db.ObjectId
     customers                 Customer[]
-    productIds                String[]        @default([]) @db.ObjectId
+    productIds                String[]          @default([]) @db.ObjectId
     products                  Product[]
     openingStatus             String?
-    group                     ProductGroup[]
+    sections                  BusinessSection[]
     mainAddress               Address
     phoneNumber               String
     email                     String?
     website                   String?
-    branchIds                 String[]        @default([]) @db.ObjectId
+    branchIds                 String[]          @default([]) @db.ObjectId
     branches                  Branch[]
-    staffsId                  String[]        @default([]) @db.ObjectId
+    staffsId                  String[]          @default([]) @db.ObjectId
     staffs                    Staff[]
-    stage                     String          @default("CREATED")
-    subscriptionIds           String[]        @default([]) @db.ObjectId
+    stage                     String            @default("CREATED")
+    subscriptionIds           String[]          @default([]) @db.ObjectId
     activeSubscriptionId      String?
-    trialPeriodUsedServiceIds String[]        @default([]) @db.ObjectId
+    trialPeriodUsedServiceIds String[]          @default([]) @db.ObjectId
 }
 
 // branch.model.ts
@@ -149,13 +150,15 @@ type DeliveryInfo {
     updatedAt         DateTime @default(now())
 }
 
-type ProductGroup {
-    id          String   @default(uuid())
-    name        String
-    description String?
-    images      String[]
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @default(now())
+type BusinessSection {
+    id          String          @default(uuid())
+    name        LocalizedData[]
+    description LocalizedData[]
+    categoryId  String?
+    productIds  String[]        @default([]) @db.ObjectId
+    images      String[]        @default([])
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @default(now())
 }
 
 type GalleryData {

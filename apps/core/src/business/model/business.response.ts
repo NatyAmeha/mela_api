@@ -1,4 +1,4 @@
-import { BaseResponse } from "@app/common/model/base.response";
+import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.response";
 import { Field, ObjectType } from "@nestjs/graphql";
 import { Business } from "./business.model";
 import { Branch } from "../../branch/model/branch.model";
@@ -44,10 +44,10 @@ export class BusinessResponse extends BaseResponse {
     }
 }
 
-export class BusinessResponseBuilder {
-    private response: BusinessResponse;
+export class BusinessResponseBuilder extends BaseResponseBuilder {
 
-    constructor() {
+    constructor(private response: BusinessResponse = new BusinessResponse({})) {
+        super(response);
         this.response = new BusinessResponse({});
     }
 

@@ -10,6 +10,10 @@ export class LocalizedField {
     key: string
     @Field()
     value: string
+    constructor(data: Partial<LocalizedField>) {
+        Object.assign(this, data)
+
+    }
 }
 
 @InputType()

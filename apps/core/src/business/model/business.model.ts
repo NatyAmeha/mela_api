@@ -1,6 +1,6 @@
 import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Customer, CustomerInput } from "../../customer/model/customer.model";
-import { ProductGroup, ProductGroupInput } from "./product_group.model";
+import { BusinessSection, CreateBusinessSectionInput } from "./business_section.model";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Gallery, GalleryInput } from "./gallery.model";
 import { Address, AddressInput } from "./address.model";
@@ -14,6 +14,9 @@ import { includes } from "lodash";
 export class Business extends BaseModel {
     @Field(type => ID)
     id?: string
+
+    @Field()
+    type: string
 
     @Field(types => [String])
     categories: string[];
@@ -39,8 +42,8 @@ export class Business extends BaseModel {
     @Field(types => OpeningStatus)
     openingStatus: string;
 
-    @Field(types => [ProductGroup])
-    group?: ProductGroup[];
+    @Field(types => [BusinessSection])
+    sections?: BusinessSection[];
 
     @Field(types => [String])
     productIds?: string[];
