@@ -3,11 +3,14 @@ import { Branch } from "../model/branch.model";
 import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
+import { Business } from "../../business/model/business.model";
+import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 
 export interface IBranchRepository {
     addBranchToBusiness(businessId: string, branchData: Branch): Promise<Branch>;
     getBranch(branchId: string): Promise<Branch>;
     updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch>;
+    deleteBranch(businessId: string, branchId: string): Promise<Branch>
 
     getBusinessBranches(businessId: string): Promise<Branch[]>;
     getProductBranchs(productId: string): Promise<Branch[]>;
@@ -49,6 +52,7 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
             }
             return new Branch({ ...result });
         } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
             throw new PrismaException({ source: "Get branch", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
@@ -58,6 +62,7 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
             const result = await this.business.findUnique({ where: { id: businessId } }).branches();
             return result.map((branch) => new Branch({ ...branch }));
         } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
             throw new PrismaException({ source: "Get business branches", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
@@ -67,19 +72,56 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
             const { products, staffs, business, ...restBranchData } = branchData;
             var result = await this.branch.update({ where: { id: branchId }, data: { ...restBranchData } });
             if (!result.id) {
-                throw new RequestValidationException({ message: "Branch not found" });
+                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BRANCH_NOT_FOUND });
             }
             return new Branch({ ...result });
         } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
             throw new PrismaException({ source: "Update branch", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
 
+    async deleteBranch(businessId: string, branchId: string): Promise<Branch> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUSINESS_NOT_FOUND });
+            }
+
+            const branch = await this.branch.findUnique({ where: { id: branchId } });
+            if (!branch) {
+                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BRANCH_NOT_FOUND });
+            }
+
+            const result = await this.$transaction(async (prisma) => {
+                if (branch && branch.productIds.length > 0) {
+                    for (const productId of branch.productIds) {
+                        await prisma.product.update({ where: { id: productId }, data: { branches: { disconnect: [{ id: branchId }] } } })
+                    }
+                }
+                await prisma.business.update({
+                    where: { id: businessId },
+                    data: { branchIds: { set: business.branchIds.filter(id => id !== branchId) } }
+                });
+                const deletedBranchInfo = await prisma.branch.delete({ where: { id: branchId } });
+                return deletedBranchInfo;
+            })
+            return new Branch({ ...result });
+        } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
+            console.log("Error", error)
+            throw new PrismaException({ source: "Delete branch", statusCode: 400, code: error.code, meta: { message: error?.meta?.message ?? error?.meta?.cause } })
+        }
+    }
+
+
+
     async getProductBranchs(productId: string): Promise<Branch[]> {
         try {
             const result = await this.product.findUnique({ where: { id: productId } }).branches();
-            return result.map((branch) => new Branch({ ...branch }));
+            return result?.map((branch) => new Branch({ ...branch }));
         } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
             throw new PrismaException({ source: "Get product branches", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
@@ -96,10 +138,10 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
             }
             return new Branch({ ...branch });
         } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
             throw new PrismaException({ source: "Get branch info for staff", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
-
 
 
     async onModuleDestroy() {

@@ -70,6 +70,19 @@ export class BranchResolver {
 
 
 
+    @RequiresPermission({
+        permissions: [{
+            resourceType: AppResources.BRANCH, action: PERMISSIONACTION.DELETE
+        }]
+    })
+    @Mutation(returns => BranchResponse)
+    async deleteBranch(@Args("businessId") businessId: string, @Args("branchId") branchId: string) {
+        let response = await this.branchService.deleteBranch(businessId, branchId);
+        return response;
+    }
+
+
+
 
     // ------------------ Nested Queries ------------------
 

@@ -7,6 +7,7 @@ import { PlatformService } from "apps/subscription/src/model/platform_service.mo
 import { BranchResourceUsageTracker, IBranchResourceUsageTracker } from "../../resource_usage_tracker/branch_resource_usage_tracker";
 import { IResourceUsageTracker } from "../../resource_usage_tracker/base_resource_usage_tracker";
 import { BusinessResponse, BusinessResponseBuilder } from "../../business/model/business.response";
+import { BranchResponseBuilder } from "../model/branch.response";
 
 @Injectable()
 export class BranchService {
@@ -29,6 +30,14 @@ export class BranchService {
 
     updateBranchInfo(branchId: string, branchInfo: Partial<Branch>) {
         return this.branchRepo.updateBranch(branchId, branchInfo);
+    }
+
+    async deleteBranch(businessId: string, branchId: string) {
+        let deletedBranchInfo = await this.branchRepo.deleteBranch(businessId, branchId);
+        if (deletedBranchInfo.id) {
+            return new BranchResponseBuilder().basicResponse(true, "Branch deleted successfully")
+        }
+        return new BranchResponseBuilder().basicResponse(false, "Unable to delete branch. Please try again later.")
     }
 
     async getBranch(branchId: string): Promise<Branch> {
