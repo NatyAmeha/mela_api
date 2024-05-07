@@ -12,6 +12,7 @@ export interface IProductRepository {
 
     getBranchProducts(branchId: string): Promise<Product[]>;
     getBusinessProducts(businessId: string): Promise<Product[]>;
+    createBulkProducts(businessId: string, products: Product[]): Promise<Product[]>;
 
 
 }
@@ -48,6 +49,30 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         } catch (error) {
             console.log("error", error)
             throw new PrismaException({ source: "Create product", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async createBulkProducts(businessId: string, products: Product[]): Promise<Product[]> {
+        try {
+            const createdProducts = await this.$transaction(products?.map(product => {
+                const { businessId, branchIds, ...productData } = product;
+                return this.product.create({
+                    data: {
+                        ...productData,
+                        business: {
+                            connect: {
+                                id: businessId
+                            },
+                        },
+                        branches: {
+                            connect: branchIds?.map((id) => ({ id }))
+                        }
+                    }
+                });
+            }));
+            return createdProducts?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Create bulk products", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

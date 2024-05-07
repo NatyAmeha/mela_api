@@ -45,4 +45,8 @@ export class DeliveryInfoInput {
     @IsNumber()
     timeToPrepare?: number;
 
+    constructor(partial?: Partial<DeliveryInfoInput>) {
+        Object.assign(this, partial);
+    }
+
 }

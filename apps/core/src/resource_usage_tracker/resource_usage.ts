@@ -15,6 +15,10 @@ export class ResourceUsage {
     isAtMaxUsage() {
         return this.usage >= this.maxUsage
     }
+    isExceededMaxUsage(newResourceToBeAdded: number) {
+        return ((this.usage as number) + newResourceToBeAdded) > (this.maxUsage as number)
+    }
+
 }
 
 export class ResourceUsageBuilder {

@@ -30,10 +30,10 @@ export class ProductResponseBuilder {
         this.productResponse = new ProductResponse({})
     }
 
-    withError(error: string): ProductResponseBuilder {
+    withError(error: string): ProductResponse {
         this.productResponse.success = false
         this.productResponse.message = error
-        return this
+        return this.productResponse;
     }
 
     withProduct(product: Product): ProductResponseBuilder {

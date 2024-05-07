@@ -77,6 +77,38 @@ export class CreateProductInput {
 }
 
 
+@InputType()
+export class BuilkProductCreateInput extends PartialType(CreateProductInput) {
+    name?: LocalizedFieldInput[];
+    description?: LocalizedFieldInput[];
+    images: string[];
+    minimumOrderQty?: number;
+    category?: string[];
+    price: number;
+    unit?: string;
+    deliveravailable?: boolean;
+    deliveryPrice: number;
+    deliveryTime?: number;
+    timeToPrepare?: number;
+
+
+    toProduct = (businessId: string): Product => {
+        var product = new Product({
+            ...this,
+            gallery: new GalleryInput({ images: this.images.map(image => ({ url: image })) }),
+            deliveryInfo: new DeliveryInfoInput({
+                deliveryAvailable: this.deliveravailable,
+                price: this.deliveryPrice,
+                deliveryTime: this.deliveryTime,
+                timeToPrepare: this.timeToPrepare
+            }),
+            businessId: businessId
+        });
+        return product;
+    }
+}
+
+
 
 @InputType()
 export class UpdateProductInput extends PartialType(OmitType(CreateProductInput, ['branchIds'] as const, InputType)) {

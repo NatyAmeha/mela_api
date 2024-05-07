@@ -1,7 +1,7 @@
 import { Args, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql";
 import { Product } from "./model/product.model";
 import { ProductService } from "./product.service";
-import { CreateProductInput, UpdateProductInput } from "./dto/product.input";
+import { BuilkProductCreateInput, CreateProductInput, UpdateProductInput } from "./dto/product.input";
 import { ProductResponse, ProductResponseBuilder } from "./model/product.response";
 import { Branch } from "../branch/model/branch.model";
 import { BranchService } from "../branch/usecase/branch.service";
@@ -48,6 +48,28 @@ export class ProductResolver {
         let subscriptionInfo = businessSubscriptionResponse.data;
         var productResult = await this.productService.createProduct(productCreateInfo, subscriptionInfo.subscription, subscriptionInfo.platformServices);
         return productResult;
+    }
+
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => ProductResponse)
+    async createBulkProducts(@Args("businessId") businessId: string, products: BuilkProductCreateInput[]): Promise<ProductResponse> {
+        let businessSubscriptionResponse = await this.coreServiceMsgBrocker.getBusinessSubscription(businessId);
+        if (!businessSubscriptionResponse || !businessSubscriptionResponse.success) {
+            return {
+                success: false,
+                message: businessSubscriptionResponse.message
+            }
+        }
+        let subscriptionInfo = businessSubscriptionResponse.data;
+        var bulkCreateResponse = await this.productService.createBulkProducts(businessId, products, subscriptionInfo.subscription, subscriptionInfo.platformServices);
+        return bulkCreateResponse;
     }
 
     @Mutation(returns => ProductResponse)
