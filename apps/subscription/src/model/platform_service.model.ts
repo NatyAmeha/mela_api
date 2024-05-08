@@ -23,10 +23,14 @@ export class SubscriptionRenewalInfo {
 
     @Field(type => Int, { defaultValue: 0 })
     discountAmount: number
+
+    constructor(data: Partial<SubscriptionRenewalInfo>) {
+        Object.assign(this, data)
+    }
 }
 
 @InputType()
-export class SubscriptionRenewalInfoInput extends SubscriptionRenewalInfo {
+export class SubscriptionRenewalInfoInput {
     @Field(type => [LocalizedFieldInput])
     @Type(() => LocalizedFieldInput)
     name: LocalizedFieldInput[]
@@ -113,6 +117,9 @@ export class CreatePlatformServiceInput {
     @Type(() => LocalizedFieldInput)
     name: LocalizedFieldInput[]
 
+    @Field(types => PlatformServiceType)
+    type: string
+
     @Field(type => [LocalizedFieldInput],)
     @Type(() => LocalizedFieldInput)
     description?: LocalizedFieldInput[]
@@ -138,6 +145,13 @@ export class CreatePlatformServiceInput {
 
     constructor(data: Partial<CreatePlatformServiceInput>) {
         Object.assign(this, data)
+    }
+
+    toPlatformService(): PlatformService {
+        return new PlatformService({
+            ...this,
+            subscriptionRenewalInfo: this.subscriptionRenewalInfo.map(info => new SubscriptionRenewalInfo({ ...info }))
+        })
     }
 }
 
@@ -238,6 +252,7 @@ export enum PlatformServiceType {
     POINT_OF_SALE = "POINT_OF_SALE",
     INVENTORY = "INVENTORY",
     ONLINE_STORE = "ONLINE_STORE",
+    SUBSCRIPTION = "SUBSCRIPTION"
 }
 
 registerEnumType(SelectionType, { name: "SelectionType" })

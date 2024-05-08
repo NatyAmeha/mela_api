@@ -18,7 +18,7 @@ export class PlatformServiceResolver {
     async createPlatformService(@Args("serviceInfo") serviceInfo: CreatePlatformServiceInput): Promise<PlatformServiceResponse> {
         // validate the input
         // save the data to db
-        let platformServiceInfo = new PlatformService({ ...serviceInfo })
+        let platformServiceInfo = serviceInfo.toPlatformService();
         let response = await this.platformServiceUsecase.createPlatformService(platformServiceInfo)
         return response;
     }
