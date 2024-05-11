@@ -45,23 +45,67 @@ model Product {
     deliveryInfo     DeliveryInfo?
     branchIds        String[]        @default([]) @db.ObjectId
     branches         Branch[]        @relation(fields: [branchIds], references: [id])
+    sku              String
+    options          ProductOption[]
+    variantsId       String[]        @default([]) @db.ObjectId
+    mainProduct      Boolean         @default(false)
+    inventory        Inventory[]
+}
+
+type ProductOption {
+    key   String
+    value String[]
+}
+
+model Inventory {
+    id                  String            @id @default(auto()) @map("_id") @db.ObjectId
+    name                String
+    sku                 String
+    price               Float
+    qty                 Float
+    isAvailable         Boolean           @default(true)
+    optionsIncluded     String[]          @default([])
+    productId           String            @db.ObjectId
+    product             Product           @relation(fields: [productId], references: [id])
+    inventoryLocationId String            @db.ObjectId
+    inventoryLocation   InventoryLocation @relation(fields: [inventoryLocationId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model InventoryLocation {
+    id          String      @id @default(auto()) @map("_id") @db.ObjectId
+    name        String
+    city        String?
+    location    String
+    phoneNumber String
+    address     String?
+    inventory   Inventory[]
+
+    branchId   String    @db.ObjectId
+    branch     Branch    @relation(fields: [branchId], references: [id])
+    businessId String?   @db.ObjectId
+    business   Business? @relation(fields: [businessId], references: [id])
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
 }
 
 // business.model.ts
 model Business {
-    id                        String            @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String              @id @default(auto()) @map("_id") @db.ObjectId
     name                      LocalizedData[]
     description               LocalizedData[]
-    type                      String            @default("RESTAURANT") // will be removed
+    type                      String              @default("RESTAURANT") // will be removed
     categories                String[]
-    isActive                  Boolean           @default(false)
+    isActive                  Boolean             @default(false)
     gallery                   Gallery
-    createdAt                 DateTime?         @default(now())
-    updatedAt                 DateTime?         @updatedAt
+    createdAt                 DateTime?           @default(now())
+    updatedAt                 DateTime?           @updatedAt
     creator                   String
-    customersId               String[]          @default([]) @db.ObjectId
+    customersId               String[]            @default([]) @db.ObjectId
     customers                 Customer[]
-    productIds                String[]          @default([]) @db.ObjectId
+    productIds                String[]            @default([]) @db.ObjectId
     products                  Product[]
     openingStatus             String?
     sections                  BusinessSection[]
@@ -69,35 +113,38 @@ model Business {
     phoneNumber               String
     email                     String?
     website                   String?
-    branchIds                 String[]          @default([]) @db.ObjectId
+    branchIds                 String[]            @default([]) @db.ObjectId
     branches                  Branch[]
-    staffsId                  String[]          @default([]) @db.ObjectId
+    staffsId                  String[]            @default([]) @db.ObjectId
     staffs                    Staff[]
-    stage                     String            @default("CREATED")
-    subscriptionIds           String[]          @default([]) @db.ObjectId
+    stage                     String              @default("CREATED")
+    subscriptionIds           String[]            @default([]) @db.ObjectId
     activeSubscriptionId      String?
-    trialPeriodUsedServiceIds String[]          @default([]) @db.ObjectId
+    trialPeriodUsedServiceIds String[]            @default([]) @db.ObjectId
+    inventoryLocations        InventoryLocation[]
 }
 
 // branch.model.ts
 model Branch {
-    id          String          @id @default(auto()) @map("_id") @db.ObjectId
-    name        LocalizedData[]
-    address     Address
-    phoneNumber String
-    email       String?
-    website     String?
-    isActive    Boolean         @default(false)
-    businessId  String          @db.ObjectId
-    business    Business        @relation(fields: [businessId], references: [id])
-    customersId String[]        @default([]) @db.ObjectId
-    customers   Customer[]      @relation(fields: [customersId], references: [id])
-    productIds  String[]        @default([]) @db.ObjectId
-    products    Product[]       @relation(fields: [productIds], references: [id])
-    staffsId    String[]        @default([]) @db.ObjectId
-    staffs      Staff[]
-    createdAt   DateTime?       @default(now())
-    updatedAt   DateTime?       @updatedAt
+    id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+    name               LocalizedData[]
+    address            Address
+    phoneNumber        String
+    email              String?
+    website            String?
+    isActive           Boolean             @default(false)
+    businessId         String              @db.ObjectId
+    business           Business            @relation(fields: [businessId], references: [id])
+    customersId        String[]            @default([]) @db.ObjectId
+    customers          Customer[]          @relation(fields: [customersId], references: [id])
+    productIds         String[]            @default([]) @db.ObjectId
+    products           Product[]           @relation(fields: [productIds], references: [id])
+    staffsId           String[]            @default([]) @db.ObjectId
+    staffs             Staff[]
+    inventoryLocations InventoryLocation[]
+
+    createdAt DateTime? @default(now())
+    updatedAt DateTime? @updatedAt
 }
 
 // staff.model.ts

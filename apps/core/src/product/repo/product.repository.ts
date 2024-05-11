@@ -29,7 +29,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async createProduct(product: Product): Promise<Product> {
         try {
             const createdProduct = await this.$transaction(async (prisma) => {
-                const { businessId, branchIds, ...productData } = product;
+                const { businessId, branchIds, inventory, ...productData } = product;
                 const result = await prisma.product.create({
                     data: {
                         ...productData,
@@ -56,7 +56,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async createBulkProducts(businessId: string, products: Product[]): Promise<Product[]> {
         try {
             const createdProducts = await this.$transaction(products?.map(product => {
-                const { businessId, branchIds, ...productData } = product;
+                const { businessId, branchIds, inventory, ...productData } = product;
                 return this.product.create({
                     data: {
                         ...productData,
@@ -79,7 +79,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
     async updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product> {
         try {
-            const { businessId, business, branches, branchIds, ...productData } = productInfo;
+            const { businessId, business, branches, branchIds, inventory, ...productData } = productInfo;
             const result = await this.product.update({
                 where: { id: productId },
                 data: { ...productData }

@@ -9,6 +9,8 @@ import { Type } from "class-transformer";
 import { ValidateNested } from "class-validator";
 import { BaseModel } from "@app/common/model/base.model";
 import { Business } from "../../business/model/business.model";
+import { Productoption } from "./product_options.model";
+import { Inventory } from "../../inventory/model/inventory.model";
 
 @ObjectType()
 
@@ -71,6 +73,20 @@ export class Product extends BaseModel {
     @Field(types => [String])
     reviewTopics?: string[];
 
+    @Field()
+    sku: string;
+    @Field(types => [Productoption], { defaultValue: [] })
+    options: Productoption[]
+    @Field(types => [String])
+    variantsId?: string[];
+    @Field(types => [Product])
+    variants?: Product[];
+    @Field({ defaultValue: false })
+    mainProduct?: boolean
+
+    @Field(types => [Inventory])
+    inventory?: Inventory[]
+
     @Field(types => CallToActionType, { defaultValue: "Order" })
     callToAction?: string;
 
@@ -84,11 +100,14 @@ export class Product extends BaseModel {
     @Field(types => [Branch])
     branches?: Branch[];
 
+
     constructor(partial?: Partial<Product>) {
         super()
         Object.assign(this, partial);
     }
 }
+
+
 
 export enum ProductType {
     PRODUCT = "PRODUCT",

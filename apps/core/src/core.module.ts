@@ -27,6 +27,12 @@ import { StaffService } from './staff/staff.service';
 import { BusinessAccessGenerator } from './business/business_access_factory';
 import { ProductResourceUsageTracker } from './resource_usage_tracker/product_resource_usage';
 import { BranchResourceUsageTracker } from './resource_usage_tracker/branch_resource_usage_tracker';
+import { InventoryLocationRepository } from './inventory/repo/inventory_location.repository';
+import { InventoryRepository } from './inventory/repo/inventory.repository';
+import { InventoryResolver } from './inventory/inventroy.resolver';
+import { InventoryService } from './inventory/inventory.service';
+import { BusinessResponseBuilder } from './business/model/business.response';
+import { InventoryLocationBuilder } from './inventory/model/inventory_location.model';
 
 
 @Module({
@@ -77,8 +83,15 @@ import { BranchResourceUsageTracker } from './resource_usage_tracker/branch_reso
     { provide: StaffRepository.injectName, useClass: StaffRepository },
     StaffResolver, StaffService,
 
+    { provide: InventoryLocationRepository.injectName, useClass: InventoryLocationRepository },
+    { provide: InventoryRepository.injectName, useClass: InventoryRepository },
+    InventoryResolver, InventoryService,
+
     { provide: CoreServiceMessageProcessor.InjectName, useClass: CoreServiceMessageProcessor },
     CoreServiceMsgBrockerClient,
+
+    // Builders and utils
+    BusinessResponseBuilder, InventoryLocationBuilder
   ],
   exports: []
 })

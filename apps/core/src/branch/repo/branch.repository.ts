@@ -5,6 +5,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { Business } from "../../business/model/business.model";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
+import { InventoryLocationBuilder } from "../../inventory/model/inventory_location.model";
 
 export interface IBranchRepository {
     addBranchToBusiness(businessId: string, branchData: Branch): Promise<Branch>;
@@ -27,9 +28,9 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
     }
 
     async addBranchToBusiness(bId: string, branchData: Branch): Promise<Branch> {
-        const { productIds, products, staffs, staffsId, businessId, ...restBranchData } = branchData;
+        const { productIds, products, staffs, staffsId, businessId, inventoryLocations, ...restBranchData } = branchData;
         var result = await this.$transaction(async (prisma) => {
-            const branch = await prisma.branch.create({
+            const branchCreateResult = await prisma.branch.create({
                 data: {
                     ...restBranchData,
                     business: { connect: { id: bId } },
@@ -37,9 +38,20 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
             });
             await prisma.business.update({
                 where: { id: bId },
-                data: { branchIds: { push: branch.id } },
+                data: { branchIds: { push: branchCreateResult.id } },
             });
-            return branch;
+            const branchInfo = new Branch({ ...branchCreateResult });
+            const inventoryLocationInfo = new InventoryLocationBuilder().fromBranch(branchInfo).build();
+            const { branchId, businessId, business, ...locationData } = inventoryLocationInfo;
+            await prisma.inventoryLocation.create({
+                data: {
+                    ...locationData,
+                    branch: { connect: { id: branchInfo.id } },
+                    business: { connect: { id: branchInfo.businessId } }
+                }
+            });
+
+            return branchCreateResult;
         })
         return new Branch({ ...result });
     }
@@ -69,7 +81,7 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
 
     async updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch> {
         try {
-            const { products, staffs, business, ...restBranchData } = branchData;
+            const { products, staffs, business, businessId, inventoryLocations, ...restBranchData } = branchData;
             var result = await this.branch.update({ where: { id: branchId }, data: { ...restBranchData } });
             if (!result.id) {
                 throw new RequestValidationException({ message: CommonBusinessErrorMessages.BRANCH_NOT_FOUND });

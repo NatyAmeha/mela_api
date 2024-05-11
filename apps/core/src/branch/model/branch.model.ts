@@ -5,6 +5,7 @@ import { Staff, StaffInput } from "../../staff/model/staff.model";
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Business } from "../../business/model/business.model";
+import { InventoryLocation } from "../../inventory/model/inventory_location.model";
 
 @ObjectType()
 export class Branch {
@@ -48,6 +49,8 @@ export class Branch {
     updatedAt?: Date;
     @Field()
     isActive?: boolean;
+
+    inventoryLocations?: InventoryLocation[];
 
     constructor(partial?: Partial<Branch>) {
         Object.assign(this, partial);

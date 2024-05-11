@@ -5,15 +5,18 @@ import { AppResources, BranchResourceAction } from "apps/mela_api/src/const/app_
 import { PlatformService, PlatformServiceType } from "apps/subscription/src/model/platform_service.model";
 import { BranchRepository } from "../branch/repo/branch.repository";
 import { Inject } from "@nestjs/common";
+import { InventoryLocationRepository } from "../inventory/repo/inventory_location.repository";
 
 export interface IBranchResourceUsageTracker extends BaseResourceUsageTracker {
     getBusinessBranchCreationUsage(businessId: string, businessSubscription: Subscription, platformServices: PlatformService[]): Promise<ResourceUsage>
-
 }
 
 export class BranchResourceUsageTracker extends BaseResourceUsageTracker implements IBranchResourceUsageTracker {
     static injectName = "BranchResourceUsageTracker"
-    constructor(@Inject(BranchRepository.injectName) private branchRepo: BranchRepository) {
+    constructor(
+        @Inject(BranchRepository.injectName) private branchRepo: BranchRepository,
+        @Inject(InventoryLocationRepository.injectName) private inventoryLocationRepo: InventoryLocationRepository
+    ) {
         super()
     }
     async getBusinessBranchCreationUsage(businessId: string, businessSubscriptionObj: Subscription, platformServices: PlatformService[]): Promise<ResourceUsage> {
@@ -35,4 +38,5 @@ export class BranchResourceUsageTracker extends BaseResourceUsageTracker impleme
         let maxAllowedUsage = parseInt(allowedPlatformServiceCustomizationUsage.value);
         return new ResourceUsageBuilder(businessId, AppResources.BRANCH).createSuccessResourceUsage(usage, maxAllowedUsage);
     }
+
 }

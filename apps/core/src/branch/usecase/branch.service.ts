@@ -8,12 +8,17 @@ import { BranchResourceUsageTracker, IBranchResourceUsageTracker } from "../../r
 import { IResourceUsageTracker } from "../../resource_usage_tracker/base_resource_usage_tracker";
 import { BusinessResponse, BusinessResponseBuilder } from "../../business/model/business.response";
 import { BranchResponseBuilder } from "../model/branch.response";
+import { InventoryLocationRepository } from "../../inventory/repo/inventory_location.repository";
+import { InventoryLocationBuilder } from "../../inventory/model/inventory_location.model";
 
 @Injectable()
 export class BranchService {
     constructor(
         @Inject(BranchRepository.injectName) private branchRepo: IBranchRepository,
-        @Inject(BranchResourceUsageTracker.injectName) private branchResourceUsageTracker: IBranchResourceUsageTracker
+        @Inject(BranchResourceUsageTracker.injectName) private branchResourceUsageTracker: IBranchResourceUsageTracker,
+        @Inject(InventoryLocationRepository.injectName) private inventoryLocationRepository: InventoryLocationRepository,
+        private businessReponseBuilder: BusinessResponseBuilder,
+        private inventoryLocationBuilder: InventoryLocationBuilder
     ) {
     }
 
@@ -22,10 +27,12 @@ export class BranchService {
         let branchResourceUsage = await this.branchResourceUsageTracker.getBusinessBranchCreationUsage(businessId, subscriptionInput, platformServices);
         console.log("Branch resource usage", branchResourceUsage)
         if (branchResourceUsage.isAtMaxUsage()) {
-            return new BusinessResponseBuilder().withError("You have reached the maximum number of branches you can create.");
+            return this.businessReponseBuilder.withError("You have reached the maximum number of branches you can create.");
         }
-        let createdBranchResult = await this.branchRepo.addBranchToBusiness(businessId, fullBranchInfo);
-        return new BusinessResponseBuilder().withBranchAdded(createdBranchResult).build();
+        const createdBranchResult = await this.branchRepo.addBranchToBusiness(businessId, fullBranchInfo);
+        const inventoryLocationInfo = this.inventoryLocationBuilder.fromBranch(createdBranchResult).build();
+        await this.inventoryLocationRepository.createInventoryLocation(inventoryLocationInfo);
+        return this.businessReponseBuilder.withBranchAdded(createdBranchResult).build();
     }
 
     updateBranchInfo(branchId: string, branchInfo: Partial<Branch>) {
