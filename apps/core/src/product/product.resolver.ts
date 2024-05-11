@@ -82,6 +82,13 @@ export class ProductResolver {
     }
 
 
+    @Mutation(returns => ProductResponse)
+    async getBusinessProducts(@Args("businessId") businessId: string, @Args("page", { nullable: true }) page?: number, @Args("limit", { nullable: true }) limit?: number): Promise<ProductResponse> {
+        let productResult = await this.productService.getBusinessProducts(businessId, { page, limit });
+        return new ProductResponseBuilder().withProducts(productResult).build();
+    }
+
+
     @RequiresPermission({
         permissions: [
             { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.ASSIGN_UNASSIGN },

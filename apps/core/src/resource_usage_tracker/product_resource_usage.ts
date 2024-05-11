@@ -43,7 +43,7 @@ export class ProductResourceUsageTracker extends BaseResourceUsageTracker {
             })
         }
 
-        let businessProducts = await this.productRepo.getBusinessProducts(businessId);
+        let businessProducts = await this.productRepo.getBusinessProducts(businessId, {});
         let usage = businessProducts.length;
         let maxAllowedUsage = parseInt(allowedPlatformServiceCustomizationUsage.value);
         let canCreateNewProduct = usage < maxAllowedUsage;

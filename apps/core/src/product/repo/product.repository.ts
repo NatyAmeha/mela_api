@@ -2,6 +2,7 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import { Product } from "../model/product.model";
 import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
+import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
@@ -11,7 +12,7 @@ export interface IProductRepository {
     removeProductFromBranch(productId: string[], branchId: string[]): Promise<Product[]>;
 
     getBranchProducts(branchId: string): Promise<Product[]>;
-    getBusinessProducts(businessId: string): Promise<Product[]>;
+    getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
     createBulkProducts(businessId: string, products: Product[]): Promise<Product[]>;
 
 
@@ -143,12 +144,14 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async getBusinessProducts(businessId: string): Promise<Product[]> {
+    async getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]> {
         try {
             const products = await this.product.findMany({
                 where: {
                     businessId: businessId
-                }
+                },
+                skip: query?.page ? query.page - 1 * query.limit : 0,
+                take: query?.limit,
             });
             return products?.map(product => new Product({ ...product }));
         } catch (error) {

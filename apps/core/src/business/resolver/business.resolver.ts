@@ -40,7 +40,7 @@ export class BusinessResolver {
     @Query(returns => BusinessResponse)
     async getBusinessDetails(@Args("id") id: string): Promise<BusinessResponse> {
         let business = await this.businessService.getBusiness(id);
-        var businessProducts = await this.productService.getBusinessProducts(id);
+        var businessProducts = await this.productService.getBusinessProducts(id, { page: 1, limit: 20 });
         var businessBranches = await this.branchService.getBusinessBranches(id);
         var respnse = new BusinessResponseBuilder().withBusiness(business).withProducts(businessProducts).withBranches(businessBranches).build();
         return respnse;
@@ -118,7 +118,7 @@ export class BusinessResolver {
     // responsd for nested query for products field inside business type
     @ResolveField('products', returns => [Product])
     async getProductsforBusiness(@Parent() business: Business): Promise<Product[]> {
-        return await this.productService.getBusinessProducts(business.id);
+        return await this.productService.getBusinessProducts(business.id, {});
     }
 
     // responsd for nested query for branches field inside business type

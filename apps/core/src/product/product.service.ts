@@ -8,6 +8,7 @@ import { PlatformSubscriptionBuilder, Subscription } from "apps/subscription/src
 import { PlatformService } from "apps/subscription/src/model/platform_service.model";
 import { BuilkProductCreateInput } from "./dto/product.input";
 import { CommonBusinessErrorMessages, CommonSubscriptionErrorMessages } from "../utils/const/error_constants";
+import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 @Injectable()
 export class ProductService {
@@ -61,7 +62,7 @@ export class ProductService {
         return await this.productRepository.getBranchProducts(branchId);
     }
 
-    async getBusinessProducts(businessId: string): Promise<Product[]> {
-        return await this.productRepository.getBusinessProducts(businessId);
+    async getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]> {
+        return await this.productRepository.getBusinessProducts(businessId, query);
     }
 }
