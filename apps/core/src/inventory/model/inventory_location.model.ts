@@ -33,6 +33,8 @@ export class InventoryLocation extends BaseModel {
         super();
         Object.assign(this, partial);
     }
+
+
 }
 
 export class InventoryLocationBuilder {

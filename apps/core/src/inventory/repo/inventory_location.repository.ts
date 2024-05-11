@@ -1,4 +1,4 @@
-import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { InventoryLocation } from "../model/inventory_location.model";
 import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
@@ -8,9 +8,11 @@ import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export interface IInventoryLocationRepository {
     createInventoryLocation(location: InventoryLocation): Promise<InventoryLocation>;
+    updateInventoryLocationInfo(ocationId: string, location: InventoryLocation)
     getBusinessInventoryLocations(businessId: string, query: QueryHelper<InventoryLocation>): Promise<InventoryLocation[]>;
 }
 
+@Injectable()
 export class InventoryLocationRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IInventoryLocationRepository {
     static injectName = "InventoryLocationRepository";
     constructor() {
@@ -44,6 +46,27 @@ export class InventoryLocationRepository extends PrismaClient implements OnModul
                 throw error;
             }
             throw new PrismaException({ source: "Create inventory location", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async updateInventoryLocationInfo(locationId: string, location: InventoryLocation) {
+        try {
+            const { branchId, businessId, ...locationData } = location;
+            const updatedLocation = await this.inventoryLocation.update({
+                where: { id: locationId },
+                data: {
+                    ...locationData,
+                    branch: { connect: { id: location.branchId } },
+                    business: { connect: { id: location.businessId } }
+                }
+            });
+            return new InventoryLocation({ ...updatedLocation });
+        } catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            console.log("error", error)
+            throw new PrismaException({ source: "Update inventory location", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

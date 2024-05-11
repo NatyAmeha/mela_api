@@ -23,3 +23,22 @@ export class CreateInventoryLocationInput extends PartialType(InventoryLocation)
         })
     }
 }
+
+@InputType()
+export class UpdateInventoryLocationInput extends PartialType(InventoryLocation) {
+    name?: string;
+    city?: string;
+    address?: string;
+    location?: string;
+    phoneNumber?: string;
+    @IsString()
+    @IsNotEmpty()
+    branchId: string;
+    @IsString()
+    @IsNotEmpty()
+    businessId: string;
+
+    getInventoryLocation(): InventoryLocation {
+        return new InventoryLocation({ ...this })
+    }
+}
