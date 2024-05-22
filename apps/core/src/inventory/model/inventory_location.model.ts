@@ -2,6 +2,7 @@ import { BaseModel } from "@app/common/model/base.model";
 import { Field, ID, ObjectType } from "@nestjs/graphql";
 import { Branch } from "../../branch/model/branch.model";
 import { Business } from "../../business/model/business.model";
+import { CreateInventoryLocationInput } from "../dto/inventory_location.input";
 
 @ObjectType({ isAbstract: true })
 export class InventoryLocation extends BaseModel {
@@ -32,6 +33,17 @@ export class InventoryLocation extends BaseModel {
     constructor(partial?: Partial<InventoryLocation>) {
         super();
         Object.assign(this, partial);
+    }
+
+    static getInventoryLocationInfo(businessId: string, branchId: string, locationData: CreateInventoryLocationInput): InventoryLocation {
+        return new InventoryLocation({
+            name: locationData.name,
+            city: locationData.city,
+            location: locationData.location,
+            phoneNumber: locationData.phoneNumber,
+            branchId: branchId,
+            businessId: businessId
+        })
     }
 
 

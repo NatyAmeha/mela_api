@@ -72,7 +72,12 @@ export class BasePermissionHelper implements IPermissionHelper {
         var args = gqlContext.getArgs();
         // one of them should be present in the mutation/query arguments
         // possible parameter key-value provided inside resolver method. to get resource target by key
-        var resourceTargetProvided: { key: string, value: any }[] = [{ key: "owner", value: args.owner }, { key: "ownerId", value: args.ownerId }, { key: "businessId", value: args.businessId }, { key: "productId", value: args.productId }, { key: "userId", value: args.userId }, { key: "id", value: args.id }]
+        var resourceTargetProvided: { key: string, value: any }[] = [
+            { key: "owner", value: args.owner }, { key: "ownerId", value: args.ownerId },
+            { key: "businessId", value: args.businessId }, { key: "productId", value: args.productId },
+            { key: "userId", value: args.userId }, { key: "id", value: args.id },
+            { key: "businessId", value: args.businessId }
+        ]
         return resourceTargetProvided.filter(target => target.value != undefined)
     }
 

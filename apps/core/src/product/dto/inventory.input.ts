@@ -3,10 +3,12 @@ import { Inventory } from "../../inventory/model/inventory.model";
 import { PriceInfo } from "apps/subscription/src/model/price.model";
 import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from "class-validator";
 import { types } from "joi";
+import { Type } from "class-transformer";
 
 @InputType()
 export class CreateInventoryInput {
     @Field(types => [PriceInfo])
+    @Type(() => PriceInfo)
     @IsArray()
     priceInfo: PriceInfo[];
     @Field()
@@ -18,10 +20,7 @@ export class CreateInventoryInput {
     @Field(types => Int)
     @IsNumber()
     minOrderQty?: number;
-    @Field(types => [String])
-    @IsOptional()
-    @IsArray()
-    optionsIncluded?: string[];
+
     @Field()
     @IsString()
     inventoryLocationId: string;
@@ -32,7 +31,7 @@ export class CreateInventoryInput {
 }
 
 @InputType()
-export class UpdateInventoryInput extends OmitType(CreateInventoryInput, ["optionsIncluded", "inventoryLocationId"] as const,) {
+export class UpdateInventoryInput extends OmitType(CreateInventoryInput, ["inventoryLocationId"] as const,) {
     @Field()
     id: string
     constructor(partial?: Partial<UpdateInventoryInput>) {

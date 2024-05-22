@@ -1,6 +1,6 @@
 import { Args, Mutation, Resolver } from "@nestjs/graphql";
 import { Inventory } from "./model/inventory.model";
-import { UpdateInventoryInput } from "../product/dto/inventory.input";
+import { CreateInventoryInput, UpdateInventoryInput } from "../product/dto/inventory.input";
 import { UpdateProductInput } from "../product/dto/product.input";
 import { InventoryResponse } from "./model/inventory.response";
 import { Inject, UseGuards } from "@nestjs/common";
@@ -22,13 +22,16 @@ export class InventoryResolver {
 
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.INVENTORY, action: PERMISSIONACTION.UPDATE },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.UPDATE, resourcTargetName: "productId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
         ]
     })
     @UseGuards(PermissionGuard)
     @Mutation(returns => InventoryResponse)
-    async createNewInventory() { }
+    async createNewInventoryOnInventoryLocation(@Args("businessId") businessId: string, @Args("productId") productId: string, @Args("inventoryData") inventoryData: CreateInventoryInput) {
+        const result = await this.inventoryService.addInventoryToProduct(businessId, productId, inventoryData);
+        return result;
+    }
 
 
     @RequiresPermission({

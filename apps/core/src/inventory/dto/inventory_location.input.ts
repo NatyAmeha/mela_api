@@ -7,21 +7,12 @@ import { IsNotEmpty, IsString } from "class-validator";
 export class CreateInventoryLocationInput extends PartialType(InventoryLocation) {
     @IsNotEmpty()
     name: string;
+    @IsNotEmpty()
     city?: string;
     @IsNotEmpty()
     location: string;
     @IsNotEmpty()
     phoneNumber: string;
-
-    getInventoryLocation(branchId: string): InventoryLocation {
-        return new InventoryLocation({
-            name: this.name,
-            city: this.city,
-            location: this.location,
-            phoneNumber: this.phoneNumber,
-            branchId: branchId
-        })
-    }
 }
 
 @InputType()

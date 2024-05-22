@@ -49,7 +49,7 @@ export class Access extends BaseModel {
 
 @ObjectType({ isAbstract: true })
 @Directive('@extends')
-@Directive('@key(fields: "id name{key,value} action resourceType resourceTarget effect groups{id,key,name{key,value}} userGenerated")')
+@Directive('@key(fields: "id name{key,value} action resourceType resourceTarget effect groups{id,key,name{key,value}} userGenerated resourcTargetName")')
 export class Permission {
     @Field(types => ID)
     id?: string
@@ -67,6 +67,7 @@ export class Permission {
     groups?: PermissionGroup[]
     @Field()
     userGenerated?: boolean = false
+    @Field()
     resourcTargetName?: string
 
 

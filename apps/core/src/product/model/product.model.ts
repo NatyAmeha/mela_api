@@ -77,6 +77,8 @@ export class Product extends BaseModel {
     sku: string;
     @Field(types => [Productoption], { defaultValue: [] })
     options: Productoption[]
+    @Field(types => [String], { defaultValue: [] })
+    optionsIncluded: string[]
     @Field(types => [String])
     variantsId?: string[];
     @Field(types => [Product])
@@ -117,6 +119,11 @@ export class Product extends BaseModel {
             ]
         });
         return product;
+    }
+
+
+    isProductPartOfBusiness(businessId: string): boolean {
+        return this.businessId === businessId;
     }
 }
 

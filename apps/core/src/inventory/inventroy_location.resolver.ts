@@ -8,7 +8,7 @@ import { UseGuards } from "@nestjs/common";
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { CoreServiceMsgBrockerClient } from "../msg_brocker_client/core_service_msg_brocker";
-import { UpdateInventoryLocationInput } from "./dto/inventory_location.input";
+import { CreateInventoryLocationInput, UpdateInventoryLocationInput } from "./dto/inventory_location.input";
 
 @Resolver(of => InventoryLocation)
 export class InventoryLocationResolver {
@@ -16,6 +16,20 @@ export class InventoryLocationResolver {
         private inventoryService: InventoryService,
         private coreServiceMsgBrocker: CoreServiceMsgBrockerClient
     ) { }
+
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.INVENTORY_LOCATION, action: PERMISSIONACTION.CREATE, resourcTargetName: "branchId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ]
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => InventoryResponse, { description: "Returns the created inventory location in location field of inventoryResponse object" })
+    async createInventoryLocationForBranch(@Args("businessId") businessId: string, @Args("branchId") branchId: string, @Args("locationData") locationData: CreateInventoryLocationInput): Promise<InventoryResponse> {
+        const result = await this.inventoryService.createInventoryLocation(businessId, branchId, locationData)
+        return result;
+    }
 
 
 

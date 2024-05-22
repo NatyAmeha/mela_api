@@ -64,6 +64,10 @@ export class CreateProductInput {
     @ArrayNotEmpty({ message: "options should not be empty if the mainproduct field is true" })
     options?: ProductOptionInput[]
 
+    @Field(types => [String])
+    @IsArray()
+    optionsIncluded: string[];
+
 
     @Field(types => [String])
     reviewTopics?: string[];

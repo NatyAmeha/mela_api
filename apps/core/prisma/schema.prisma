@@ -46,6 +46,7 @@ model Product {
     branches         Branch[]        @relation(fields: [branchIds], references: [id])
     sku              String
     options          ProductOption[]
+    optionsIncluded  String[]        @default([])
     variantsId       String[]        @default([]) @db.ObjectId
     mainProduct      Boolean         @default(false)
     inventory        Inventory[]
@@ -74,6 +75,9 @@ model Inventory {
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@unique([productId, inventoryLocationId, sku])
+    @@unique([productId, optionsIncluded, sku])
 }
 
 model InventoryLocation {
