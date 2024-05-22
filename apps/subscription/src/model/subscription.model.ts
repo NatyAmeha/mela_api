@@ -89,6 +89,13 @@ export class Subscription extends BaseModel {
             throw new RequestValidationException({ message: "Subscription Expired" })
         }
     }
+
+    static toSubscriptionInstance(subscriptionObj: Subscription) {
+        if (this == undefined) {
+            throw new RequestValidationException({ message: "No subscription information found" })
+        }
+        return new PlatformSubscriptionBuilder().fromSubscriptionObject(subscriptionObj)
+    }
 }
 
 @ObjectType({ isAbstract: true })

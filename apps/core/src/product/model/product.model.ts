@@ -6,20 +6,26 @@ import { Branch } from "../../branch/model/branch.model";
 import { Customer } from "../../customer/model/customer.model";
 import { Gallery, GalleryInput } from "../../business/model/gallery.model";
 import { Type } from "class-transformer";
-import { ValidateNested } from "class-validator";
+import { ValidateNested, validate } from "class-validator";
 import { BaseModel } from "@app/common/model/base.model";
 import { Business } from "../../business/model/business.model";
 import { Productoption } from "./product_options.model";
 import { Inventory } from "../../inventory/model/inventory.model";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { CreateProductInput } from "../dto/product.input";
 
-@ObjectType()
-
+@ObjectType({ isAbstract: true })
 export class Product extends BaseModel {
     @Field(types => String)
     id?: string;
 
     @Field(type => [LocalizedField])
+    @Type(() => LocalizedField)
     name: LocalizedField[]
+
+    @Field(type => [LocalizedField])
+    @Type(() => LocalizedField)
+    displayName?: LocalizedField[]
 
     @Field(types => [LocalizedField])
     description: LocalizedField[];
@@ -44,16 +50,13 @@ export class Product extends BaseModel {
     businessId: string;
 
     @Field(types => [String])
-    productGroupId?: string[];
+    sectionId?: string[];
 
     @Field(types => Boolean, { defaultValue: false })
     isActive: boolean;
 
     @Field(types => [String])
     category: string[];
-
-    @Field(types => Float)
-    price: number;
 
     @Field(types => ProductType)
     type: string;
@@ -66,9 +69,6 @@ export class Product extends BaseModel {
 
     @Field(types => Boolean, { defaultValue: false })
     canOrderOnline: boolean;
-
-    @Field(types => ProductUnitType, { defaultValue: "Unit" })
-    unit?: string;
 
     @Field(types => [String])
     reviewTopics?: string[];
@@ -85,6 +85,7 @@ export class Product extends BaseModel {
     mainProduct?: boolean
 
     @Field(types => [Inventory])
+    @Type(() => Inventory)
     inventory?: Inventory[]
 
     @Field(types => CallToActionType, { defaultValue: "Order" })
@@ -93,9 +94,8 @@ export class Product extends BaseModel {
     @Field(types => [String])
     branchIds?: string[];
 
-    @Field(types => DeliveryInfo)
-    @ValidateNested()
-    deliveryInfo?: DeliveryInfo;
+    @Field(types => String)
+    deliveryInfoId?: string;
 
     @Field(types => [Branch])
     branches?: Branch[];
@@ -104,6 +104,19 @@ export class Product extends BaseModel {
     constructor(partial?: Partial<Product>) {
         super()
         Object.assign(this, partial);
+    }
+
+    static async fromCreateProductInput(businessId: string, productInput: CreateProductInput): Promise<Product> {
+        const generatedSku = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const { inventoryInfo, ...restProductInfo } = productInput;
+        var product = new Product({
+            ...restProductInfo,
+            sku: generatedSku,
+            businessId: businessId, inventory: [
+                await Inventory.fromCreateInventory(productInput.name[0].value, generatedSku, productInput.inventoryInfo)
+            ]
+        });
+        return product;
     }
 }
 
@@ -116,11 +129,7 @@ export enum ProductType {
     MEMBERSHIP = "MEMBERSHIP",
 }
 
-export enum ProductUnitType {
-    Unit = "Unit",
-    Kg = "Kg",
-    Litre = "Litre",
-}
+
 
 export enum CallToActionType {
     Order = "Order",
@@ -130,7 +139,6 @@ export enum CallToActionType {
 }
 
 registerEnumType(ProductType, { name: "ProductType" });
-registerEnumType(ProductUnitType, { name: "ProductUnitType" });
 registerEnumType(CallToActionType, { name: "CallToActionType" });
 
 

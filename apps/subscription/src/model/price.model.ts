@@ -7,6 +7,7 @@ export enum Currency {
     ETB = "ETB"
 }
 @ObjectType({ isAbstract: true })
+@InputType("PriceInfoInput")
 export class PriceInfo {
     @Field(types => Float)
     amount: number;

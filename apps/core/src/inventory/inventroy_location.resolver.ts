@@ -14,7 +14,8 @@ import { UpdateInventoryLocationInput } from "./dto/inventory_location.input";
 export class InventoryLocationResolver {
     constructor(
         private inventoryService: InventoryService,
-        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient,) { }
+        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient
+    ) { }
 
 
 

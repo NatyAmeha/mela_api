@@ -23,17 +23,16 @@ model Customer {
 model Product {
     id               String          @id @default(auto()) @map("_id") @db.ObjectId
     name             LocalizedData[]
+    displayName      LocalizedData[]
     description      LocalizedData[]
     tag              String[]
     gallery          Gallery
     loyaltyPoint     Int             @default(0)
-    minimumOrderQty  Int             @default(0)
     business         Business        @relation(fields: [businessId], references: [id])
     businessId       String          @db.ObjectId
-    productGroupId   String[]
-    isActive         Boolean         @default(false)
+    sectionId        String[]
+    isActive         Boolean         @default(true)
     category         String[]
-    price            Float
     type             String
     createdAt        DateTime?       @default(now())
     updatedAt        DateTime?       @updatedAt
@@ -42,7 +41,7 @@ model Product {
     reviewTopics     String[]
     callToAction     String?         @default("Order Now")
     subscriptionPlan Json[]
-    deliveryInfo     DeliveryInfo?
+    deliveryInfoId   String?
     branchIds        String[]        @default([]) @db.ObjectId
     branches         Branch[]        @relation(fields: [branchIds], references: [id])
     sku              String
@@ -61,8 +60,11 @@ model Inventory {
     id                  String            @id @default(auto()) @map("_id") @db.ObjectId
     name                String
     sku                 String
-    price               Float
+    priceInfo           PriceInfo[]
     qty                 Float
+    unit                String            @default("Unit")
+    minOrderQty         Float             @default(1)
+    maxOrderQty         Float             @default(1000)
     isAvailable         Boolean           @default(true)
     optionsIncluded     String[]          @default([])
     productId           String            @db.ObjectId
@@ -122,6 +124,7 @@ model Business {
     activeSubscriptionId      String?
     trialPeriodUsedServiceIds String[]            @default([]) @db.ObjectId
     inventoryLocations        InventoryLocation[]
+    deliveryInfo              DeliveryInfo[]
 }
 
 // branch.model.ts
@@ -189,6 +192,7 @@ type Address {
 
 type DeliveryInfo {
     id                String   @default(uuid())
+    name              String
     deliveryAvailable Boolean? @default(false)
     price             Float?   @default(0)
     deliveryTime      Int      @default(2)
@@ -212,4 +216,10 @@ type GalleryData {
     id       String   @default(uuid())
     url      String
     featured Boolean?
+}
+
+type PriceInfo {
+    id       String @default(uuid())
+    amount   Float
+    currency String
 }

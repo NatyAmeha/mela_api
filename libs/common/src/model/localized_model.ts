@@ -23,6 +23,11 @@ export class LocalizedFieldInput {
     key: string
     @Field()
     value: string
+
+    constructor(data: Partial<LocalizedFieldInput>) {
+        Object.assign(this, data)
+
+    }
 }
 
 export enum LanguageKey {

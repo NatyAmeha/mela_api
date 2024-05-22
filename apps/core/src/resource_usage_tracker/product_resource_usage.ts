@@ -22,14 +22,14 @@ export class ProductResourceUsageTracker extends BaseResourceUsageTracker {
         var allowedProductCreationActions = Object.values(ProductResourceAction);
         let isSubscriptionValid = await this.isPlatformServiceSubscriptionValid(businessSubscription, PlatformServiceType.POINT_OF_SALE, platformServices);
         if (!isSubscriptionValid) {
-            return <ResourceUsage>{
+            return new ResourceUsage({
                 success: false,
                 message: "Subscription expired for this product. Please renew your subscription to continue using this product",
                 resourceId: businessId,
                 resourceType: AppResources.PRODUCT,
                 usage: 0,
                 maxUsage: 0
-            }
+            })
         }
         let allowedPlatformServiceCustomizationUsage = await this.getAllowedPlatformServiceCusomizationFromSubscription(businessSubscription, platformServices, allowedProductCreationActions);
         if (!allowedPlatformServiceCustomizationUsage) {

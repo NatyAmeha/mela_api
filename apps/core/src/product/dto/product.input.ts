@@ -1,55 +1,69 @@
 import { Field, Float, InputType, Int, OmitType, PartialType, registerEnumType } from "@nestjs/graphql";
-import { Product, ProductType, ProductUnitType } from "../model/product.model";
+import { Product, ProductType } from "../model/product.model";
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Type } from "class-transformer";
 import { GalleryInput } from "../../business/model/gallery.model";
 import { DeliveryInfoInput } from "../model/delivery.model";
-import { IsArray, IsNotEmpty, ValidateNested } from "class-validator";
+import { ArrayNotEmpty, IsArray, IsNotEmpty, ValidateIf, ValidateNested, validate } from "class-validator";
+import { CreateInventoryInput } from "./inventory.input";
+import { ProductOptionInput } from "../model/product_options.model";
 
 
 @InputType()
 export class CreateProductInput {
-    @Field(type => [LocalizedFieldInput])
+    @Field(types => [LocalizedFieldInput], { description: "Variant name for the main product" })
     @Type(() => LocalizedFieldInput)
-    @IsArray()
+    @ArrayNotEmpty()
     name: LocalizedFieldInput[]
+
+    @Field(types => [LocalizedFieldInput], { description: "display name, will be shown on browsing sectioin " })
+    @Type(() => LocalizedFieldInput)
+    @ValidateIf((obj: CreateProductInput, value) => obj.mainProduct == true)
+    @ValidateNested({ each: true, })
+    displayName?: LocalizedFieldInput[]
 
     @Field(types => [LocalizedFieldInput])
     @Type(() => LocalizedFieldInput)
-    @IsArray()
-    description: LocalizedFieldInput[];
+    @ValidateIf((obj: CreateProductInput, value) => obj.mainProduct == true)
+    @ValidateNested({ each: true })
+    description?: LocalizedFieldInput[];
 
     @Field(types => GalleryInput)
     @Type(() => GalleryInput)
+    @ValidateNested({ each: true })
     gallery: GalleryInput;
 
     @Field(types => [String])
     tag?: string[];
 
-
-    @Field(types => Int, { defaultValue: 1 })
-    minimumOrderQty?: number
+    @Field({ defaultValue: false })
+    mainProduct?: boolean
 
     @Field(types => Int, { defaultValue: 0 })
     loyaltyPoint: number;
 
     @Field(types => [String])
-    productGroupId?: string[];
+    sectionId?: string[];
 
     @Field(types => [String])
     category: string[];
 
-    @Field(types => Float)
-    price: number;
 
     @Field(types => ProductType)
     type: string;
 
-    @Field(types => Boolean, { defaultValue: false })
-    canOrderOnline: boolean;
+    @Field(types => CreateInventoryInput)
+    @Type(() => CreateInventoryInput)
+    @ValidateNested({ always: true, each: true })
+    inventoryInfo: CreateInventoryInput
 
-    @Field(types => ProductUnitType, { defaultValue: "Unit" })
-    unit?: string;
+    @Field(types => [ProductOptionInput])
+    @Type(() => ProductOptionInput)
+    @ValidateNested({ always: true, each: true })
+    @ValidateIf((obj: CreateProductInput, value) => obj.mainProduct == true)
+    @ArrayNotEmpty({ message: "options should not be empty if the mainproduct field is true" })
+    options?: ProductOptionInput[]
+
 
     @Field(types => [String])
     reviewTopics?: string[];
@@ -60,18 +74,14 @@ export class CreateProductInput {
     @Field(types => [String])
     branchIds?: string[];
 
-    @Field(types => DeliveryInfoInput)
-    @Type(() => DeliveryInfoInput)
-    @ValidateNested()
-    deliveryInfo?: DeliveryInfoInput;
+    @Field(types => Boolean, { defaultValue: false })
+    canOrderOnline: boolean;
+
+    @Field()
+    deliveryInfoId?: string
 
     constructor(partial?: Partial<CreateProductInput>) {
         Object.assign(this, partial);
-    }
-
-    toProduct(businessId: string): Product {
-        var product = new Product({ ...this, businessId: businessId });
-        return product;
     }
 
 }
@@ -92,7 +102,8 @@ export class BuilkProductCreateInput extends PartialType(CreateProductInput) {
     timeToPrepare?: number;
 
 
-    toProduct = (businessId: string): Product => {
+    toProduct = async (businessId: string): Promise<Product> => {
+        const error = await validate(this);
         var product = new Product({
             ...this,
             gallery: new GalleryInput({ images: this.images.map(image => ({ url: image })) }),

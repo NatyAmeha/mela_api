@@ -1,9 +1,13 @@
-import { Field, Float, InputType, Int, ObjectType } from "@nestjs/graphql";
+import { Field, Float, ID, InputType, Int, ObjectType } from "@nestjs/graphql";
 import { IsNotEmpty, IsNumber, ValidateIf } from "class-validator";
 
 
 @ObjectType()
 export class DeliveryInfo {
+    @Field(types => ID)
+    id?: string
+    @Field()
+    name: string;
     @Field({ defaultValue: false })
     deliveryAvailable: boolean;
     @Field(types => Float)

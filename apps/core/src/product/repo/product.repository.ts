@@ -3,6 +3,7 @@ import { Product } from "../model/product.model";
 import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
+import { result } from "lodash";
 
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
@@ -13,7 +14,7 @@ export interface IProductRepository {
 
     getBranchProducts(branchId: string): Promise<Product[]>;
     getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
-    createBulkProducts(businessId: string, products: Product[]): Promise<Product[]>;
+    createProductsWithVariants(products: Product[]): Promise<Product[]>;
 
 
 }
@@ -53,26 +54,58 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async createBulkProducts(businessId: string, products: Product[]): Promise<Product[]> {
+    async createProductsWithVariants(products: Product[]): Promise<Product[]> {
         try {
-            const createdProducts = await this.$transaction(products?.map(product => {
-                const { businessId, branchIds, inventory, ...productData } = product;
-                return this.product.create({
-                    data: {
-                        ...productData,
-                        business: {
-                            connect: {
-                                id: businessId
+            const createdProducts = await this.$transaction(async (prisma) => {
+                const productResults = await Promise.all(products?.map(async (product) => {
+                    const { businessId, branchIds, inventory, ...productData } = product;
+                    const { inventoryLocation, inventoryLocationId, ...restInventoryInfo } = inventory[0];
+                    return await prisma.product.create({
+                        data: {
+                            ...productData,
+                            business: {
+                                connect: {
+                                    id: product.businessId
+                                },
                             },
-                        },
-                        branches: {
-                            connect: branchIds?.map((id) => ({ id }))
+                            branches: {
+                                connect: product.branchIds?.map((id) => ({ id }))
+                            },
+
+                            inventory: {
+                                create: {
+                                    ...restInventoryInfo,
+                                    inventoryLocation: {
+                                        connect: {
+                                            id: inventoryLocationId
+                                        }
+                                    }
+
+                                }
+                            }
                         }
-                    }
-                });
-            }));
+                    });
+
+                }))
+
+                const mainProduct = productResults.find(product => product.mainProduct == true);
+                if (mainProduct && productResults.length > 1) {
+                    const varaintsId = productResults.filter(product => product.mainProduct == false)?.map(product => product.id);
+                    const updateMainProductVariants = await prisma.product.update({
+                        where: { id: mainProduct.id },
+                        data: {
+                            variantsId: varaintsId
+                        }
+                    });
+                }
+                return productResults;
+            });
+
+
+
             return createdProducts?.map(product => new Product({ ...product }));
         } catch (error) {
+            console.log("error", error)
             throw new PrismaException({ source: "Create bulk products", statusCode: 400, code: error.code, meta: error.meta });
         }
     }

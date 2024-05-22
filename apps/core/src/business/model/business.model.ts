@@ -9,6 +9,7 @@ import { Product } from "../../product/model/product.model";
 import { Staff } from "../../staff/model/staff.model";
 import { BaseModel } from "@app/common/model/base.model";
 import { includes } from "lodash";
+import { DeliveryInfo } from "../../product/model/delivery.model";
 
 @ObjectType()
 export class Business extends BaseModel {
@@ -83,6 +84,9 @@ export class Business extends BaseModel {
 
     @Field(types => [Customer])
     customers?: Customer[];
+
+    @Field(types => [DeliveryInfo])
+    deliveryInfo?: DeliveryInfo[]
 
     platformServiceTrialPeriodUsed(platformServiceId: string) {
         return includes(this.trialPeriodUsedServiceIds, platformServiceId)

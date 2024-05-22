@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType, PickType } from "@nestjs/graphql"
+import { ArrayNotEmpty, IsNotEmpty } from "class-validator"
 
 @ObjectType({ isAbstract: true })
 export class Productoption {
@@ -10,6 +11,8 @@ export class Productoption {
 
 @InputType()
 export class ProductOptionInput extends PickType(Productoption, ['key', 'value'] as const) {
+    @IsNotEmpty()
     key: string
+    @ArrayNotEmpty()
     value: string[]
 }

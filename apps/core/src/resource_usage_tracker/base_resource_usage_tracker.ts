@@ -2,6 +2,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { LanguageKey } from "@app/common/model/localized_model";
 import { Customization, PlatformService, PlatformServiceType } from "apps/subscription/src/model/platform_service.model";
 import { PlatformSubscriptionBuilder, Subscription } from "apps/subscription/src/model/subscription.model";
+import { CommonSubscriptionErrorMessages } from "../utils/const/error_constants";
 
 export interface IResourceUsageTracker {
     getAllowedPlatformServiceCusomizationFromSubscription(subscription: Subscription, platformServices: PlatformService[], requiredAction: string[]): Promise<Customization>
@@ -22,6 +23,9 @@ export class BaseResourceUsageTracker implements IResourceUsageTracker {
     }
 
     async isPlatformServiceSubscriptionValid(subscriptionObj: Subscription, platformServiceType: PlatformServiceType, platformServices: PlatformService[]): Promise<boolean> {
+        if (subscriptionObj == undefined || !platformServices || platformServices?.length == 0) {
+            throw new RequestValidationException({ message: CommonSubscriptionErrorMessages.SUBSCRIPTION_NOT_FOUND })
+        }
         let selecteServiceInfo = platformServices.find(service => service.type == platformServiceType);
         if (!selecteServiceInfo) {
             return false;

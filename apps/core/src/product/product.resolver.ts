@@ -16,6 +16,10 @@ import { PlatformServiceSubscription, PlatformServices } from "libs/common/get_u
 import { PlatformServiceGateway, SubscriptionGateway } from "apps/mela_api/src/model/subscription.gateway.model";
 import { CoreServiceMsgBrockerClient } from "../msg_brocker_client/core_service_msg_brocker";
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
+import { plainToClass, plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
+import { IValidator } from "@app/common/validation_utils/validator.interface";
+import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
 
 @Resolver(of => Product)
 export class ProductResolver {
@@ -23,7 +27,8 @@ export class ProductResolver {
         private coreServiceMsgBrocker: CoreServiceMsgBrockerClient,
         private productService: ProductService,
         private businessService: BusinessService,
-        private branchService: BranchService
+        private branchService: BranchService,
+        @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator
     ) {
     }
 
@@ -32,21 +37,16 @@ export class ProductResolver {
             { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE },
             { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
         ],
-        selectionCriteria: PermissionSelectionCriteria.ANY
     })
     @UseGuards(PermissionGuard)
-    @Mutation(returns => ProductResponse)
-    async createBusinessProduct(@Args("businessId") businessId: string, @Args('productInfo') product: CreateProductInput): Promise<ProductResponse> {
-        let productCreateInfo = product.toProduct(businessId);
+    @Mutation(returns => ProductResponse, { description: "Create products with varaints. returns list of products created. inside products field" })
+    async createBusinessProducts(@Args("businessId") businessId: string, @Args({ name: 'productInfo', type: () => [CreateProductInput] }) productInfo: CreateProductInput[]): Promise<ProductResponse> {
+        await this.inputValidator.validateArrayInput(productInfo, CreateProductInput)
         let businessSubscriptionResponse = await this.coreServiceMsgBrocker.getBusinessSubscription(businessId);
         if (!businessSubscriptionResponse || !businessSubscriptionResponse.success) {
-            return {
-                success: false,
-                message: businessSubscriptionResponse.message
-            }
+            return new ProductResponseBuilder().withError(businessSubscriptionResponse.message)
         }
-        let subscriptionInfo = businessSubscriptionResponse.data;
-        var productResult = await this.productService.createProduct(productCreateInfo, subscriptionInfo.subscription, subscriptionInfo.platformServices);
+        var productResult = await this.productService.createProducts(businessId, productInfo, businessSubscriptionResponse.data.subscription, businessSubscriptionResponse.data.platformServices);
         return productResult;
     }
 
@@ -57,20 +57,20 @@ export class ProductResolver {
             { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
         ],
     })
-    @UseGuards(PermissionGuard)
-    @Mutation(returns => ProductResponse)
-    async createBulkProducts(@Args("businessId") businessId: string, products: BuilkProductCreateInput[]): Promise<ProductResponse> {
-        let businessSubscriptionResponse = await this.coreServiceMsgBrocker.getBusinessSubscription(businessId);
-        if (!businessSubscriptionResponse || !businessSubscriptionResponse.success) {
-            return {
-                success: false,
-                message: businessSubscriptionResponse.message
-            }
-        }
-        let subscriptionInfo = businessSubscriptionResponse.data;
-        var bulkCreateResponse = await this.productService.createBulkProducts(businessId, products, subscriptionInfo.subscription, subscriptionInfo.platformServices);
-        return bulkCreateResponse;
-    }
+    // @UseGuards(PermissionGuard)
+    // @Mutation(returns => ProductResponse)
+    // async createBulkProducts(@Args("businessId") businessId: string, products: BuilkProductCreateInput[]): Promise<ProductResponse> {
+    //     let businessSubscriptionResponse = await this.coreServiceMsgBrocker.getBusinessSubscription(businessId);
+    //     if (!businessSubscriptionResponse || !businessSubscriptionResponse.success) {
+    //         return {
+    //             success: false,
+    //             message: businessSubscriptionResponse.message
+    //         }
+    //     }
+    //     let subscriptionInfo = businessSubscriptionResponse.data;
+    //     var bulkCreateResponse = await this.productService.createBulkProducts(businessId, products, subscriptionInfo.subscription, subscriptionInfo.platformServices);
+    //     return bulkCreateResponse;
+    // }
 
     @Mutation(returns => ProductResponse)
     async updateProduct(@Args('productId') productId: string, @Args('product') product: UpdateProductInput): Promise<ProductResponse> {
