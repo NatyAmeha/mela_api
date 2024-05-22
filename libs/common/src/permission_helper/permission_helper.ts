@@ -8,12 +8,13 @@ import { Subscription } from "apps/subscription/src/model/subscription.model";
 import { SubscriptionType } from "apps/subscription/src/model/subscription_type.enum";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
+import { string } from "joi";
 
 export interface IPermissionHelper {
     isPermissionsGranted(grantedPermissions: Permission[], requiredPermission: PermissionConfiguration): boolean
-    getResourceTargetFromArgument(gqlContext: GqlExecutionContext): string
+    getResourceTargetFromArgument(gqlContext: GqlExecutionContext): { key: string, value: any }[]
     getSubscriptionPermissionList(subscriptionInfo: Subscription): Promise<Permission[]>
-    addResourceTargetOnRequestedPermissions(permissions: PermissionConfiguration, resourceTarget?: string): PermissionConfiguration
+    addResourceTargetOnRequestedPermissions(permissions: PermissionConfiguration, resourceTarget?: { key: string, value: any }[]): PermissionConfiguration
 
 }
 @Injectable()
@@ -67,20 +68,23 @@ export class BasePermissionHelper implements IPermissionHelper {
         return false;
     }
 
-    getResourceTargetFromArgument(gqlContext: GqlExecutionContext): string {
+    getResourceTargetFromArgument(gqlContext: GqlExecutionContext): { key: string, value: any }[] {
         var args = gqlContext.getArgs();
         // one of them should be present in the mutation/query arguments
-        return args.owner ?? args.ownerId ?? args.businessId ?? args.userId ?? args.id
+        // possible parameter key-value provided inside resolver method. to get resource target by key
+        var resourceTargetProvided: { key: string, value: any }[] = [{ key: "owner", value: args.owner }, { key: "ownerId", value: args.ownerId }, { key: "businessId", value: args.businessId }, { key: "productId", value: args.productId }, { key: "userId", value: args.userId }, { key: "id", value: args.id }]
+        return resourceTargetProvided.filter(target => target.value != undefined)
     }
 
-    addResourceTargetOnRequestedPermissions(permissions: PermissionConfiguration, resourceTarget?: string): PermissionConfiguration {
-        if (!resourceTarget) {
+    addResourceTargetOnRequestedPermissions(permissions: PermissionConfiguration, resourceTargets?: { key: string, value: any }[]): PermissionConfiguration {
+        if (!resourceTargets) {
             return permissions;
         }
         permissions.permissions.forEach(p => {
-            p.resourceTarget = resourceTarget;
+            p.resourceTarget = resourceTargets.find(rs => rs.key == p.resourcTargetName)?.value
         })
 
+        console.log("provided permissions", permissions.permissions)
         return permissions;
     }
 
