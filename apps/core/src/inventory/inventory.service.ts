@@ -6,6 +6,7 @@ import { InventoryResponse, InventoryResponseBuilder } from "./model/inventory.r
 import { CreateInventoryLocationInput } from "./dto/inventory_location.input";
 import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
 import { BranchResourceUsageTracker, IBranchResourceUsageTracker } from "../resource_usage_tracker/branch_resource_usage_tracker";
+import { UpdateInventoryInput } from "../product/dto/inventory.input";
 
 @Injectable()
 export class InventoryService {
@@ -14,6 +15,11 @@ export class InventoryService {
         @Inject(InventoryLocationRepository.injectName) private inventoryLocationRepository: InventoryLocationRepository,
         @Inject(BranchResourceUsageTracker.injectName) private branchResourceUsageTracker: IBranchResourceUsageTracker
     ) {
+    }
+
+    async updateInventories(inventories: UpdateInventoryInput[]): Promise<InventoryResponse> {
+        const inventoryUpdateResult = await this.inventoryRepository.updateInventoriesInformation(inventories);
+        return new InventoryResponseBuilder().withInventories(inventoryUpdateResult).build();
     }
 
     async updateInventoryLocation(inventoryLocationId: string, inventoryLocationInfo: InventoryLocation): Promise<InventoryResponse> {

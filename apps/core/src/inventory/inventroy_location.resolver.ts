@@ -19,7 +19,12 @@ export class InventoryLocationResolver {
 
 
 
-    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE }] })
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.INVENTORY_LOCATION, action: PERMISSIONACTION.UPDATE },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+        ]
+    })
     @UseGuards(PermissionGuard)
     @Mutation(returns => InventoryResponse)
     async updateInventoryLocation(@Args("locationId") locationId: string, @Args('inventoryLocationInfo') inventoryLocationInfo: UpdateInventoryLocationInput): Promise<InventoryResponse> {

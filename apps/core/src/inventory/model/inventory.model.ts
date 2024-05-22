@@ -51,10 +51,6 @@ export class Inventory extends BaseModel {
     }
 
     static async fromCreateInventory(productdName: string, productSku: string, inventoryInput: CreateInventoryInput) {
-        // const errors = await validate(inventoryInput);
-        // if (errors.length > 0) {
-        //     throw new RequestValidationException({ validationErrors: errors });
-        // }
         const inventoryName = `${productdName} - ${productSku}`;
         return new Inventory({
             ...inventoryInput,

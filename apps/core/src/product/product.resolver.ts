@@ -51,12 +51,12 @@ export class ProductResolver {
     }
 
 
-    @RequiresPermission({
-        permissions: [
-            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
-        ],
-    })
+    // @RequiresPermission({
+    //     permissions: [
+    //         { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE },
+    //         { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+    //     ],
+    // })
     // @UseGuards(PermissionGuard)
     // @Mutation(returns => ProductResponse)
     // async createBulkProducts(@Args("businessId") businessId: string, products: BuilkProductCreateInput[]): Promise<ProductResponse> {

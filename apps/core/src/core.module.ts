@@ -33,6 +33,7 @@ import { InventoryLocationResolver } from './inventory/inventroy_location.resolv
 import { InventoryService } from './inventory/inventory.service';
 import { BusinessResponseBuilder } from './business/model/business.response';
 import { InventoryLocationBuilder } from './inventory/model/inventory_location.model';
+import { InventoryResolver } from './inventory/inventory.resolver';
 
 
 @Module({
@@ -85,7 +86,8 @@ import { InventoryLocationBuilder } from './inventory/model/inventory_location.m
 
     { provide: InventoryLocationRepository.injectName, useClass: InventoryLocationRepository },
     { provide: InventoryRepository.injectName, useClass: InventoryRepository },
-    InventoryLocationResolver, InventoryService,
+    InventoryLocationResolver, InventoryResolver,
+    InventoryService,
 
     { provide: CoreServiceMessageProcessor.InjectName, useClass: CoreServiceMessageProcessor },
     CoreServiceMsgBrockerClient,

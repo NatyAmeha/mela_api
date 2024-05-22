@@ -30,6 +30,18 @@ export class InventoryResponseBuilder extends BaseResponseBuilder {
         super(response);
     }
 
+    withInventory(inventory: Inventory): InventoryResponseBuilder {
+        this.response.success = true;
+        this.response.inventory = inventory;
+        return this;
+    }
+
+    withInventories(inventories: Inventory[]): InventoryResponseBuilder {
+        this.response.success = true;
+        this.response.inventories = inventories;
+        return this;
+    }
+
     withInvetoryLocation(location: InventoryLocation): InventoryResponseBuilder {
         this.response.success = true;
         this.response.location = location;

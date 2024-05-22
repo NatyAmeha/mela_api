@@ -1,7 +1,7 @@
-import { Field, InputType, Int, PartialType } from "@nestjs/graphql";
+import { Field, InputType, Int, OmitType, PartialType } from "@nestjs/graphql";
 import { Inventory } from "../../inventory/model/inventory.model";
 import { PriceInfo } from "apps/subscription/src/model/price.model";
-import { IsArray, IsNumber, IsOptional, IsString, Min } from "class-validator";
+import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from "class-validator";
 import { types } from "joi";
 
 @InputType()
@@ -28,5 +28,14 @@ export class CreateInventoryInput {
 
     constructor(partial?: Partial<CreateInventoryInput>) {
         Object.assign(this, partial);
+    }
+}
+
+@InputType()
+export class UpdateInventoryInput extends OmitType(CreateInventoryInput, ["optionsIncluded", "inventoryLocationId"] as const,) {
+    @Field()
+    id: string
+    constructor(partial?: Partial<UpdateInventoryInput>) {
+        super(partial);
     }
 }
