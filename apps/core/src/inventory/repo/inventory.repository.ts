@@ -7,6 +7,8 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 export interface IInventoryRepository {
     updateInventoriesInformation(inventories: UpdateInventoryInput[]): Promise<Inventory[]>;
     addInventoriesOnProduct(productId: string, inventory: Inventory): Promise<Inventory>
+    getProductInventories(productId: string, locationId?: string): Promise<Inventory[]>
+    getInventoriesInInventoryLocation(locationId: string): Promise<Inventory[]>;
 }
 
 @Injectable()
@@ -61,6 +63,38 @@ export class InventoryRepository extends PrismaClient implements OnModuleInit, O
             return inventoryResults;
         });
         return updatedInventories.map((inventory) => new Inventory({ ...inventory }));
+    }
+
+    async getProductInventories(productId: string, locationId?: string): Promise<Inventory[]> {
+        try {
+            let inventoryResult: any[];
+            if (locationId) {
+                inventoryResult = await this.inventory.findMany({
+                    where: { productId: productId, inventoryLocationId: locationId }
+                });
+            }
+            else {
+                inventoryResult = await this.inventory.findMany({
+                    where: { productId: productId }
+                });
+            }
+            return inventoryResult.map((inventory) => new Inventory({ ...inventory }));
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({ source: "Get product inventory by location id", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getInventoriesInInventoryLocation(locationId: string): Promise<Inventory[]> {
+        try {
+            const inventoryResults = await this.inventory.findMany({
+                where: { inventoryLocationId: locationId }
+            });
+            return inventoryResults.map((inventory) => new Inventory({ ...inventory }));
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({ source: "Get product inventory by location id", statusCode: 400, code: error.code, meta: error.meta });
+        }
     }
 
 

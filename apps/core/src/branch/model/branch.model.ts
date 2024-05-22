@@ -55,6 +55,11 @@ export class Branch {
     constructor(partial?: Partial<Branch>) {
         Object.assign(this, partial);
     }
+
+    getInventoryLocationIds() {
+        return this.inventoryLocations.map(location => location.id)
+
+    }
 }
 
 @InputType()

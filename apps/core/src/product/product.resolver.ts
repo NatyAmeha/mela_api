@@ -1,4 +1,4 @@
-import { Args, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { Product } from "./model/product.model";
 import { ProductService } from "./product.service";
 import { BuilkProductCreateInput, CreateProductInput, UpdateProductInput } from "./dto/product.input";
@@ -48,6 +48,20 @@ export class ProductResolver {
         }
         var productResult = await this.productService.createProducts(businessId, productInfo, businessSubscriptionResponse.data.subscription, businessSubscriptionResponse.data.platformServices);
         return productResult;
+    }
+
+    @Query(returns => ProductResponse, { description: "Get product details with inventory, variants" })
+    async getProductDetail(
+        @Args("productId") productId: string,
+        @Args({ name: "branchId", nullable: true }) branchId?: string,
+        @Args({ name: "locationId", nullable: true }) locationId?: string,
+    ): Promise<ProductResponse> {
+        let branchInfo: Branch
+        if (branchId) {
+            branchInfo = await this.branchService.getBranch(branchId);
+        }
+        const productDetailResult = await this.productService.getProductDetailsWithInventory(productId, locationId, branchInfo);
+        return productDetailResult;
     }
 
 

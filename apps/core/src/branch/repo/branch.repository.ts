@@ -5,7 +5,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { Business } from "../../business/model/business.model";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
-import { InventoryLocationBuilder } from "../../inventory/model/inventory_location.model";
+import { InventoryLocation, InventoryLocationBuilder } from "../../inventory/model/inventory_location.model";
 
 export interface IBranchRepository {
     addBranchToBusiness(businessId: string, branchData: Branch): Promise<Branch>;
@@ -58,11 +58,13 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
 
     async getBranch(branchId: string): Promise<Branch> {
         try {
-            const result = await this.branch.findUnique({ where: { id: branchId } });
+            const result = await this.branch.findUnique({ where: { id: branchId }, include: { inventoryLocations: true } });
             if (!result) {
                 throw new RequestValidationException({ message: "Branch not found" });
             }
-            return new Branch({ ...result });
+            const { inventoryLocations, ...resetBranchInfo } = result;
+            const inventoryLocationsInfo = inventoryLocations.map((location) => new InventoryLocation({ ...location }));
+            return new Branch({ ...resetBranchInfo, inventoryLocations: inventoryLocationsInfo });
         } catch (error) {
             if (error instanceof RequestValidationException) throw error;
             throw new PrismaException({ source: "Get branch", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })

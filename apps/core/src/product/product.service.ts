@@ -10,12 +10,16 @@ import { BuilkProductCreateInput, CreateProductInput } from "./dto/product.input
 import { CommonBusinessErrorMessages, CommonSubscriptionErrorMessages } from "../utils/const/error_constants";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { plainToClass } from "class-transformer";
+import { InventoryLocationRepository } from "../inventory/repo/inventory_location.repository";
+import { InventoryRepository } from "../inventory/repo/inventory.repository";
+import { Branch } from "../branch/model/branch.model";
 
 @Injectable()
 export class ProductService {
     constructor(
         @Inject(ProductRepository.injectName) private productRepository: IProductRepository,
-        @Inject(ProductResourceUsageTracker.injectName) private productUsageTracker: ProductResourceUsageTracker
+        @Inject(ProductResourceUsageTracker.injectName) private productUsageTracker: ProductResourceUsageTracker,
+        @Inject(InventoryRepository.injectName) private inventoryRepo: InventoryRepository
     ) {
     }
     async createProducts(businessId: string, productInput: CreateProductInput[], subscriptionInput: Subscription, platformServices: PlatformService[]): Promise<ProductResponse> {
@@ -31,6 +35,22 @@ export class ProductService {
         console.log("productUsageTracker", productUsageTracker)
         let createdProducts = await this.productRepository.createProductsWithVariants(productsInfos);
         return new ProductResponseBuilder().withProducts(createdProducts).build();
+    }
+
+    async getProductDetailsWithInventory(productId: string, locationId?: string, branchInfo?: Branch): Promise<ProductResponse> {
+        const productInfo = await this.productRepository.getProductById(productId);
+        if (!productInfo) {
+            throw new RequestValidationException({ message: "Product not found", statusCode: 400 });
+        }
+        // const inventoryLocationIds = branchInfo?.getInventoryLocationIds()
+        // will be refactored to get accurate product inventory info
+        const productInventories = await this.inventoryRepo.getProductInventories(productId, locationId);
+        let response = new ProductResponseBuilder().withProduct(productInfo).withinventories(productInventories);
+        if (productInfo.mainProduct && productInfo?.variantsId?.length > 0) {
+            const productVariants = await this.productRepository.getProductsById(productInfo.variantsId);
+            response.withProductVariants(productVariants, branchInfo);
+        }
+        return response.build()
     }
 
     // async createBulkProducts(businessId: string, products: BuilkProductCreateInput[], subscriptionInput: Subscription, platformServices: PlatformService[]): Promise<ProductResponse> {

@@ -8,6 +8,7 @@ import { result } from "lodash";
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
     getProductById(productId: string): Promise<Product>;
+    getProductsById(productId: string[]): Promise<Product[]>;
     updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product>;
 
     addProductToBranch(productId: string[], branchId: string[]): Promise<Product[]>;
@@ -58,11 +59,24 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async getProductById(productId: string): Promise<Product> {
         try {
             const product = await this.product.findUnique({
-                where: { id: productId }
+                where: { id: productId },
             });
             return new Product({ ...product });
         } catch (error) {
             throw new PrismaException({ source: "Get product by id", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getProductsById(productIds: string[]): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: {
+                    id: { in: productIds }
+                }
+            });
+            return products?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get products by id", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

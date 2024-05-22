@@ -3,11 +3,19 @@ import { Product } from "./product.model";
 import { Field, ObjectType } from "@nestjs/graphql";
 import { Branch } from "../../branch/model/branch.model";
 import { Business } from "../../business/model/business.model";
+import { Inventory } from "../../inventory/model/inventory.model";
 
 @ObjectType()
 export class ProductResponse extends BaseResponse {
     @Field(type => Product)
     product?: Product;
+
+    @Field(type => [Inventory])
+    inventories?: Inventory[];
+
+    @Field(type => [Product])
+    variants?: Product[];
+
     @Field(type => [Product])
     products?: Product[];
 
@@ -39,6 +47,22 @@ export class ProductResponseBuilder {
     withProduct(product: Product): ProductResponseBuilder {
         this.productResponse.success = true
         this.productResponse.product = product
+        return this
+    }
+
+    withinventories(inventory: Inventory[]): ProductResponseBuilder {
+        this.productResponse.success = true
+        this.productResponse.inventories = inventory
+        return this
+    }
+
+    withProductVariants(productVariants: Product[], branchInfo?: Branch): ProductResponseBuilder {
+        this.productResponse.success = true
+        let result: Product[] = productVariants;
+        if (branchInfo) {
+            result = productVariants.filter(variant => variant.branchIds.includes(branchInfo?.id));
+        }
+        this.productResponse.variants = result;
         return this
     }
 
