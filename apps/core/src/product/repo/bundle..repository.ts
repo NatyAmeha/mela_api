@@ -5,10 +5,13 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 import { uniq } from "lodash";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
+import { Business } from "../../business/model/business.model";
+import { Branch } from "../../branch/model/branch.model";
+import { Product } from "../model/product.model";
 
 export interface IBundleRepository {
     createBundle(bundle: ProductBundle): Promise<ProductBundle>
-    getBundle(bundleId: string): Promise<ProductBundle>
+    getBundleDetails(bundleId: string): Promise<ProductBundle>
     getBundlesAvailableInBranch(branchId: string): Promise<ProductBundle[]>
     getBusinessBundles(businessId: string): Promise<ProductBundle[]>
     updateBundleInfo(bundleId: string, bundle: Partial<ProductBundle>): Promise<ProductBundle>
@@ -47,14 +50,27 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
         }
     }
 
-    async getBundle(bundleId: string): Promise<ProductBundle> {
+    async getBundleDetails(bundleId: string): Promise<ProductBundle> {
         try {
-            const result = await this.bundle.findUnique({ where: { id: bundleId } });
-            if (!result.id) {
+            const bundleResult = await this.bundle.findUnique({
+                where: { id: bundleId },
+                include: { branches: true, business: true }
+            });
+            if (!bundleResult) {
                 throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUNDLE_NOT_FOUND, statusCode: 400 })
             }
-            return new ProductBundle({ ...result });
+            const productsResult = await this.product.findMany({
+                where: { id: { in: bundleResult.productIds } }
+            });
+            const { business, branches, ...restBundleInfo } = bundleResult;
+            return new ProductBundle({
+                ...restBundleInfo,
+                business: new Business({ ...business }),
+                branches: branches.map(branch => new Branch({ ...branch })),
+                products: productsResult.map(product => new Product({ ...product })),
+            });
         } catch (ex) {
+            console.log(ex)
             if (ex instanceof RequestValidationException) {
                 throw ex;
             }
@@ -91,9 +107,7 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
             const result = await this.$transaction(async (prisma) => {
                 const bundle = await prisma.bundle.findUnique({ where: { id: bundleId } });
                 if (!bundle) {
-                    if (!result.id) {
-                        throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUNDLE_NOT_FOUND, statusCode: 400 })
-                    }
+                    throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUNDLE_NOT_FOUND, statusCode: 400 })
                 }
                 const newProductIds = [...bundle.productIds, ...productId]
                 const uniqueProductIds = uniq(newProductIds);

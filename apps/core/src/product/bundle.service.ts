@@ -22,6 +22,11 @@ export class BundleService {
         return new BundleResponseBuilder().withBundle(result).build()
     }
 
+    async getBundleDetails(bundleId: string): Promise<BundleResponse> {
+        const result = await this.bundleRepository.getBundleDetails(bundleId)
+        return new BundleResponseBuilder().withBundle(result).build()
+    }
+
     async addProductToBundle(bundleId: string, productIds: string[]): Promise<BundleResponse> {
         const result = await this.bundleRepository.addProductToBundle(bundleId, productIds)
         return new BundleResponseBuilder().withBundle(result).build()

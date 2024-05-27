@@ -89,6 +89,13 @@ export class ProductResolver {
         return bundleResult;
     }
 
+
+    @Query(returns => BundleResponse, { description: "Get bundle details with products, business, and branches info" })
+    async getBundleDetail(@Args("bundleId") bundleId: string): Promise<BundleResponse> {
+        let bundleResult = await this.bundleService.getBundleDetails(bundleId);
+        return bundleResult;
+    }
+
     @RequiresPermission({
         permissions: [
             { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.UPDATE, resourcTargetName: "bundleId" },
