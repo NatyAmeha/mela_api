@@ -20,6 +20,9 @@ import { plainToClass, plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
+import { CreateBundleInput } from "./dto/product_bundle.input";
+import { BundleResponse } from "./dto/bundle_response";
+import { BundleService } from "./bundle.service";
 
 @Resolver(of => Product)
 export class ProductResolver {
@@ -28,6 +31,7 @@ export class ProductResolver {
         private productService: ProductService,
         private businessService: BusinessService,
         private branchService: BranchService,
+        private bundleService: BundleService,
         @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator
     ) {
     }
@@ -62,6 +66,27 @@ export class ProductResolver {
         }
         const productDetailResult = await this.productService.getProductDetailsWithInventory(productId, locationId, branchInfo);
         return productDetailResult;
+    }
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.CREATE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BundleResponse, { description: "returns the created bundle inside bundle field of the response object" })
+    async createBundle(@Args("businessId") businessId: string, @Args({ name: "branchIds", type: () => [String] }) branchIds: string[], @Args("bundle") bundle: CreateBundleInput): Promise<BundleResponse> {
+        // let businessSubscriptionResponse = await this.coreServiceMsgBrocker.getBusinessSubscription(businessId);
+        // if (!businessSubscriptionResponse || !businessSubscriptionResponse.success) {
+        //     return {
+        //         success: false,
+        //         message: businessSubscriptionResponse.message
+        //     }
+        // }
+        // let subscriptionInfo = businessSubscriptionResponse.data;
+        let bundleResult = await this.bundleService.createProductBundle(businessId, branchIds, bundle);
+        return bundleResult;
     }
 
 
@@ -131,7 +156,7 @@ export class ProductResolver {
     })
     @UseGuards(PermissionGuard)
     @Mutation(returns => ProductResponse)
-    async removeProductFromBranch(@Args("businessId") businessId, @Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
+    async removeProductFromBranch(@Args("businessId") businessId: string, @Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
         var updatedProducts = await this.productService.removeProductFromBranch(productId, branchId);
         return {
             success: true,

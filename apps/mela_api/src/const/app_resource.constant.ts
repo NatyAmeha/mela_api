@@ -3,6 +3,7 @@ export enum AppResources {
     BRANCH = 'BRANCH',
     STAFF = 'STAFF',
     PRODUCT = 'PRODUCT',
+    BUNDLE = 'BUNDLE',
     CUSTOMER = 'CUSTOMER',
     USER = 'USER',
     INVENTORY = 'INVENTORY',

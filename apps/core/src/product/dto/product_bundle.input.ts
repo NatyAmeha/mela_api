@@ -54,7 +54,7 @@ export class CreateBundleInput {
     condition?: string
 
     @Field(types => Float)
-    @ValidateIf((obj: CreateBundleInput) => obj.condition != DiscountCondition.NONE)
+    @ValidateIf((obj: CreateBundleInput) => (obj.condition != DiscountCondition.NONE && obj.condition != DiscountCondition.PURCHASE_ALL_ITEMS))
     @IsNotEmpty()
     conditionValue?: number
 

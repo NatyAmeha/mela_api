@@ -178,15 +178,15 @@ model Bundle {
     description LocalizedData[]
     type        String          @default("PRODUCT_BUNDLE")
     productIds  String[]
-    startDate   DateTime        @default(now())
-    endDate     DateTime
+    startDate   DateTime?
+    endDate     DateTime?
     gallery     Gallery
     discount    Discount?
     businessId  String          @db.ObjectId
     business    Business        @relation(fields: [businessId], references: [id])
     branchIds   String[]        @default([]) @db.ObjectId
     branches    Branch[]        @relation(fields: [branchIds], references: [id])
-    isActive    Boolean         @default(false)
+    isActive    Boolean?        @default(false)
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @updatedAt
 }
@@ -252,7 +252,7 @@ type PriceInfo {
 
 type Discount {
     type           String
-    value          Float
+    value          Float?
     condition      String
-    conditionValue Float
+    conditionValue Float?
 }

@@ -34,6 +34,8 @@ import { InventoryService } from './inventory/inventory.service';
 import { BusinessResponseBuilder } from './business/model/business.response';
 import { InventoryLocationBuilder } from './inventory/model/inventory_location.model';
 import { InventoryResolver } from './inventory/inventory.resolver';
+import { ProductBundleRepository } from './product/repo/bundle..repository';
+import { BundleService } from './product/bundle.service';
 
 
 @Module({
@@ -81,6 +83,8 @@ import { InventoryResolver } from './inventory/inventory.resolver';
     { provide: ProductResourceUsageTracker.injectName, useClass: ProductResourceUsageTracker },
     ProductService, ProductResolver,
 
+    { provide: ProductBundleRepository.injectName, useClass: ProductBundleRepository },
+    BundleService,
     { provide: StaffRepository.injectName, useClass: StaffRepository },
     StaffResolver, StaffService,
 

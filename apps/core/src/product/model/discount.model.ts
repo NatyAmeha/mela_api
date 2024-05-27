@@ -19,12 +19,16 @@ export enum DiscountCondition {
 export class Discount {
     @Field(types => DiscountType)
     type: string
-    @Field(types => Number)
+    @Field(types => Float)
     value: number
     @Field(types => DiscountCondition, { defaultValue: DiscountCondition.NONE })
     condition: string
     @Field(types => Float)
     conditionValue?: number
+
+    constructor(partial?: Partial<Discount>) {
+        Object.assign(this, partial)
+    }
 }
 
 registerEnumType(DiscountType, { name: "DiscountType" })
