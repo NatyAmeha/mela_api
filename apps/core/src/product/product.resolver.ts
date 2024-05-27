@@ -34,8 +34,8 @@ export class ProductResolver {
 
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
         ],
     })
     @UseGuards(PermissionGuard)
@@ -86,8 +86,14 @@ export class ProductResolver {
     //     return bulkCreateResponse;
     // }
 
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.UPDATE, resourcTargetName: "productId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
     @Mutation(returns => ProductResponse)
-    async updateProduct(@Args('productId') productId: string, @Args('product') product: UpdateProductInput): Promise<ProductResponse> {
+    async updateBusinessProductInfo(@Args("businessId") businessId: string, @Args('productId') productId: string, @Args('product') product: UpdateProductInput): Promise<ProductResponse> {
         var productResult = await this.productService.updateProduct(productId, product.getProductInfoToBeUpdated());
         return {
             success: true,
@@ -105,13 +111,13 @@ export class ProductResolver {
 
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.ASSIGN_UNASSIGN },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.ASSIGN_UNASSIGN, resourcTargetName: "branchIds" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
         ],
     })
     @UseGuards(PermissionGuard)
     @Mutation(returns => ProductResponse)
-    async addProductToBranch(@Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
+    async addProductToBranch(@Args("businessId") businessId: string, @Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
         var updatedProducts = await this.productService.addProductToBranch(productId, branchId);
         return new ProductResponseBuilder().withProducts(updatedProducts).build();
     }
@@ -119,13 +125,13 @@ export class ProductResolver {
 
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.ASSIGN_UNASSIGN },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.ASSIGN_UNASSIGN, resourcTargetName: "branchIds" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
         ],
     })
     @UseGuards(PermissionGuard)
     @Mutation(returns => ProductResponse)
-    async removeProductFromBranch(@Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
+    async removeProductFromBranch(@Args("businessId") businessId, @Args('productIds', { type: () => [String] }) productId: string[], @Args('branchIds', { type: () => [String] }) branchId: string[]): Promise<ProductResponse> {
         var updatedProducts = await this.productService.removeProductFromBranch(productId, branchId);
         return {
             success: true,

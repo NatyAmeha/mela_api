@@ -40,8 +40,8 @@ import { Configuration } from 'apps/mela_api/configuration';
                 url: definition.url,
                 willSendRequest: (async ({ request, context }) => {
                   var userResponse = await appService.validateJwtAndQueryUser(context.authorization)
+                  console.log("context", request.http?.url);
                   if (userResponse != undefined) {
-                    console.log("context", request.http.url);
                     request.http.headers.set("authorization", context.authorization)
                     request.http.headers.set("user", JSON.stringify(userResponse.user));
                     request.http.headers.set("accesses", JSON.stringify(userResponse.accesses));

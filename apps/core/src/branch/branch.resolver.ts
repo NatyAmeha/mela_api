@@ -39,8 +39,8 @@ export class BranchResolver {
 
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.CREATE },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+            { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.CREATE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
         ],
     })
     @UseGuards(PermissionGuard)
@@ -56,8 +56,8 @@ export class BranchResolver {
     }
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.CREATE },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY }
+            { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.CREATE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
         ],
     })
     @UseGuards(PermissionGuard)
@@ -71,9 +71,10 @@ export class BranchResolver {
 
 
     @RequiresPermission({
-        permissions: [{
-            resourceType: AppResources.BRANCH, action: PERMISSIONACTION.DELETE
-        }]
+        permissions: [
+            { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.DELETE, resourcTargetName: "branchId", },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ]
     })
     @Mutation(returns => BranchResponse)
     async deleteBranch(@Args("businessId") businessId: string, @Args("branchId") branchId: string) {

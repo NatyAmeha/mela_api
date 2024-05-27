@@ -59,7 +59,7 @@ export class BusinessResolver {
     }
 
 
-    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }] })
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.CREATE, resourcTargetName: "businessId" }] })
     @UseGuards(PermissionGuard)
     @Mutation(returns => BaseResponse)
     async createBusinessSection(@Args("businessId") businessId: string, @Args({ name: "sections", type: () => [CreateBusinessSectionInput] }) sections: CreateBusinessSectionInput[]): Promise<BaseResponse> {
@@ -67,7 +67,7 @@ export class BusinessResolver {
         return result;
     }
 
-    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }] })
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.DELETE, resourcTargetName: "businessId" }] })
     @UseGuards(PermissionGuard)
     @Mutation(returns => BaseResponse)
     async removeBusinessSection(@Args("businessId") businessId: string, @Args({ name: "sectionsId", type: () => [String] }) sectionId: string[]): Promise<BaseResponse> {
@@ -76,10 +76,10 @@ export class BusinessResolver {
     }
 
 
-    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE }] })
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
     @UseGuards(PermissionGuard)
     @Mutation(returns => BusinessResponse)
-    async updateBusinessInfo(@Args('id') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
+    async updateBusinessInfo(@Args('businessId') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
         var businessResult = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
         var response = new BusinessResponseBuilder().withBusiness(businessResult).build();
         return response;
@@ -101,16 +101,6 @@ export class BusinessResolver {
         let response = await this.businessService.getUserOwnedBusinesses(userInfo.id);
         return response;
     }
-
-
-    // @Mutation(returns => BusinessResponse)
-    // async updateBusinessRegistrationStage(@Args('businessId') businessId: string, @Args('stage') stage: string): Promise<BusinessResponse> {
-    //     await this.businessService.updateBusienssRegistrationStage(businessId, stage);
-    //     return {
-    //         success: true,
-    //         business: null
-    //     }
-    // }
 
 
     // ------------------ Nested Queries ------------------
