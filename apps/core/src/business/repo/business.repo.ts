@@ -27,7 +27,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
         super();
     }
     async createBusiness(data: Business): Promise<Business> {
-        const { customers, branches, staffs, products, ...businessData } = data;
+        const { customers, branches, staffs, products, bundles, ...businessData } = data;
         var result = await this.business.create({ data: { ...businessData } });
         return new Business({ ...result })
     }
@@ -95,7 +95,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            const { customers, branches, products, staffs, ...businessData } = updatedBusinessData;
+            const { customers, branches, products, staffs, bundles, ...businessData } = updatedBusinessData;
             var result = await this.business.update({ where: { id: businessId }, data: { ...businessData } });
             if (!result.id) {
                 throw new RequestValidationException({ message: "Business not updated" });

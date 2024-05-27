@@ -129,6 +129,7 @@ model Business {
     trialPeriodUsedServiceIds String[]            @default([]) @db.ObjectId
     inventoryLocations        InventoryLocation[]
     deliveryInfo              DeliveryInfo[]
+    bundles                   Bundle[]
 }
 
 // branch.model.ts
@@ -147,6 +148,8 @@ model Branch {
     productIds         String[]            @default([]) @db.ObjectId
     products           Product[]           @relation(fields: [productIds], references: [id])
     staffsId           String[]            @default([]) @db.ObjectId
+    bundleIds          String[]            @default([]) @db.ObjectId
+    bundles            Bundle[]            @relation(fields: [bundleIds], references: [id])
     staffs             Staff[]
     inventoryLocations InventoryLocation[]
 
@@ -167,6 +170,25 @@ model Staff {
     isActive   Boolean   @default(false)
     createdAt  DateTime  @default(now())
     updatedAt  DateTime  @updatedAt
+}
+
+model Bundle {
+    id          String          @id @default(auto()) @map("_id") @db.ObjectId
+    name        LocalizedData[]
+    description LocalizedData[]
+    type        String          @default("PRODUCT_BUNDLE")
+    productIds  String[]
+    startDate   DateTime        @default(now())
+    endDate     DateTime
+    gallery     Gallery
+    discount    Discount?
+    businessId  String          @db.ObjectId
+    business    Business        @relation(fields: [businessId], references: [id])
+    branchIds   String[]        @default([]) @db.ObjectId
+    branches    Branch[]        @relation(fields: [branchIds], references: [id])
+    isActive    Boolean         @default(false)
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @updatedAt
 }
 
 type LocalizedData {
@@ -226,4 +248,11 @@ type PriceInfo {
     id       String @default(uuid())
     amount   Float
     currency String
+}
+
+type Discount {
+    type           String
+    value          Float
+    condition      String
+    conditionValue Float
 }

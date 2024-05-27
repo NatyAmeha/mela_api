@@ -6,6 +6,7 @@ import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Business } from "../../business/model/business.model";
 import { InventoryLocation } from "../../inventory/model/inventory_location.model";
+import { ProductBundle } from "../../product/model/product_bundle.model";
 
 @ObjectType()
 export class Branch {
@@ -50,7 +51,11 @@ export class Branch {
     @Field()
     isActive?: boolean;
 
+    @Field(types => [String], { defaultValue: [] })
     inventoryLocations?: InventoryLocation[];
+    @Field(types => [ProductBundle])
+    bundles?: ProductBundle[]
+
 
     constructor(partial?: Partial<Branch>) {
         Object.assign(this, partial);
