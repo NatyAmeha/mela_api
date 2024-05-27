@@ -42,4 +42,9 @@ export class BundleService {
         return new BundleResponseBuilder().basicResponse(true);
     }
 
+    async deleteBundle(bundleId: string): Promise<BundleResponse> {
+        const result = await this.bundleRepository.deleteBundle(bundleId)
+        return new BundleResponseBuilder().withBundle(result).build();
+    }
+
 }

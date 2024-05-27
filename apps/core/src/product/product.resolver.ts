@@ -149,7 +149,8 @@ export class ProductResolver {
 
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.READ, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.UPDATE, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" },
             { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
         ],
     })
@@ -163,6 +164,7 @@ export class ProductResolver {
     @RequiresPermission({
         permissions: [
             { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.READ, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" },
             { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
         ],
     })
@@ -171,6 +173,21 @@ export class ProductResolver {
     async removeBundleFromBranch(@Args("businessId") businessId: string, @Args("bundleId") bundleId: string, @Args({ name: "branchIds", type: () => [String] }) branchIds: string[]): Promise<BundleResponse> {
         let bundleResult = await this.bundleService.removeBundleFromBranch(bundleId, branchIds);
         return bundleResult;
+    }
+
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.DELETE, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BundleResponse)
+    async deleteProductBundle(@Args("businessId") businessId: string, @Args('bundleId') bundleId: string): Promise<BundleResponse> {
+        let bundleResponse = await this.bundleService.deleteBundle(bundleId);
+        return bundleResponse;
     }
 
 

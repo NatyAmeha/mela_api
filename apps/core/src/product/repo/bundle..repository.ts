@@ -214,12 +214,8 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
                 if (!bundle) {
                     throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUNDLE_NOT_FOUND, statusCode: 400 })
                 }
-                const businessUpdate = await prisma.business.update({
-                    where: { id: bundle.businessId },
-                    data: { bundles: { disconnect: { id: bundleId } } }
-                })
 
-                const disconnectBranchFromBundle = await prisma.bundle.update({
+                await prisma.bundle.update({
                     where: { id: bundleId },
                     data: {
                         branches: { disconnect: bundle.branchIds.map(id => ({ id })) },
@@ -232,6 +228,7 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
             });
             return new ProductBundle({ ...result });
         } catch (ex) {
+            console.log(ex)
             if (ex instanceof RequestValidationException) {
                 throw ex;
             }

@@ -176,7 +176,7 @@ model Bundle {
     id          String          @id @default(auto()) @map("_id") @db.ObjectId
     name        LocalizedData[]
     description LocalizedData[]
-    type        String          @default("PRODUCT_BUNDLE")
+    type        String          @default("DEFAULT")
     productIds  String[]
     startDate   DateTime?
     endDate     DateTime?

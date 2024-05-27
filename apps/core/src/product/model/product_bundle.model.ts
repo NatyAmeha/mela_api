@@ -11,7 +11,7 @@ import { validate } from "class-validator";
 import { plainToClass } from "class-transformer";
 
 export enum BundleType {
-    PRODUCT_BUNDLE = "PRODUCT_BUNDLE",
+    DEFAULT = "DEFAULT",
     SERVICE_BUNDLE = "SERVICE_BUNDLE",
     TIMELY_BUNDLE = "TIMELY_BUNDLE",
 
