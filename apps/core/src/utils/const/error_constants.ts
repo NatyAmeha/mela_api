@@ -6,7 +6,10 @@ export class CommonBusinessErrorMessages {
     static MAX_PRODUCT_CREATION_EXCEEDED = "You have reached the maximum number of products you can create";
 
     static BRANCH_NOT_FOUND = "Branch not found";
+    static UANBLE_TO_FIND_BRANCHS = "Unable to find branches";
+    static SOME_BRANCHES_NOT_FOUND = "Some branches not found";
     static BRANCH_NOT_UPDATED = "Branch not updated";
+    static BUNDLE_NOT_FOUND = "Bundle not found";
 
 
 }

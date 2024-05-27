@@ -1,7 +1,7 @@
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
-import { Field, Float, InputType } from "@nestjs/graphql";
-import { BundleType } from "../model/product_bundle.model";
-import { ArrayNotEmpty, IsDate, IsNotEmpty, ValidateIf } from "class-validator";
+import { Field, Float, InputType, OmitType, PartialType } from "@nestjs/graphql";
+import { BundleType, ProductBundle } from "../model/product_bundle.model";
+import { ArrayNotEmpty, IsDate, IsNotEmpty, IsNumber, ValidateIf } from "class-validator";
 import { GalleryInput } from "../../business/model/gallery.model";
 import { DiscountCondition, DiscountType } from "../model/discount.model";
 import { Type } from "class-transformer";
@@ -22,7 +22,7 @@ export class CreateBundleInput {
     @ArrayNotEmpty()
     productIds: string[]
 
-    @Field(types => BundleType, { defaultValue: BundleType.PRODUCT_BUNDLE })
+    @Field(types => BundleType)
     type: string
 
     @Field()
@@ -57,6 +57,33 @@ export class CreateBundleInput {
     @ValidateIf((obj: CreateBundleInput) => (obj.condition != DiscountCondition.NONE && obj.condition != DiscountCondition.PURCHASE_ALL_ITEMS))
     @IsNotEmpty()
     conditionValue?: number
+
+    constructor(partial?: Partial<CreateBundleInput>) {
+        Object.assign(this, partial)
+    }
+}
+
+@InputType()
+export class UpdateBundleInput extends PartialType(CreateBundleInput) {
+
+    @Field(types => [String])
+    productIds?: string[]
+
+    @Field(types => Number)
+    @ValidateIf((obj: UpdateBundleInput) => obj.discountType != null)
+    @IsNotEmpty()
+    discountValue?: number
+
+    @Field(types => Float)
+    @ValidateIf((obj: UpdateBundleInput) => (obj.condition != DiscountCondition.NONE && obj.condition != DiscountCondition.PURCHASE_ALL_ITEMS))
+    @IsNotEmpty()
+    conditionValue?: number
+
+
+    toBundleInfo(businessId: string): ProductBundle {
+        return new ProductBundle({})
+
+    }
 
 
 

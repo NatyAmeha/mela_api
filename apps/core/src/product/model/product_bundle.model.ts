@@ -5,7 +5,10 @@ import { Discount, DiscountCondition } from "./discount.model";
 import { Product } from "./product.model";
 import { Business } from "../../business/model/business.model";
 import { Branch } from "../../branch/model/branch.model";
-import { CreateBundleInput } from "../dto/product_bundle.input";
+import { CreateBundleInput, UpdateBundleInput } from "../dto/product_bundle.input";
+import { CreateProductInput } from "../dto/product.input";
+import { validate } from "class-validator";
+import { plainToClass } from "class-transformer";
 
 export enum BundleType {
     PRODUCT_BUNDLE = "PRODUCT_BUNDLE",
@@ -70,13 +73,20 @@ export class ProductBundle {
         bundle.startDate = input.type == BundleType.TIMELY_BUNDLE ? input.startDate ?? new Date() : null;
         bundle.businessId = businessId;
         bundle.branchIds = branchIds;
-        bundle.discount = input.discountType ? new Discount({
-            type: input.discountType, value: input.discountValue,
-            condition: input.condition, conditionValue: input.condition == DiscountCondition.PURCHASE_ALL_ITEMS ? input.productIds.length : input.conditionValue,
-        }) : null
+        if (input.discountType) {
+            bundle.discount = new Discount({
+                type: input.discountType, value: input.discountValue,
+                condition: input.condition, conditionValue: input.conditionValue ?? (input.condition == DiscountCondition.PURCHASE_ALL_ITEMS ? input.productIds?.length : 0),
+            })
+        }
         return bundle
-
     }
+
+    static async fromUpdateBundleInput(businessId: string, updateInput: UpdateBundleInput) {
+        const bundleInfo = this.fromCreateBundleInput({ businessId, branchIds: [], input: new CreateBundleInput({ ...updateInput }) })
+        return bundleInfo;
+    }
+
 }
 
 registerEnumType(BundleType, { name: "BundleType" })

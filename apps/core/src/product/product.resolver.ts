@@ -20,7 +20,7 @@ import { plainToClass, plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
-import { CreateBundleInput } from "./dto/product_bundle.input";
+import { CreateBundleInput, UpdateBundleInput } from "./dto/product_bundle.input";
 import { BundleResponse } from "./dto/bundle_response";
 import { BundleService } from "./bundle.service";
 
@@ -88,6 +88,92 @@ export class ProductResolver {
         let bundleResult = await this.bundleService.createProductBundle(businessId, branchIds, bundle);
         return bundleResult;
     }
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.UPDATE, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BundleResponse, { description: "returns the updated bundle inside bundle field of the response object" })
+    async updateBundle(@Args("businessId") businessId: string, @Args("bundleId") bundleId: string, @Args("bundleData") bundleData: UpdateBundleInput): Promise<BundleResponse> {
+        let bundleResult = await this.bundleService.updateBundleInfo(businessId, bundleId, bundleData);
+        return bundleResult;
+    }
+
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.UPDATE, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BundleResponse, { description: "returns the updated bundle inside bundle field of the response object" })
+    async addProductToBundle(@Args("businessId") businessId: string, @Args("bundleId") bundleId: string, @Args({ name: "productIds", type: () => [String] }) productIds: string[]): Promise<BundleResponse> {
+        let bundleResult = await this.bundleService.addProductToBundle(bundleId, productIds);
+        return bundleResult;
+    }
+
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.UPDATE, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BundleResponse, { description: "returns the updated bundle inside bundle field of the response object" })
+    async removeProductFromBundle(@Args("businessId") businessId: string, @Args("bundleId") bundleId: string, @Args({ name: "productIds", type: () => [String] }) productIds: string[]): Promise<BundleResponse> {
+        let bundleResult = await this.bundleService.removeProductFromBundle(bundleId, productIds);
+        return bundleResult;
+    }
+
+    // @RequiresPermission({
+    //     permissions: [
+    //         { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.DELETE, resourcTargetName: "bundleId" },
+    //         { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" },
+    //         { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
+    //     ],
+    // })
+    // @UseGuards(PermissionGuard)
+    // @Mutation(returns => BundleResponse, { description: "returns the updated bundle inside bundle field of the response object" })
+    // async deleteBundle(@Args("businessId") businessId: string, @Args("bundleId") bundleId: string): Promise<BundleResponse> {
+    //     let bundleResult = await this.bundleService.deleteBundle(bundleId);
+    //     return bundleResult;
+    // }
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.READ, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BundleResponse, { description: "returns the updated bundle inside bundle field of the response object" })
+    async addProductBundleToBranch(@Args("businessId") businessId: string, @Args("bundleId") bundleId: string, @Args({ name: "branchIds", type: () => [String] }) branchIds: string[]): Promise<BundleResponse> {
+        let bundleResult = await this.bundleService.addBundleToBranch(bundleId, branchIds);
+        return bundleResult;
+    }
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BUNDLE, action: PERMISSIONACTION.READ, resourcTargetName: "bundleId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BundleResponse, { description: "returns the updated bundle inside bundle field of the response object" })
+    async removeBundleFromBranch(@Args("businessId") businessId: string, @Args("bundleId") bundleId: string, @Args({ name: "branchIds", type: () => [String] }) branchIds: string[]): Promise<BundleResponse> {
+        let bundleResult = await this.bundleService.removeBundleFromBranch(bundleId, branchIds);
+        return bundleResult;
+    }
+
+
 
 
     // @RequiresPermission({

@@ -1,4 +1,4 @@
-import { BaseResponse } from "@app/common/model/base.response";
+import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.response";
 import { Field, ObjectType } from "@nestjs/graphql";
 import { ProductBundle } from "../model/product_bundle.model";
 
@@ -14,11 +14,12 @@ export class BundleResponse extends BaseResponse {
 }
 
 
-export class BundleResponseBuilder {
-    private bundleResponse: BundleResponse
-    constructor() {
+export class BundleResponseBuilder extends BaseResponseBuilder {
+    constructor(private bundleResponse = new BundleResponse({})) {
+        super(bundleResponse)
         this.bundleResponse = new BundleResponse({})
     }
+
 
     withBundle(bundle: ProductBundle): BundleResponseBuilder {
         this.bundleResponse.success = true
