@@ -9,6 +9,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 export enum ProductUnitType {
     Unit = "Unit",
     Kg = "Kg",
+    KG = "KG",
     Litre = "Litre",
 }
 

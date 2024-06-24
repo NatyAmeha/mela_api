@@ -7,7 +7,7 @@ import { Injectable } from "@nestjs/common";
 @Injectable()
 export class ClassDecoratorValidator implements IValidator {
     static injectName = "ClassValidator"
-    async validateArrayInput<T extends Object>(arrayInputs: Array<any>, classConstructor: new () => T): Promise<any> {
+    async validateArrayInput<T extends Object>(arrayInputs: Array<any>, classConstructor: new ({ }) => Partial<T>): Promise<any> {
         const productInputs = arrayInputs.map(obj => plainToClass(classConstructor, obj));
         const errors = (await Promise.all(productInputs.map(input => validate(input)))).flat();
         console.log("validation errors", errors)

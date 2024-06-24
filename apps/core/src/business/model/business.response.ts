@@ -60,6 +60,7 @@ export class BusinessResponseBuilder extends BaseResponseBuilder {
 
     withBusiness(business: Business): BusinessResponseBuilder {
         this.response.success = true;
+        this.response.message = "Business found successfully"
         this.response.business = business;
         return this;
     }

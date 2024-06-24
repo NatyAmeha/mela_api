@@ -50,6 +50,7 @@ model Product {
     variantsId       String[]        @default([]) @db.ObjectId
     mainProduct      Boolean         @default(false)
     inventory        Inventory[]
+    addons           ProductAddon[]
 }
 
 type ProductOption {
@@ -189,6 +190,21 @@ model Bundle {
     isActive    Boolean?        @default(false)
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @updatedAt
+}
+
+type ProductAddon {
+    id              String          @default(uuid())
+    name            LocalizedData[]
+    minQty          Float           @default(1)
+    maxQty          Float           @default(1)
+    tag             String[]        @default([])
+    isActive        Boolean         @default(true)
+    isRequired      Boolean         @default(false)
+    isProduct       Boolean         @default(false)
+    productId       String?         @db.ObjectId
+    additionalPrice PriceInfo[]
+    createdAt       DateTime?       @default(now())
+    updatedAt       DateTime?
 }
 
 type LocalizedData {

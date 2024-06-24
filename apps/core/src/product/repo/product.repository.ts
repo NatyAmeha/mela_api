@@ -4,6 +4,8 @@ import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { result } from "lodash";
+import { ProductAddon } from "../model/product_addon.model";
+import { CommonBusinessErrorMessages, CommonProductErrorMessages } from "../../utils/const/error_constants";
 
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
@@ -17,6 +19,12 @@ export interface IProductRepository {
     getBranchProducts(branchId: string): Promise<Product[]>;
     getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
     createProductsWithVariants(products: Product[]): Promise<Product[]>;
+
+    createProductAddon(productId: string, productAddon: ProductAddon[]): Promise<boolean>;
+    getProductAddons(productId: string): Promise<ProductAddon[]>;
+    updateProductAddon(productId: string, productAddonInfo: ProductAddon[]): Promise<boolean>;
+    deleteAllProductAddon(productId: string): Promise<boolean>;
+    deleteProductAddon(productId: string, productAddonId: string): Promise<boolean>;
 
 
 }
@@ -138,7 +146,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
     async updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product> {
         try {
-            const { businessId, business, branches, branchIds, inventory, ...productData } = productInfo;
+            const { businessId, business, branches, branchIds, inventory, addons, ...productData } = productInfo;
             const result = await this.product.update({
                 where: { id: productId },
                 data: { ...productData }
@@ -209,12 +217,116 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                 where: {
                     businessId: businessId
                 },
-                skip: query?.page ? query.page - 1 * query.limit : 0,
+                skip: query?.page ? ((query.page - 1) * query.limit) : 0,
                 take: query?.limit,
             });
             return products?.map(product => new Product({ ...product }));
         } catch (error) {
+            console.log("error", error)
             throw new PrismaException({ source: "Get business products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async createProductAddon(productId: string, productAddon: ProductAddon[]): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const productResult = await prisma.product?.findFirst({ where: { id: productId } });
+                if (!productResult) {
+                    throw new PrismaException({ source: "Create product addon", statusCode: 400, code: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const result = await prisma.product.update({
+                    where: { id: productId },
+                    data: {
+                        addons: { push: productAddon }
+                    }
+                });
+                return true;
+            });
+            return transactionResult;
+        } catch (error) {
+            throw new PrismaException({ source: "Create product addon", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getProductAddons(productId: string): Promise<ProductAddon[]> {
+        try {
+            const product = await this.product.findFirst({
+                where: { id: productId },
+                select: { addons: true }
+            });
+            return product.addons?.map(addon => new ProductAddon({ ...addon }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get product addons", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async updateProductAddon(productId: string, productAddonInfo: ProductAddon[]): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const productResult = await prisma.product.findFirst({ where: { id: productId } });
+                if (!productResult) {
+                    throw new PrismaException({ source: "Update product addon", statusCode: 400, code: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const updatedAddons = productResult.addons?.map(existingAddon => {
+                    const updatedAddon = productAddonInfo?.find((addonInfo) => existingAddon.id == addonInfo.id);
+                    return updatedAddon ? { ...existingAddon, ...updatedAddon } : existingAddon;
+                })
+                await prisma.product.update({
+                    where: { id: productId },
+                    data: {
+                        addons: updatedAddons
+                    }
+                });
+                return true;
+
+            });
+            return transactionResult;
+        } catch (error) {
+            console.log("error", error)
+            throw new PrismaException({ source: "Update product addon", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async deleteAllProductAddon(productId: string): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const productResult = await prisma.product?.findFirst({ where: { id: productId } });
+                if (!productResult) {
+                    throw new PrismaException({ source: "Delete all product addon", statusCode: 400, code: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                await prisma.product.update({
+                    where: { id: productId },
+                    data: {
+                        addons: { set: [] }
+                    }
+                });
+                return true;
+            });
+            return transactionResult;
+        } catch (error) {
+            throw new PrismaException({ source: "Delete all product addon", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async deleteProductAddon(productId: string, productAddonId: string): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const productResult = await prisma.product?.findFirst({ where: { id: productId } });
+                if (!productResult) {
+                    throw new PrismaException({ source: "Delete product addon", statusCode: 400, code: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const updatedAddons = productResult.addons?.filter(addon => addon.id !== productAddonId);
+                await prisma.product.update({
+                    where: { id: productId },
+                    data: {
+                        addons: { set: updatedAddons }
+                    }
+                });
+                return true;
+            });
+            return transactionResult;
+        } catch (error) {
+            throw new PrismaException({ source: "Delete product addon", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

@@ -13,13 +13,21 @@ import { plainToClass } from "class-transformer";
 import { InventoryLocationRepository } from "../inventory/repo/inventory_location.repository";
 import { InventoryRepository } from "../inventory/repo/inventory.repository";
 import { Branch } from "../branch/model/branch.model";
+import { CreateProductAddonInput, UpdateProductAddonInput } from "./dto/product_addon.input";
+import { ProductAddon } from "./model/product_addon.model";
+import { IValidator } from "@app/common/validation_utils/validator.interface";
+import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
 
 @Injectable()
 export class ProductService {
     constructor(
         @Inject(ProductRepository.injectName) private productRepository: IProductRepository,
         @Inject(ProductResourceUsageTracker.injectName) private productUsageTracker: ProductResourceUsageTracker,
-        @Inject(InventoryRepository.injectName) private inventoryRepo: InventoryRepository
+        @Inject(InventoryRepository.injectName) private inventoryRepo: InventoryRepository,
+        @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator
+
+
+
     ) {
     }
     async createProducts(businessId: string, productInput: CreateProductInput[], subscriptionInput: Subscription, platformServices: PlatformService[]): Promise<ProductResponse> {
@@ -86,4 +94,30 @@ export class ProductService {
     async getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]> {
         return await this.productRepository.getBusinessProducts(businessId, query);
     }
+
+    async createProductAddon(productId: string, addons: CreateProductAddonInput[]): Promise<ProductResponse> {
+        await this.inputValidator.validateArrayInput(addons, CreateProductAddonInput);
+        const productAddons = addons.map(addon => ProductAddon.fromCreateProductAddon(addon));
+        const result = await this.productRepository.createProductAddon(productId, productAddons);
+        return new ProductResponseBuilder().basicResponse(result)
+    }
+
+    async updateProductAddon(productId: string, updatedAddons: UpdateProductAddonInput[]) {
+        await this.inputValidator.validateArrayInput(updatedAddons, UpdateProductAddonInput);
+        const productAddons = updatedAddons.map(addon => ProductAddon.fromCreateProductAddon(addon));
+        const result = await this.productRepository.updateProductAddon(productId, productAddons)
+        return new ProductResponseBuilder().basicResponse(result)
+    }
+
+    async deleteProductAddon(productId: string, addonId: string) {
+        const result = await this.productRepository.deleteProductAddon(productId, addonId);
+        return new ProductResponseBuilder().basicResponse(result);
+    }
+
+    async deleteAllAddons(productId: string) {
+        const result = await this.productRepository.deleteAllProductAddon(productId);
+        return new ProductResponseBuilder().basicResponse(result);
+    }
+
+
 }

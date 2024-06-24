@@ -13,6 +13,7 @@ import { Productoption } from "./product_options.model";
 import { Inventory } from "../../inventory/model/inventory.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { CreateProductInput } from "../dto/product.input";
+import { ProductAddon } from "./product_addon.model";
 
 @ObjectType({ isAbstract: true })
 export class Product extends BaseModel {
@@ -101,6 +102,9 @@ export class Product extends BaseModel {
 
     @Field(types => [Branch])
     branches?: Branch[];
+
+    @Field(types => [ProductAddon], { defaultValue: [] })
+    addons?: ProductAddon[];
 
 
     constructor(partial?: Partial<Product>) {

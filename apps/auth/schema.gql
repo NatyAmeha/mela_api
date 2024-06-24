@@ -6,7 +6,7 @@ type Access {
   dateCreated: DateTime
   dateUpdated: DateTime
   id: ID
-  name: [LocalizedData!]
+  name: [LocalizedField!]
   owner: String!
   ownerType: AccessOwnerType!
   permissionType: PermissionType!
@@ -19,6 +19,30 @@ enum AccessOwnerType {
   BUSINESS
   PLATFORM
   USER
+}
+
+type AccessResponse {
+  accesses: [Access!]
+  code: Int
+  deleteAccessCount: Int
+  message: String
+  success: Boolean!
+}
+
+"""The account type"""
+enum AccountType {
+  ADMIN
+  SUPERADMIN
+  USER
+}
+
+input AdminSignUpInput {
+  email: String!
+  firstName: String!
+  lastName: String
+  password: String
+  phoneNumber: String!
+  profileImageUrl: String
 }
 
 type AuthResponse {
@@ -50,13 +74,13 @@ enum LanguageKey {
   OROMIC
 }
 
-type LocalizedData {
+type LocalizedField {
   """the name of the language, ex. english, amharic"""
   key: LanguageKey!
   value: String!
 }
 
-input LocalizedDataInput {
+input LocalizedFieldInput {
   """the name of the language, ex. english, amharic"""
   key: LanguageKey!
   value: String!
@@ -64,6 +88,7 @@ input LocalizedDataInput {
 
 type Mutation {
   addPermissionToUserAccess(access: String!, permissions: [CreatePermissionInput!]!, user: String!): [Permission!]!
+  createAdminAccountUsingEmailPassword(signup: AdminSignUpInput!): AuthResponse!
   createUserAccountUsingEmailPassword(signup: SignupInput!): AuthResponse!
   logout: Boolean!
   removePermissionFromUserAccess(access: String!, permissions: [String!]!, user: String!): Boolean!
@@ -72,17 +97,13 @@ type Mutation {
   updateProfileInfo(user: UpdateUserInput!): Boolean!
 }
 
-input NameTypeInput {
-  key: String!
-  value: String!
-}
-
 type Permission {
   action: String!
   effect: String!
   groups: [PermissionGroup!]
   id: ID
-  name: [LocalizedData!]!
+  name: [LocalizedField!]
+  resourcTargetName: String
   resourceTarget: String!
   resourceType: String!
   userGenerated: Boolean
@@ -91,21 +112,23 @@ type Permission {
 type PermissionGroup {
   id: String!
   key: String!
-  name: [LocalizedData!]!
+  name: [LocalizedField!]!
 }
 
 input PermissionGroupInput {
   key: String!
-  name: [NameTypeInput!]!
+  name: [LocalizedFieldInput!]!
 }
 
 enum PermissionType {
-  PLATFORM_PERMISSION
+  BUSINESS_MANAGEMENT_PERMISSION
+  PLATFORM_SERVICE_ACCESS_PERMISSION
   PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION
 }
 
 type Query {
   check: String!
+  getAccesses(owenrType: AccessOwnerType!, ownerId: String!, permissionType: PermissionType!): AccessResponse!
   me: UserResponse!
   placeholder: User!
   refreshToken: AuthResponse!
@@ -134,6 +157,7 @@ type User {
   accessIds: [String!]
   accesses: [Access!]
   accountStatus: String
+  accountType: AccountType!
   email: String
   emailVerified: Boolean
   firstName: String

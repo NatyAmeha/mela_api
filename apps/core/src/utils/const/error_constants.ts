@@ -19,3 +19,10 @@ export class CommonSubscriptionErrorMessages {
     static SUBSCRIPTION_NOT_UPDATED = "Subscription not updated";
     static SUBSCRIPTION_NOT_DELETED = "Subscription not deleted";
 }
+
+export class CommonProductErrorMessages {
+    static PRODUCT_NOT_FOUND = "Product not found";
+    static PRODUCT_NOT_UPDATED = "Product not updated";
+    static PRODUCT_NOT_DELETED = "Product not deleted";
+    static PRODUCT_NOT_CREATED = "Product not created";
+}

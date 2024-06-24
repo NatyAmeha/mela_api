@@ -36,6 +36,7 @@ import { InventoryLocationBuilder } from './inventory/model/inventory_location.m
 import { InventoryResolver } from './inventory/inventory.resolver';
 import { ProductBundleRepository } from './product/repo/bundle..repository';
 import { BundleService } from './product/bundle.service';
+import { ProductAddonResolver } from './product/product_addon.resolver';
 
 
 @Module({
@@ -81,7 +82,7 @@ import { BundleService } from './product/bundle.service';
 
     { provide: ProductRepository.injectName, useClass: ProductRepository },
     { provide: ProductResourceUsageTracker.injectName, useClass: ProductResourceUsageTracker },
-    ProductService, ProductResolver,
+    ProductService, ProductResolver, ProductAddonResolver,
 
     { provide: ProductBundleRepository.injectName, useClass: ProductBundleRepository },
     BundleService,
