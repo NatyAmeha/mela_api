@@ -6,6 +6,7 @@ import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { result, uniq } from "lodash";
 import { ProductAddon } from "../model/product_addon.model";
 import { CommonBusinessErrorMessages, CommonProductErrorMessages } from "../../utils/const/error_constants";
+import { Stat } from "../model/product_stat.model";
 
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
@@ -29,6 +30,8 @@ export interface IProductRepository {
     assignPaymentOptionToProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
     removePaymentOptionFromProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
 
+    updateProductStats(productId: string, stats: Partial<Stat>): Promise<boolean>;
+
 
 }
 
@@ -38,6 +41,21 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
     async onModuleInit() {
         this.$connect();
+    }
+
+    async updateProductStats(productId: string, stats: Partial<Stat>): Promise<boolean> {
+        try {
+            // for now, only update the product view counter
+            const result = await this.product.update({
+                where: { id: productId },
+                data: {
+                    totalViews: stats.totalViews
+                }
+            });
+            return true;
+        } catch (error) {
+            throw new PrismaException({ source: "Update product stats", statusCode: 400, code: error.code, meta: error.meta });
+        }
     }
 
     async createProduct(product: Product): Promise<Product> {

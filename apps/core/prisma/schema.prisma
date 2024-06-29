@@ -52,6 +52,8 @@ model Product {
     inventory        Inventory[]
     addons           ProductAddon[]
     paymentOptionsId String[]        @default([])
+
+    totalViews Int? @default(0)
 }
 
 type ProductOption {
@@ -133,6 +135,7 @@ model Business {
     deliveryInfo              DeliveryInfo[]
     bundles                   Bundle[]
     paymentOptions            PaymentOption[]
+    totalViews                Int?                @default(0)
 }
 
 // branch.model.ts
@@ -225,6 +228,12 @@ type PaymentOption {
     dueDate        DateTime?
     createdAt      DateTime?       @default(now())
     updatedAt      DateTime?
+}
+
+type PaymentMethod {
+    id   String          @default(uuid())
+    name LocalizedData[]
+    type String?
 }
 
 type LocalizedData {

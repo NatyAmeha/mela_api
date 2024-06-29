@@ -108,6 +108,10 @@ export class Product extends BaseModel {
     @Field(types => [String], { defaultValue: [] })
     paymentOptionsId?: string[];
 
+    // stats
+    @Field(types => Int, { defaultValue: 0 })
+    totalViews: number;
+
 
     constructor(partial?: Partial<Product>) {
         super()

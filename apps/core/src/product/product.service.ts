@@ -48,7 +48,7 @@ export class ProductService {
     async getProductDetailsWithInventory(productId: string, locationId?: string, branchInfo?: Branch): Promise<ProductResponse> {
         const productInfo = await this.productRepository.getProductById(productId);
         if (!productInfo) {
-            throw new RequestValidationException({ message: "Product not found", statusCode: 400 });
+            throw new RequestValidationException({ message: CommonProductErrorMessages.PRODUCT_NOT_FOUND, statusCode: 400 });
         }
         // const inventoryLocationIds = branchInfo?.getInventoryLocationIds()
         // will be refactored to get accurate product inventory info
@@ -58,6 +58,7 @@ export class ProductService {
             const productVariants = await this.productRepository.getProductsById(productInfo.variantsId);
             response.withProductVariants(productVariants, branchInfo);
         }
+        await this.productRepository.updateProductStats(productId, { totalViews: productInfo.totalViews + 1 });
         return response.build()
     }
 

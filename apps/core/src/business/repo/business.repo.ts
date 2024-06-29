@@ -8,6 +8,7 @@ import { BusinessResponse, BusinessResponseBuilder } from "../model/business.res
 import { includes, isEqual, uniq, uniqBy, uniqWith } from "lodash";
 import { BusinessSection } from "../model/business_section.model";
 import { PaymentOption } from "../model/payment_option.model";
+import { Stat } from "../../product/model/product_stat.model";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
@@ -24,6 +25,8 @@ export interface IBusinessRepository {
     addPaymentOptionToBusiness(businessId: string, newPaymentOptions: PaymentOption[]): Promise<PaymentOption[]>
     removePaymentOptionFromBusiness(businessId: string, paymentOptionIds: string[]): Promise<boolean>
     updatePaymentOption(businessId: string, paymentOption: PaymentOption): Promise<boolean>
+
+    updateBusinessStats(businessId: string, stats: Partial<Stat>): Promise<boolean>
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -31,6 +34,17 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     constructor() {
         super();
     }
+
+    async updateBusinessStats(businessId: string, stats: Partial<Stat>): Promise<boolean> {
+        try {
+            const result = await this.business.update({ where: { id: businessId }, data: { totalViews: stats.totalViews } });
+            return true;
+        } catch (error) {
+            console.log("error", error)
+            throw new PrismaException({ source: "Update business stats", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
     async createBusiness(data: Business): Promise<Business> {
         const { customers, branches, staffs, products, bundles, ...businessData } = data;
         var result = await this.business.create({ data: { ...businessData } });

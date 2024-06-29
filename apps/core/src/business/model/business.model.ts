@@ -1,4 +1,4 @@
-import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Field, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Customer, CustomerInput } from "../../customer/model/customer.model";
 import { BusinessSection, CreateBusinessSectionInput } from "./business_section.model";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
@@ -95,6 +95,9 @@ export class Business extends BaseModel {
 
     @Field(types => [PaymentOption])
     paymentOptions?: PaymentOption[]
+
+    @Field(types => Int, { defaultValue: 0 })
+    totalViews: number;
 
     platformServiceTrialPeriodUsed(platformServiceId: string) {
         return includes(this.trialPeriodUsedServiceIds, platformServiceId)

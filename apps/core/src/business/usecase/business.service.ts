@@ -26,7 +26,9 @@ export class BusinessService {
     }
 
     async getBusiness(id: string) {
-        return await this.businessRepo.getBusiness(id);
+        const businessResult = await this.businessRepo.getBusiness(id);
+        await this.businessRepo.updateBusinessStats(businessResult.id, { totalViews: businessResult.totalViews + 1 })
+        return businessResult;
     }
 
     async isBusinessExist(businessId: string): Promise<boolean> {
@@ -154,4 +156,5 @@ export class BusinessService {
         }
         return businessInfo.paymentOptions.filter(option => paymentOptionId.includes(option.id));
     }
+
 }  
