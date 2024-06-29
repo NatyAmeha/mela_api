@@ -7,7 +7,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { PlatformSubscriptionBuilder, Subscription } from "apps/subscription/src/model/subscription.model";
 import { PlatformService } from "apps/subscription/src/model/platform_service.model";
 import { BuilkProductCreateInput, CreateProductInput } from "./dto/product.input";
-import { CommonBusinessErrorMessages, CommonSubscriptionErrorMessages } from "../utils/const/error_constants";
+import { CommonBusinessErrorMessages, CommonProductErrorMessages, CommonSubscriptionErrorMessages } from "../utils/const/error_constants";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { plainToClass } from "class-transformer";
 import { InventoryLocationRepository } from "../inventory/repo/inventory_location.repository";
@@ -97,7 +97,15 @@ export class ProductService {
 
     async createProductAddon(productId: string, addons: CreateProductAddonInput[]): Promise<ProductResponse> {
         await this.inputValidator.validateArrayInput(addons, CreateProductAddonInput);
+        const productInfo = await this.productRepository.getProductById(productId);
+        if (!productInfo) {
+            return new ProductResponseBuilder().withError(CommonProductErrorMessages.PRODUCT_NOT_FOUND);
+        }
         const productAddons = addons.map(addon => ProductAddon.fromCreateProductAddon(addon));
+        const isAddonExist = await this.isAddonExistInProduct(productInfo, productAddons);
+        if (isAddonExist) {
+            return new ProductResponseBuilder().withError(CommonProductErrorMessages.ADDON_ALREADY_EXIST);
+        }
         const result = await this.productRepository.createProductAddon(productId, productAddons);
         return new ProductResponseBuilder().basicResponse(result)
     }
@@ -117,6 +125,25 @@ export class ProductService {
     async deleteAllAddons(productId: string) {
         const result = await this.productRepository.deleteAllProductAddon(productId);
         return new ProductResponseBuilder().basicResponse(result);
+    }
+
+    async assignPaymentOptions(productId: string, paymentOptionsId: string[]): Promise<ProductResponse> {
+        const result = await this.productRepository.assignPaymentOptionToProduct(productId, paymentOptionsId);
+        return new ProductResponseBuilder().basicResponse(result);
+    }
+
+    async removePaymentOptions(productId: string, paymentOptionId: string[]): Promise<ProductResponse> {
+        const result = await this.productRepository.removePaymentOptionFromProduct(productId, paymentOptionId);
+        return new ProductResponseBuilder().basicResponse(result);
+    }
+
+    async isAddonExistInProduct(productInfo: Product, newAddons: ProductAddon[]): Promise<boolean> {
+        const productAddons = productInfo.addons;
+        return newAddons.some(newAddon => {
+            return productAddons.some(addon => {
+                return this.inputValidator.isObjectAreEqual(newAddon.name.map(name => name.value), addon.name.map(name => name.value))
+            });
+        })
     }
 
 

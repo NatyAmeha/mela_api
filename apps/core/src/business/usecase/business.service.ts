@@ -7,11 +7,18 @@ import { BusinessResponse, BusinessResponseBuilder } from "../model/business.res
 import { BusinessSection, CreateBusinessSectionInput } from "../model/business_section.model";
 import { BaseResponse } from "@app/common/model/base.response";
 import { plainToClass } from "class-transformer";
+import { PaymentOption } from "../model/payment_option.model";
+import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
+import { IValidator } from "@app/common/validation_utils/validator.interface";
+import { CreatePaymentOptionInput } from "../dto/payment_option.input";
+import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 
 @Injectable()
 export class BusinessService {
     // try-catch block  must be used on the methods that handles message broker message/event
-    constructor(@Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository) {
+    constructor(
+        @Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository,
+        @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator) {
 
     }
     async createBusiness(data: Business) {
@@ -20,6 +27,11 @@ export class BusinessService {
 
     async getBusiness(id: string) {
         return await this.businessRepo.getBusiness(id);
+    }
+
+    async isBusinessExist(businessId: string): Promise<boolean> {
+        const businessInfo = await this.getBusiness(businessId);
+        return businessInfo.id ? true : false;
     }
 
     async getBusinessResponse(id: string): Promise<BusinessResponse> {
@@ -90,4 +102,56 @@ export class BusinessService {
         let userBusinessResult = await this.businessRepo.getUserOwnedBusinesses(userId);
         return userBusinessResult;
     }
-}
+
+    async addPaymentOptions(businessId: string, paymentOptions: CreatePaymentOptionInput[]): Promise<BusinessResponse> {
+        await this.inputValidator.validateArrayInput(paymentOptions, CreatePaymentOptionInput);
+        const businessInfo = await this.getBusiness(businessId)
+        if (!businessInfo.id) {
+            return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BUSINESS_NOT_FOUND);
+        }
+        if (this.isPaymentOptionExistBefore(businessInfo, paymentOptions)) {
+            return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.PAYMENT_OPTION_ALREADY_EXIST);
+        }
+        let newPaymentOptionsResult = await this.businessRepo.addPaymentOptionToBusiness(businessId, paymentOptions);
+        const result = new BusinessResponseBuilder().withPaymentOptions(newPaymentOptionsResult).build();
+        return result
+    }
+
+    async removePaymentOption(businessId: string, paymentOptionId: string[]): Promise<BusinessResponse> {
+        let response = await this.businessRepo.removePaymentOptionFromBusiness(businessId, paymentOptionId);
+        const result = new BusinessResponseBuilder().basicResponse(response);
+        return result as BusinessResponse;
+    }
+
+    async updatePaymentOption(businessId: string, paymentOption: PaymentOption): Promise<BusinessResponse> {
+        let response = await this.businessRepo.updatePaymentOption(businessId, paymentOption);
+        const result = new BusinessResponseBuilder().basicResponse(response);
+        return result as BusinessResponse;
+    }
+
+    isPaymentOptionExistBefore(businessInfo: Business, paymentOptions: PaymentOption[]): boolean {
+        if (businessInfo.paymentOptions.length === 0) {
+            return false;
+        }
+        const result = paymentOptions.every(newOption => {
+            return businessInfo.paymentOptions.every(option => {
+                const newPaymentOptionData = new PaymentOption({ name: newOption.name, type: newOption.type, dueDate: newOption.dueDate ?? null, upfrontPayment: newOption.upfrontPayment ?? null })
+                const paymentOptionData = new PaymentOption({ name: option.name, type: option.type, dueDate: option.dueDate ?? null, upfrontPayment: option.upfrontPayment ?? null })
+                console.log("option comparison", newPaymentOptionData, paymentOptionData)
+                return !this.inputValidator.isObjectAreEqual(newPaymentOptionData, paymentOptionData)
+            })
+        })
+        return !result;
+    }
+
+    async getBusinessPaymentOptions(businessId: string, paymentOptionId?: string[]): Promise<PaymentOption[]> {
+        const businessInfo = await this.getBusiness(businessId);
+        if (!businessInfo.id) {
+            return [];
+        }
+        if (!paymentOptionId) {
+            return businessInfo.paymentOptions;
+        }
+        return businessInfo.paymentOptions.filter(option => paymentOptionId.includes(option.id));
+    }
+}  

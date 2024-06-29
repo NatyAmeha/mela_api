@@ -3,7 +3,7 @@ import { Product } from "../model/product.model";
 import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
-import { result } from "lodash";
+import { result, uniq } from "lodash";
 import { ProductAddon } from "../model/product_addon.model";
 import { CommonBusinessErrorMessages, CommonProductErrorMessages } from "../../utils/const/error_constants";
 
@@ -25,6 +25,9 @@ export interface IProductRepository {
     updateProductAddon(productId: string, productAddonInfo: ProductAddon[]): Promise<boolean>;
     deleteAllProductAddon(productId: string): Promise<boolean>;
     deleteProductAddon(productId: string, productAddonId: string): Promise<boolean>;
+
+    assignPaymentOptionToProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
+    removePaymentOptionFromProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
 
 
 }
@@ -327,6 +330,51 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
             return transactionResult;
         } catch (error) {
             throw new PrismaException({ source: "Delete product addon", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async assignPaymentOptionToProduct(productId: string, paymentOptionsId: string[]): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const productResult = await prisma.product?.findFirst({ where: { id: productId } });
+                if (!productResult) {
+                    throw new PrismaException({ source: "Assign payment option to product", statusCode: 400, code: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const uniqueOptionsId = uniq([...productResult.paymentOptionsId, ...paymentOptionsId])
+                await prisma.product.update({
+                    where: { id: productId },
+                    data: {
+                        paymentOptionsId: { set: uniqueOptionsId }
+                    }
+                });
+
+                return true;
+            });
+            return transactionResult;
+        } catch (error) {
+            throw new PrismaException({ source: "Assign payment option to product", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async removePaymentOptionFromProduct(productId: string, paymentOptionsId: string[]): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const productResult = await prisma.product?.findFirst({ where: { id: productId } });
+                if (!productResult) {
+                    throw new PrismaException({ source: "Remove payment option from product", statusCode: 400, code: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const updatedOptions = productResult.paymentOptionsId?.filter(id => !paymentOptionsId.includes(id));
+                await prisma.product.update({
+                    where: { id: productId },
+                    data: {
+                        paymentOptionsId: { set: updatedOptions }
+                    }
+                });
+                return true;
+            });
+            return transactionResult;
+        } catch (error) {
+            throw new PrismaException({ source: "Remove payment option from product", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

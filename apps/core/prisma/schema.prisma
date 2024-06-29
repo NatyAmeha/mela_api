@@ -51,6 +51,7 @@ model Product {
     mainProduct      Boolean         @default(false)
     inventory        Inventory[]
     addons           ProductAddon[]
+    paymentOptionsId String[]        @default([])
 }
 
 type ProductOption {
@@ -131,6 +132,7 @@ model Business {
     inventoryLocations        InventoryLocation[]
     deliveryInfo              DeliveryInfo[]
     bundles                   Bundle[]
+    paymentOptions            PaymentOption[]
 }
 
 // branch.model.ts
@@ -153,9 +155,8 @@ model Branch {
     bundles            Bundle[]            @relation(fields: [bundleIds], references: [id])
     staffs             Staff[]
     inventoryLocations InventoryLocation[]
-
-    createdAt DateTime? @default(now())
-    updatedAt DateTime? @updatedAt
+    createdAt          DateTime?           @default(now())
+    updatedAt          DateTime?           @updatedAt
 }
 
 // staff.model.ts
@@ -193,18 +194,37 @@ model Bundle {
 }
 
 type ProductAddon {
-    id              String          @default(uuid())
+    id              String               @default(uuid())
     name            LocalizedData[]
-    minQty          Float           @default(1)
-    maxQty          Float           @default(1)
-    tag             String[]        @default([])
-    isActive        Boolean         @default(true)
-    isRequired      Boolean         @default(false)
-    isProduct       Boolean         @default(false)
-    productId       String?         @db.ObjectId
+    inputType       String
+    minAmount       Float?
+    maxAmount       Float?
+    options         ProductAddonOption[]
+    checkCalendar   Boolean?
+    isProduct       Boolean              @default(false)
+    productIds      String[]             @default([])
+    tag             String[]             @default([])
+    isActive        Boolean              @default(true)
+    isRequired      Boolean              @default(false)
     additionalPrice PriceInfo[]
-    createdAt       DateTime?       @default(now())
+    createdAt       DateTime?            @default(now())
     updatedAt       DateTime?
+}
+
+type ProductAddonOption {
+    id     String          @default(uuid())
+    name   LocalizedData[]
+    images String[]        @default([])
+}
+
+type PaymentOption {
+    id             String          @default(uuid())
+    name           LocalizedData[]
+    type           String
+    upfrontPayment Float?          @default(0)
+    dueDate        DateTime?
+    createdAt      DateTime?       @default(now())
+    updatedAt      DateTime?
 }
 
 type LocalizedData {

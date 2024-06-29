@@ -5,6 +5,7 @@ import { Branch } from "../../branch/model/branch.model";
 import { Product } from "../../product/model/product.model";
 import { Access } from "apps/auth/src/authorization/model/access.model";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
+import { PaymentOption } from "./payment_option.model";
 
 @ObjectType()
 export class BusinessResponse extends BaseResponse {
@@ -20,6 +21,9 @@ export class BusinessResponse extends BaseResponse {
     branchAdded?: Branch[]
     @Field(type => [Branch])
     branchUpdated?: Branch[]
+
+    @Field(type => [PaymentOption])
+    paymentOptions?: PaymentOption[]
 
     accesses?: Access[]
 
@@ -104,6 +108,12 @@ export class BusinessResponseBuilder extends BaseResponseBuilder {
     withAccesses(accesses: Access[]): BusinessResponseBuilder {
         this.response.success = true;
         this.response.accesses = accesses;
+        return this;
+    }
+
+    withPaymentOptions(paymentOptions: PaymentOption[]): BusinessResponseBuilder {
+        this.response.success = true;
+        this.response.paymentOptions = paymentOptions;
         return this;
     }
 

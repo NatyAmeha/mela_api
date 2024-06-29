@@ -7,6 +7,7 @@ import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
 import { includes, isEqual, uniq, uniqBy, uniqWith } from "lodash";
 import { BusinessSection } from "../model/business_section.model";
+import { PaymentOption } from "../model/payment_option.model";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
@@ -19,6 +20,10 @@ export interface IBusinessRepository {
 
     createBusinessSection(businessId: string, sections: BusinessSection[]): Promise<BusinessResponse>
     removeBusinessSection(businessId: string, sectionIds: string[]): Promise<BusinessResponse>
+
+    addPaymentOptionToBusiness(businessId: string, newPaymentOptions: PaymentOption[]): Promise<PaymentOption[]>
+    removePaymentOptionFromBusiness(businessId: string, paymentOptionIds: string[]): Promise<boolean>
+    updatePaymentOption(businessId: string, paymentOption: PaymentOption): Promise<boolean>
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -206,6 +211,65 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
                 throw error;
             }
             throw new PrismaException({ source: "Get user owned businesses", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async addPaymentOptionToBusiness(businessId: string, newPaymentOptions: PaymentOption[]): Promise<PaymentOption[]> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUSINESS_NOT_FOUND });
+            }
+            const result = await this.business.update({ where: { id: businessId }, data: { paymentOptions: { push: newPaymentOptions } } });
+            return newPaymentOptions;
+        } catch (error) {
+            console.log("error", error)
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            throw new PrismaException({ source: "Add payment option to business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async removePaymentOptionFromBusiness(businessId: string, paymentOptionIds: string[]): Promise<boolean> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUSINESS_NOT_FOUND });
+            }
+            const remainingPaymentOptions = business.paymentOptions.filter((paymentOption) => !paymentOptionIds.includes(paymentOption.id));
+            const result = await this.business.update({ where: { id: businessId }, data: { paymentOptions: { set: remainingPaymentOptions } } });
+            return true;
+        } catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            throw new PrismaException({ source: "Remove payment option from business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async updatePaymentOption(businessId: string, paymentOption: PaymentOption): Promise<boolean> {
+        try {
+            if (!paymentOption.id) {
+                throw new RequestValidationException({ message: "Payment option id is missing" });
+            }
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUSINESS_NOT_FOUND });
+            }
+            const updatedOptions = business.paymentOptions.map((option) => {
+                if (option.id === paymentOption.id) {
+                    return { ...option, ...paymentOption };
+                }
+                return option;
+            });
+            const result = await this.business.update({ where: { id: businessId }, data: { paymentOptions: { set: updatedOptions } } });
+            return true;
+        } catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            throw new PrismaException({ source: "Update payment option", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

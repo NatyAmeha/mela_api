@@ -1,9 +1,10 @@
 import { Field, ID, InputType, OmitType, PartialType } from "@nestjs/graphql";
-import { ProductAddon } from "../model/product_addon.model";
+import { AddonInputType, ProductAddon, ProductAddonOption, ProductAddonOptionInput } from "../model/product_addon.model";
 import { Price } from "@app/common/model/price.model";
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { ArrayNotEmpty, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested, isNotEmpty } from "class-validator";
 import { Type } from "class-transformer";
+import { types } from "joi";
 
 
 @InputType()
@@ -13,24 +14,39 @@ export class CreateProductAddonInput {
     @Field(type => [LocalizedFieldInput])
     name: LocalizedFieldInput[];
 
-    @Min(1)
+    @Field(types => AddonInputType)
+    inputType: string;
+
     @IsOptional()
-    minQty?: number;
+    @Min(1)
+    minAmount?: number;
+
     @IsOptional()
     @Min(1)
-    maxQty?: number;
+    maxAmount?: number;
+
+    @Field(types => [ProductAddonOptionInput], { defaultValue: [] })
+    @ValidateIf((obj: CreateProductAddonInput, value) => obj.inputType == AddonInputType.SINGLE_SELECTION_INPUT || obj.inputType == AddonInputType.MULTIPLE_SELECTION_INPUT)
+    @IsNotEmpty()
+    options?: ProductAddonOptionInput[];
+
+    @Field()
+    checkCalendar?: boolean;
 
     isProduct?: boolean;
 
+    @Field()
     isRequired?: boolean;
 
     tag?: string[];
 
 
+    @Field(types => [String])
     @ValidateIf((obj: CreateProductAddonInput, value) => obj.isProduct == true)
-    @IsNotEmpty()
-    productId?: string;
+    @ArrayNotEmpty()
+    productIds?: string[];
 
+    @Field(types => [Price], { defaultValue: [] })
     @Type(() => Price)
     additionalPrice?: Price[]
 

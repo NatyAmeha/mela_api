@@ -11,6 +11,7 @@ import { BaseModel } from "@app/common/model/base.model";
 import { includes } from "lodash";
 import { DeliveryInfo } from "../../product/model/delivery.model";
 import { ProductBundle } from "../../product/model/product_bundle.model";
+import { PaymentOption } from "./payment_option.model";
 
 @ObjectType()
 export class Business extends BaseModel {
@@ -91,6 +92,9 @@ export class Business extends BaseModel {
 
     @Field(types => [ProductBundle])
     bundles?: ProductBundle[]
+
+    @Field(types => [PaymentOption])
+    paymentOptions?: PaymentOption[]
 
     platformServiceTrialPeriodUsed(platformServiceId: string) {
         return includes(this.trialPeriodUsedServiceIds, platformServiceId)

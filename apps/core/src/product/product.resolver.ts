@@ -274,6 +274,37 @@ export class ProductResolver {
         }
     }
 
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.DELETE, resourcTargetName: "productId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => ProductResponse, { description: "Returns boolean value to indicate the payment option is assigned to product" })
+    async assignPaymentOptionToProduct(@Args("businessId") businessId: string, @Args('productId') productId: string, @Args({ name: "paymentOptionId", type: () => [String] }) paymentOptionsId: string[]): Promise<ProductResponse> {
+        const selectedBusinessPaymentOptions = await this.businessService.getBusinessPaymentOptions(businessId, paymentOptionsId);
+        const isPaymentOptionsExistOnBusiness = selectedBusinessPaymentOptions.length === paymentOptionsId.length;
+        if (!isPaymentOptionsExistOnBusiness) {
+            return new ProductResponseBuilder().withError("Payment options not found on business");
+        }
+        return await this.productService.assignPaymentOptions(productId, paymentOptionsId);
+    }
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.DELETE, resourcTargetName: "productId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => ProductResponse)
+    async removePaymentOptionFromProduct(@Args("businessId") businessId: string, @Args('productId') productId: string, @Args({ name: "paymentOptionId", type: () => [String] }) paymentOptionsId: string[]): Promise<ProductResponse> {
+        return await this.productService.removePaymentOptions(productId, paymentOptionsId);
+    }
+
+
+
     // ------------------ Nested Queries ------------------
 
     // responsd for nested query of business from product type

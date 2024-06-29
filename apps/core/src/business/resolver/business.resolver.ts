@@ -23,6 +23,7 @@ import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input"
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 import { CreateBusinessSectionInput } from "../model/business_section.model";
 import { BaseResponse } from "@app/common/model/base.response";
+import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 
 
 @Resolver(of => Business)
@@ -99,6 +100,27 @@ export class BusinessResolver {
     @Query(returns => BusinessResponse)
     async getUserBusinesses(@CurrentUser() userInfo: User): Promise<BusinessResponse> {
         let response = await this.businessService.getUserOwnedBusinesses(userInfo.id);
+        return response;
+    }
+
+
+    // Payment option opereration
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async addPaymentOptions(@Args("businessId") businessId: string, @Args({ name: "paymentOptions", type: () => [CreatePaymentOptionInput] }) paymentOptions: CreatePaymentOptionInput[]): Promise<BusinessResponse> {
+        let result = await this.businessService.addPaymentOptions(businessId, paymentOptions);
+        return result;
+
+    }
+
+
+
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    async deletePaymentOption(@Args("businessId") businessId: string, @Args({ name: "paymentOptionsId", type: () => [String] }) paymentOptionsId: string[]): Promise<BusinessResponse> {
+        let response = await this.businessService.removePaymentOption(businessId, paymentOptionsId);
         return response;
     }
 

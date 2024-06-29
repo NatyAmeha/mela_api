@@ -16,7 +16,7 @@ export class ProductAddonResolver {
 
     @RequiresPermission({
         permissions: [
-            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE, resourcTargetName: "productId" },
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.UPDATE, resourcTargetName: "productId" },
             { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
         ],
     })

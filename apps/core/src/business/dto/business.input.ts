@@ -5,6 +5,8 @@ import { Address, AddressInput } from "../model/address.model";
 import { Gallery, GalleryInput } from "../model/gallery.model";
 import { IsArray, IsEmail, IsNotEmpty, IsPhoneNumber, IsString, ValidateNested } from "class-validator";
 import { Transform, Type } from "class-transformer";
+import { CreatePaymentOptionInput } from "./payment_option.input";
+import { PaymentOption } from "../model/payment_option.model";
 
 
 @InputType()
@@ -50,6 +52,11 @@ export class CreateBusinessInput {
     @Field(types => GalleryInput)
     gallery: GalleryInput;
 
+    @Field(types => [CreatePaymentOptionInput])
+    paymentOptions?: CreatePaymentOptionInput[]
+
+
+
 
 
     constructor(partial?: Partial<Business>) {
@@ -57,14 +64,18 @@ export class CreateBusinessInput {
     }
 
     toBusiness(): Business {
-        const business = new Business({ ...this, stage: BusinessRegistrationStage.BUSINESS_CREATED });
+        const business = new Business({
+            ...this,
+            paymentOptions: this.paymentOptions.map(option => PaymentOption.fromCreatePaymentOptionInput(option)),
+            stage: BusinessRegistrationStage.BUSINESS_CREATED
+        });
         return business;
     }
 }
 
 
 @InputType()
-export class UpdateBusinessInput extends PartialType(PickType(CreateBusinessInput, ['name', 'categories', 'description', 'email', 'gallery', 'mainAddress', 'email', 'phoneNumber', 'website'], InputType)) {
+export class UpdateBusinessInput extends PartialType(PickType(CreateBusinessInput, ['name', 'categories', 'description', 'email', 'gallery', 'mainAddress', 'email', 'phoneNumber', 'website', 'paymentOptions'], InputType)) {
 
     toBusinessInfo(): Business {
         const business = new Business({ ...this });

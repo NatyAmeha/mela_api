@@ -3,6 +3,7 @@ import { IValidator } from "./validator.interface";
 import { validate } from "class-validator";
 import { RequestValidationException } from "../errors/request_validation_exception";
 import { Injectable } from "@nestjs/common";
+import { isEqual } from "lodash";
 
 @Injectable()
 export class ClassDecoratorValidator implements IValidator {
@@ -14,5 +15,9 @@ export class ClassDecoratorValidator implements IValidator {
         if (errors.length > 0) {
             throw new RequestValidationException({ validationErrors: errors })
         }
+    }
+
+    isObjectAreEqual<T extends Object>(obj1: T, obj2: T): boolean {
+        return isEqual(obj1, obj2)
     }
 }

@@ -2,6 +2,7 @@ export class CommonBusinessErrorMessages {
     static BUSINESS_NOT_FOUND = "Business not found";
     static BUSINESS_NOT_UPDATED = "Business not updated";
     static BUSINESS_ALREADY_IN_PAYMENT_STAGE = "Business already in payment stage";
+    static PAYMENT_OPTION_ALREADY_EXIST = "One or more payment options already exist";
 
     static MAX_PRODUCT_CREATION_EXCEEDED = "You have reached the maximum number of products you can create";
 
@@ -25,4 +26,5 @@ export class CommonProductErrorMessages {
     static PRODUCT_NOT_UPDATED = "Product not updated";
     static PRODUCT_NOT_DELETED = "Product not deleted";
     static PRODUCT_NOT_CREATED = "Product not created";
+    static ADDON_ALREADY_EXIST = "Addon already exist";
 }

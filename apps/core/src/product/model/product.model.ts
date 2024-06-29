@@ -15,11 +15,10 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { CreateProductInput } from "../dto/product.input";
 import { ProductAddon } from "./product_addon.model";
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class Product extends BaseModel {
     @Field(types => String)
     id?: string;
-
     @Field(type => [LocalizedField])
     @Type(() => LocalizedField)
     name: LocalizedField[]
@@ -105,6 +104,9 @@ export class Product extends BaseModel {
 
     @Field(types => [ProductAddon], { defaultValue: [] })
     addons?: ProductAddon[];
+
+    @Field(types => [String], { defaultValue: [] })
+    paymentOptionsId?: string[];
 
 
     constructor(partial?: Partial<Product>) {
