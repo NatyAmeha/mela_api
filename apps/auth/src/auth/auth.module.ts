@@ -24,6 +24,7 @@ import { AUTH_RMQ_CLIENT } from '../cosntants';
 import { AuthServiceMsgBrocker } from '../msg_brocker_client/auth_service_msg_brocker';
 import { AuthController } from './auth.controller';
 import { AuthMsgProcessosor } from '../msg_brocker_client/auth_msg_processor';
+import { UserService } from './usecase/user.service';
 
 
 
@@ -39,6 +40,7 @@ import { AuthMsgProcessosor } from '../msg_brocker_client/auth_msg_processor';
       // })
     }),
     RmqModule,
+    CommonModule,
     JwtModule.register({}),
     LoggerModule,
     AuthorizationModule,
@@ -92,7 +94,7 @@ import { AuthMsgProcessosor } from '../msg_brocker_client/auth_msg_processor';
     },
     { provide: AuthServiceMsgBrocker.InjectName, useClass: AuthServiceMsgBrocker },
     AuthService, AuthResolver, AccessTokenStretegy, RefreshTokenStrategy,
-    UserResolver,
+    UserResolver, UserService,
 
     { provide: AuthMsgProcessosor.InjectName, useClass: AuthMsgProcessosor }
   ],

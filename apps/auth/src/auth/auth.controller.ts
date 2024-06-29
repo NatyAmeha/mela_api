@@ -13,10 +13,7 @@ export class AuthController {
         var userResult = await this.authservice.getUserInfo(userId)
         let userAccesses = await this.authorizationService.getAllUserAccesses(userId)
 
-        return {
-            user: userResult,
-            accesses: userAccesses
-        }
+        return new UserResponse({ user: userResult, accesses: userAccesses })
     }
 
     // @Get("/access/business")

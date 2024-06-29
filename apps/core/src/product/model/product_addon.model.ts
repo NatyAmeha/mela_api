@@ -58,7 +58,7 @@ export class ProductAddon extends BaseModel {
     static fromCreateProductAddon(createProductAddonInput: CreateProductAddonInput | UpdateProductAddonInput) {
         return new ProductAddon({
             ...createProductAddonInput,
-            name: createProductAddonInput.name.map(name => new LocalizedField(name)),
+            name: createProductAddonInput.name?.map(name => new LocalizedField(name)),
         })
     }
 }

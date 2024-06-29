@@ -112,7 +112,7 @@ export class ProductService {
 
     async updateProductAddon(productId: string, updatedAddons: UpdateProductAddonInput[]) {
         await this.inputValidator.validateArrayInput(updatedAddons, UpdateProductAddonInput);
-        const productAddons = updatedAddons.map(addon => ProductAddon.fromCreateProductAddon(addon));
+        const productAddons = updatedAddons?.map(addon => ProductAddon.fromCreateProductAddon(addon));
         const result = await this.productRepository.updateProductAddon(productId, productAddons)
         return new ProductResponseBuilder().basicResponse(result)
     }

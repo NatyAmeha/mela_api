@@ -25,9 +25,9 @@ export class CreateProductAddonInput {
     @Min(1)
     maxAmount?: number;
 
-    @Field(types => [ProductAddonOptionInput], { defaultValue: [] })
+    @Field(types => [ProductAddonOptionInput])
     @ValidateIf((obj: CreateProductAddonInput, value) => obj.inputType == AddonInputType.SINGLE_SELECTION_INPUT || obj.inputType == AddonInputType.MULTIPLE_SELECTION_INPUT)
-    @IsNotEmpty()
+    @ArrayNotEmpty()
     options?: ProductAddonOptionInput[];
 
     @Field()
@@ -46,7 +46,7 @@ export class CreateProductAddonInput {
     @ArrayNotEmpty()
     productIds?: string[];
 
-    @Field(types => [Price], { defaultValue: [] })
+    @Field(types => [Price])
     @Type(() => Price)
     additionalPrice?: Price[]
 

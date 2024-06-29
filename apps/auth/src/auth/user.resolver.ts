@@ -1,29 +1,24 @@
 import { Args, Int, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
-import { User } from "./model/user.model";
+import { FavoriteBusienssInput, FavoriteBusinessInfo, User } from "./model/user.model";
 import { UseGuards } from "@nestjs/common";
 import { JwtGuard } from "./service/guard/jwt.gurad";
 import { CurrentUser } from "../../../../libs/common/get_user_decorator";
 import { AuthService } from "./usecase/auth.service";
 import { UpdateUserInput } from "./dto/update_user.input";
 import { UserResponse } from "./dto/user.response";
+import { UserService } from "./usecase/user.service";
 
 @Resolver(of => UserResponse)
 export class UserResolver {
-    constructor(private readonly authService: AuthService) { }
+    constructor(private readonly authService: AuthService, private userService: UserService) { }
 
 
     @UseGuards(JwtGuard)
     @Query(returns => UserResponse, { name: "me" })
     async getUserInfo(@CurrentUser() currentUser: User): Promise<UserResponse> {
-        return {
-            user: currentUser
-        }
+        return new UserResponse({ user: currentUser })
     }
 
-    @Query(returns => String, { name: "check" })
-    getData(): string {
-        return "Natnael ameha"
-    }
 
     @UseGuards(JwtGuard)
     @Mutation(returns => Boolean)
@@ -31,6 +26,18 @@ export class UserResolver {
         var userInfo = updateInput.getUserInfo();
         var isUpdated = await this.authService.updateUserInfo(currentUser.id!, userInfo);
         return isUpdated;
+    }
+
+    @UseGuards(JwtGuard)
+    @Mutation(returns => UserResponse, { description: "Returns success boolean value to indicate if the operation was successful or not" })
+    async addBusinessToFavorites(@CurrentUser() currentUser: User, @Args("input", { type: () => [FavoriteBusienssInput] }) input: FavoriteBusienssInput[]): Promise<UserResponse> {
+        return await this.userService.addbusinesstoFavorite(currentUser.id!, input);
+    }
+
+    @UseGuards(JwtGuard)
+    @Mutation(returns => UserResponse)
+    async removeBusinessFromFavorites(@CurrentUser() currentUser: User, @Args("businessIds", { type: () => [String] }) businessIds: string[]): Promise<UserResponse> {
+        return await this.userService.removeBusinessFromFavorites(currentUser.id!, businessIds);
     }
 
 }
