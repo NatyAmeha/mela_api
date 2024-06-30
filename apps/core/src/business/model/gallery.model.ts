@@ -1,9 +1,12 @@
-import { Field, ID, InputType, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, ID, InputType, ObjectType } from "@nestjs/graphql";
 import { Expose, Type } from "class-transformer";
 import { types } from "joi";
 
 @ObjectType()
+@Directive('@key(fields: "id, logoImage, coverImage, images{featured, url}, videos{featured, url}")')
 export class Gallery {
+    @Field(type => ID)
+    id?: string
     @Field({ description: "The logo image of the gallery" })
     logoImage?: string;
 

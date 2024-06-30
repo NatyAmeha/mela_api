@@ -1,6 +1,6 @@
 import { Field, ID, InputType, OmitType, PartialType } from "@nestjs/graphql";
 import { AddonInputType, ProductAddon, ProductAddonOption, ProductAddonOptionInput } from "../model/product_addon.model";
-import { Price } from "@app/common/model/price.model";
+import { PriceInput } from "@app/common/model/price.model";
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { ArrayNotEmpty, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested, isNotEmpty } from "class-validator";
 import { Type } from "class-transformer";
@@ -46,9 +46,9 @@ export class CreateProductAddonInput {
     @ArrayNotEmpty()
     productIds?: string[];
 
-    @Field(types => [Price])
-    @Type(() => Price)
-    additionalPrice?: Price[]
+    @Field(types => [PriceInput])
+    @Type(() => PriceInput)
+    additionalPrice?: PriceInput[]
 
     constructor(partial: Partial<CreateProductAddonInput>) {
         Object.assign(this, partial)

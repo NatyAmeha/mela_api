@@ -16,6 +16,9 @@ import { SubscriptionAccessGenerator } from './utils/subscription_access_generat
 import { BusinessSubscriptionOption, PlatformSubscriptionOption, SubscriptionFactory } from './utils/subscrption_factory';
 import { CommonModule } from '@app/common';
 import { SubscriptionMsgProcessosor } from './msg_brocker_client/subscription_service_msg_processor';
+import { MembershipResolver } from './membership/resolver/membership.resolver';
+import { MembershipService } from './membership/resolver/membership.service';
+import { MembershipRepository } from './membership/repo/membership.repo';
 
 @Module({
   imports: [
@@ -69,7 +72,10 @@ import { SubscriptionMsgProcessosor } from './msg_brocker_client/subscription_se
     { provide: SubscriptionMsgProcessosor.InjectName, useClass: SubscriptionMsgProcessosor },
 
     SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase,
-    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository
+    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository,
+
+    { provide: MembershipRepository.injectName, useClass: MembershipRepository },
+    MembershipResolver, MembershipService
 
 
   ],

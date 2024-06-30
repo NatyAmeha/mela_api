@@ -1,5 +1,5 @@
 
-import { Field, Float, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, Float, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { DeliveryInfo, DeliveryInfoInput } from "./delivery.model";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Branch } from "../../branch/model/branch.model";
@@ -16,6 +16,8 @@ import { CreateProductInput } from "../dto/product.input";
 import { ProductAddon } from "./product_addon.model";
 
 @ObjectType()
+@Directive('@extends')
+@Directive('@key(fields: "id")')
 export class Product extends BaseModel {
     @Field(types => String)
     id?: string;

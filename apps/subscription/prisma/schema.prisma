@@ -57,6 +57,32 @@ model PlatformService {
     duration                Int                       @default(90)
 }
 
+model Membership {
+    id              String           @id @default(auto()) @map("_id") @db.ObjectId
+    name            LocalizedField[]
+    description     LocalizedField[]
+    price           PriceInfo[]
+    category        String[]         @default([])
+    benefits        Benefit[]
+    duration        Int              @default(30)
+    trialPeriod     Int              @default(0)
+    type            String
+    owner           String
+    isActive        Boolean          @default(true)
+    groupsId        String[]
+    subscriptionsId String[]
+    groups          Group[]
+    // subscriptions?: Subscription[]
+}
+
+model Group {
+    id           String           @id @default(auto()) @map("_id") @db.ObjectId
+    name         LocalizedField[]
+    members      GroupMember[]
+    membershipId String?          @db.ObjectId
+    membership   Membership?      @relation(fields: [membershipId], references: [id])
+}
+
 type SubscriptionRenewalInfo {
     id             String           @default(uuid())
     name           LocalizedField[]
@@ -104,7 +130,25 @@ type CustomizationInfo {
     action          String
 }
 
+type Benefit {
+    id       String           @default(uuid())
+    name     LocalizedField[]
+    perkType String?
+}
+
+type GroupMember {
+    userId       String
+    memberStatus String
+    dateJoined   DateTime @default(now())
+}
+
 type LocalizedField {
     key   String
     value String
+}
+
+type PriceInfo {
+    id       String @default(uuid())
+    amount   Float
+    currency String
 }
