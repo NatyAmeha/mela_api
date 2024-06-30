@@ -1,0 +1,303 @@
+generator client {
+    provider      = "prisma-client-js"
+    output        = "./generated/prisma_auth_client"
+    binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("CORE_SERVICE_DB_URL")
+}
+
+// customer.model.ts
+model Customer {
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId     String
+    branchesId String[] @default([]) @db.ObjectId
+    branches   Branch[] @relation(fields: [branchesId], references: [id])
+    businessId String   @db.ObjectId
+    business   Business @relation(fields: [businessId], references: [id])
+}
+
+// product.model.ts
+model Product {
+    id               String          @id @default(auto()) @map("_id") @db.ObjectId
+    name             LocalizedData[]
+    displayName      LocalizedData[]
+    description      LocalizedData[]
+    tag              String[]
+    gallery          Gallery
+    loyaltyPoint     Int             @default(0)
+    business         Business        @relation(fields: [businessId], references: [id])
+    businessId       String          @db.ObjectId
+    sectionId        String[]
+    isActive         Boolean         @default(true)
+    category         String[]
+    type             String
+    createdAt        DateTime?       @default(now())
+    updatedAt        DateTime?       @updatedAt
+    canOrderOnline   Boolean         @default(false)
+    unit             String?
+    reviewTopics     String[]
+    callToAction     String?         @default("Order Now")
+    subscriptionPlan Json[]
+    deliveryInfoId   String?
+    branchIds        String[]        @default([]) @db.ObjectId
+    branches         Branch[]        @relation(fields: [branchIds], references: [id])
+    sku              String
+    options          ProductOption[]
+    optionsIncluded  String[]        @default([])
+    variantsId       String[]        @default([]) @db.ObjectId
+    mainProduct      Boolean         @default(false)
+    inventory        Inventory[]
+    addons           ProductAddon[]
+    paymentOptionsId String[]        @default([])
+
+    totalViews Int? @default(0)
+}
+
+type ProductOption {
+    key   String
+    value String[]
+}
+
+model Inventory {
+    id                  String            @id @default(auto()) @map("_id") @db.ObjectId
+    name                String
+    sku                 String
+    priceInfo           PriceInfo[]
+    qty                 Float
+    unit                String            @default("Unit")
+    minOrderQty         Float             @default(1)
+    maxOrderQty         Float             @default(1000)
+    isAvailable         Boolean           @default(true)
+    optionsIncluded     String[]          @default([])
+    productId           String            @db.ObjectId
+    product             Product           @relation(fields: [productId], references: [id])
+    inventoryLocationId String            @db.ObjectId
+    inventoryLocation   InventoryLocation @relation(fields: [inventoryLocationId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([productId, inventoryLocationId, sku])
+    @@unique([productId, optionsIncluded, sku])
+}
+
+model InventoryLocation {
+    id          String      @id @default(auto()) @map("_id") @db.ObjectId
+    name        String
+    city        String?
+    location    String
+    phoneNumber String
+    address     String?
+    inventory   Inventory[]
+
+    branchId   String    @db.ObjectId
+    branch     Branch    @relation(fields: [branchId], references: [id])
+    businessId String?   @db.ObjectId
+    business   Business? @relation(fields: [businessId], references: [id])
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+}
+
+// business.model.ts
+model Business {
+    id                        String              @id @default(auto()) @map("_id") @db.ObjectId
+    name                      LocalizedData[]
+    description               LocalizedData[]
+    type                      String              @default("RESTAURANT") // will be removed
+    categories                String[]
+    isActive                  Boolean             @default(false)
+    gallery                   Gallery
+    createdAt                 DateTime?           @default(now())
+    updatedAt                 DateTime?           @updatedAt
+    creator                   String
+    customersId               String[]            @default([]) @db.ObjectId
+    customers                 Customer[]
+    productIds                String[]            @default([]) @db.ObjectId
+    products                  Product[]
+    openingStatus             String?
+    sections                  BusinessSection[]
+    mainAddress               Address
+    phoneNumber               String
+    email                     String?
+    website                   String?
+    branchIds                 String[]            @default([]) @db.ObjectId
+    branches                  Branch[]
+    staffsId                  String[]            @default([]) @db.ObjectId
+    staffs                    Staff[]
+    stage                     String              @default("CREATED")
+    subscriptionIds           String[]            @default([]) @db.ObjectId
+    activeSubscriptionId      String?
+    trialPeriodUsedServiceIds String[]            @default([]) @db.ObjectId
+    inventoryLocations        InventoryLocation[]
+    deliveryInfo              DeliveryInfo[]
+    bundles                   Bundle[]
+    paymentOptions            PaymentOption[]
+    totalViews                Int?                @default(0)
+}
+
+// branch.model.ts
+model Branch {
+    id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+    name               LocalizedData[]
+    address            Address
+    phoneNumber        String
+    email              String?
+    website            String?
+    isActive           Boolean             @default(false)
+    businessId         String              @db.ObjectId
+    business           Business            @relation(fields: [businessId], references: [id])
+    customersId        String[]            @default([]) @db.ObjectId
+    customers          Customer[]          @relation(fields: [customersId], references: [id])
+    productIds         String[]            @default([]) @db.ObjectId
+    products           Product[]           @relation(fields: [productIds], references: [id])
+    staffsId           String[]            @default([]) @db.ObjectId
+    bundleIds          String[]            @default([]) @db.ObjectId
+    bundles            Bundle[]            @relation(fields: [bundleIds], references: [id])
+    staffs             Staff[]
+    inventoryLocations InventoryLocation[]
+    createdAt          DateTime?           @default(now())
+    updatedAt          DateTime?           @updatedAt
+}
+
+// staff.model.ts
+model Staff {
+    id         String    @id @default(auto()) @map("_id") @db.ObjectId
+    name       String
+    pin        Int
+    roles      String[]
+    branchId   String?   @db.ObjectId
+    branch     Branch?   @relation(fields: [branchId], references: [id])
+    businessId String?   @db.ObjectId
+    business   Business? @relation(fields: [businessId], references: [id])
+    isActive   Boolean   @default(false)
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+}
+
+model Bundle {
+    id          String          @id @default(auto()) @map("_id") @db.ObjectId
+    name        LocalizedData[]
+    description LocalizedData[]
+    type        String          @default("DEFAULT")
+    productIds  String[]
+    startDate   DateTime?
+    endDate     DateTime?
+    gallery     Gallery
+    discount    Discount?
+    businessId  String          @db.ObjectId
+    business    Business        @relation(fields: [businessId], references: [id])
+    branchIds   String[]        @default([]) @db.ObjectId
+    branches    Branch[]        @relation(fields: [branchIds], references: [id])
+    isActive    Boolean?        @default(false)
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @updatedAt
+}
+
+type ProductAddon {
+    id              String               @default(uuid())
+    name            LocalizedData[]
+    inputType       String
+    minAmount       Float?
+    maxAmount       Float?
+    options         ProductAddonOption[]
+    checkCalendar   Boolean?
+    isProduct       Boolean              @default(false)
+    productIds      String[]             @default([])
+    tag             String[]             @default([])
+    isActive        Boolean              @default(true)
+    isRequired      Boolean              @default(false)
+    additionalPrice PriceInfo[]
+    createdAt       DateTime?            @default(now())
+    updatedAt       DateTime?
+}
+
+type ProductAddonOption {
+    id     String          @default(uuid())
+    name   LocalizedData[]
+    images String[]        @default([])
+}
+
+type PaymentOption {
+    id             String          @default(uuid())
+    name           LocalizedData[]
+    type           String
+    upfrontPayment Float?          @default(0)
+    dueDate        DateTime?
+    createdAt      DateTime?       @default(now())
+    updatedAt      DateTime?
+}
+
+type PaymentMethod {
+    id   String          @default(uuid())
+    name LocalizedData[]
+    type String?
+}
+
+type LocalizedData {
+    key   String
+    value String
+}
+
+// gallery.type.ts
+type Gallery {
+    id         String        @default(uuid())
+    logoImage  String?
+    coverImage String?
+    images     GalleryData[]
+    videos     GalleryData[]
+    createdAt  DateTime      @default(now())
+    updatedAt  DateTime      @default(now())
+}
+
+type Address {
+    id        String   @default(uuid())
+    address   String?
+    city      String
+    location  String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+}
+
+type DeliveryInfo {
+    id                String   @default(uuid())
+    name              String
+    deliveryAvailable Boolean? @default(false)
+    price             Float?   @default(0)
+    deliveryTime      Int      @default(2)
+    timeToPrepare     Int?     @default(1)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @default(now())
+}
+
+type BusinessSection {
+    id          String          @default(uuid())
+    name        LocalizedData[]
+    description LocalizedData[]
+    categoryId  String?
+    productIds  String[]        @default([]) @db.ObjectId
+    images      String[]        @default([])
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @default(now())
+}
+
+type GalleryData {
+    id       String   @default(uuid())
+    url      String
+    featured Boolean?
+}
+
+type PriceInfo {
+    id       String @default(uuid())
+    amount   Float
+    currency String
+}
+
+type Discount {
+    type           String
+    value          Float?
+    condition      String
+    conditionValue Float?
+}

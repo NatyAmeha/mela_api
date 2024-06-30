@@ -1,63 +1,97 @@
-import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
-import { PrismaClient } from "@prisma/client";
-import { User } from "../../model/user.model";
-import { AuthServicePrismaDataSource } from "../datasource/auth_service_prisma_datasource.impl";
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+
+import { FavoriteBusinessInfo, User } from "../../model/user.model";
 import { IDatasource } from "@app/common/datasource_helper/datasource.interface";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { PrismaClient } from "apps/auth/prisma/generated/prisma_auth_client";
+import { uniqBy, uniqWith } from "lodash";
+import { PrismaException } from "@app/common/errors/prisma_exception";
 
 export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>
     abstract isUserRegisteredBefore(checkingField: Partial<User>): Promise<boolean>
-    abstract updateRefreshToken(userId: string, refreshToken: string): Promise<boolean>
-    abstract getUser(query: Partial<User>): Promise<User>
-    abstract getUserByEmail(email: string): Promise<User | undefined>
-    abstract getUserByPhoneNumber(email: string): Promise<User | undefined>
+    abstract getUser(query: Partial<User>): Promise<User | undefined>
     abstract updateUserInfo(userId: string, userInfo: Partial<User>): Promise<boolean>
+    abstract addBusinessToFavorites(userId: string, businessInfos: FavoriteBusinessInfo[]): Promise<boolean>
+    abstract removeBusinessFromFavorites(userId: string, businessIds: string[])
 }
 @Injectable()
-export class UserRepository implements IUserRepository {
+export class UserRepository extends PrismaClient implements IUserRepository, OnModuleInit, OnModuleDestroy {
+
     static injectName = "USERREPOSITORY";
 
-    constructor(@Inject(AuthServicePrismaDataSource.injectName) private datasource: IDatasource<User>) {
+    async onModuleInit() {
+        await this.$connect();
     }
 
     async isUserRegisteredBefore(checkingField: Partial<User>): Promise<boolean> {
-        var queryInfo: QueryHelper<User> = {
-            query: new User({ ...checkingField }),
-        }
-        var result = await this.datasource.findOne(queryInfo)
+
+        var result = await this.user.findFirst({ where: { ...checkingField as any } })
         return result?.id != undefined;
     }
     async createUser(userInfo: User): Promise<User> {
-        var userResult = await this.datasource.create(userInfo);
-        return userResult as User;
-    }
-    async updateRefreshToken(userId: string, refreshToken: string): Promise<boolean> {
-        var updateResult = await this.datasource.update(userId, new User({ refreshToken: refreshToken }))
-        return updateResult;
+        var userResult = await this.user.create({ data: { ...userInfo } });
+        return new User({ ...userResult })
     }
 
-    async getUserByEmail(email: string): Promise<User | undefined> {
-        var queryInfo = { query: new User({ email }) }
-        var userResult = await this.datasource.findOne(queryInfo)
-        return userResult
-    }
-
-    async getUser(userQuery: Partial<User>): Promise<User> {
-        var queryInfo = { query: new User(userQuery) }
-        var userInfo = await this.datasource.findOne(queryInfo)
-        return userInfo;
-    }
-
-    async getUserByPhoneNumber(phoneNumber: string): Promise<User> {
-        var queryInfo = { query: new User({ phoneNumber: phoneNumber }) }
-        var userResult = await this.datasource.findOne(queryInfo)
-        return userResult as User
+    async getUser(userQuery: Partial<User>): Promise<User | undefined> {
+        var userInfo = await this.user.findFirst({ where: { ...userQuery as any } })
+        if (!userInfo.id) {
+            throw new RequestValidationException({ message: "Incorrect query data provided" })
+        }
+        return new User({ ...userInfo });
     }
 
     async updateUserInfo(userId: string, userInfo: Partial<User>): Promise<boolean> {
-        var updateResult = await this.datasource.update(userId, new User(userInfo))
-        return updateResult;
+        await this.user.update({ where: { id: userId }, data: { ...userInfo } })
+        return true;
+    }
+
+    async addBusinessToFavorites(userId: string, businessInfos: FavoriteBusinessInfo[]): Promise<boolean> {
+        try {
+            const user = await this.user.findUnique({ where: { id: userId } })
+            if (!user) {
+                throw new RequestValidationException({ message: "User not found" })
+            }
+            const allFavoriteBusinesses = [...user.favoriteBusinesses, ...businessInfos];
+            const uniqFavoriteBusinesses = uniqBy(allFavoriteBusinesses, (fb) => fb.businessId)
+
+            await this.user.update({
+                where: { id: userId },
+                data: {
+                    favoriteBusinesses: uniqFavoriteBusinesses
+                }
+            })
+            return true;
+        }
+        catch (ex) {
+            throw new PrismaException({ message: ex.message, statusCode: 500, exception: ex })
+        }
+    }
+
+    async removeBusinessFromFavorites(userId: string, businessIds: string[]): Promise<boolean> {
+        try {
+            const user = await this.user.findUnique({ where: { id: userId } })
+            if (!user) {
+                throw new RequestValidationException({ message: "User not found" })
+            }
+            const favoriteBusinesses = user.favoriteBusinesses.filter(fb => !businessIds.includes(fb.businessId))
+            await this.user.update({
+                where: { id: userId },
+                data: {
+                    favoriteBusinesses: favoriteBusinesses
+                }
+            })
+            return true;
+        }
+        catch (ex) {
+            throw new PrismaException({ message: ex.message, statusCode: 500, exception: ex })
+        }
+    }
+
+    async onModuleDestroy() {
+        await this.$disconnect()
     }
 
 }

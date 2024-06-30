@@ -1,17 +1,18 @@
-import { Inject } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { AuthInfo } from "../../dto/auth_info.args";
 import { User } from "../../model/user.model";
-import { IAuthProvider } from "./Iauth_provider.interface";
+import { BaseAuthProvider, IAuthProvider } from "./Iauth_provider.interface";
 import { IUserRepository, UserRepository } from "../../data/repo/user.repository";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { ErrorTypes } from "@app/common/errors/error_types";
 
-export class PhoneAuthProvder implements IAuthProvider {
+@Injectable()
+export class PhoneAuthProvder extends BaseAuthProvider {
     static injectName = "PHONE_AUTH_PROVIDER"
     constructor(
-        @Inject(UserRepository.injectName) private userRepo: IUserRepository,
+        @Inject(UserRepository.injectName) public userRepo: IUserRepository,
     ) {
-
+        super(userRepo)
     }
     async createAccount(userInfo: User): Promise<User> {
         if (!userInfo.phoneNumber) {
@@ -29,11 +30,15 @@ export class PhoneAuthProvder implements IAuthProvider {
         if (!authInfo.phoneNumber) {
             throw new RequestValidationException({ message: "Phone number is not provided", statusCode: 400 })
         }
-        var userByPhoneNumber = await this.userRepo.getUserByPhoneNumber(authInfo.phoneNumber)
+        var userByPhoneNumber = await this.userRepo.getUser({ phoneNumber: authInfo.phoneNumber })
         if (!userByPhoneNumber) {
             throw new RequestValidationException({ message: "User not foud by this phone number", statusCode: 400, errorType: ErrorTypes.USER_NOT_FOUND })
         }
         return userByPhoneNumber;
+    }
+
+    async logout(userId: string): Promise<boolean> {
+        return super.logout(userId)
     }
 
 }

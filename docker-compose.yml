@@ -1,0 +1,82 @@
+version: '3.4'
+
+services:
+  auth_service:
+    # image: auth_service
+    build:
+     context: .
+     dockerfile: ./apps/auth/Dockerfile
+    environment:
+      NODE_ENV: development
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - 3002:3002
+    container_name: Auth_service
+    volumes:
+      - .:/usr/src/app
+      - ./usr/src/app/nodule_modules
+    command: npm run start:dev auth
+    networks:
+      - api_network
+  subscription_service:
+    # image: subscription_service
+    build:
+     context: .
+     dockerfile: ./apps/subscription/Dockerfile
+    environment:
+      NODE_ENV: development
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+    ports:
+      - 3001:3001
+    volumes:
+      - .:/usr/src/app
+      - ./usr/src/app/nodule_modules
+    container_name: Subscription_service
+    command: npm run start:dev subscription   
+    networks:
+      - api_network
+  api_gateway:
+    # image: api_gateway
+    build:
+     context: .
+     dockerfile: ./apps/mela_api/Dockerfile
+    environment:
+      NODE_ENV: development
+    env_file:
+      - .env
+    depends_on:
+      - auth_service
+      - subscription_service
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/nodule_modules
+    container_name: Api_gateway
+    command: npm run start:dev mela_api
+    networks:
+      - api_network
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - api_network
+networks:
+  rabbitmq_go_net:
+    driver: bridge
+  api_network:
+    driver: bridge
+
+

@@ -1,0 +1,10 @@
+import { registerEnumType } from "@nestjs/graphql";
+
+export enum PermissionType {
+    BUSINESS_MANAGEMENT_PERMISSION = "BUSINESS_ACCESS_PERMISSION",
+
+    PLATFORM_SERVICE_ACCESS_PERMISSION = "PLATFORM_SERVICE_ACCESS_PERMISSION",
+    PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION = "PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION"
+}
+
+registerEnumType(PermissionType, { name: "PermissionType" })

@@ -1,2 +1,2 @@
 export * from './common.module';
-export * from './common.service';
+export * from './permission_helper/access_factory.interface';

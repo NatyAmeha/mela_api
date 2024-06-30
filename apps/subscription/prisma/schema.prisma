@@ -1,0 +1,110 @@
+generator client {
+    provider      = "prisma-client-js"
+    // output   = "./generated/prisma_subscription_client"
+    binaryTargets = ["native", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("SUBSCRIPTION_DB_URL")
+}
+
+model SubscriptionPlan {
+    id            String           @id @default(auto()) @map("_id") @db.ObjectId
+    name          LocalizedField[]
+    description   LocalizedField[]
+    price         Float
+    category      String[]
+    benefits      BenefitType[]
+    duration      Int
+    trialPeriod   Int?
+    type          String
+    subscriptions Subscription[]
+    owner         String?          @db.ObjectId
+    isActive      Boolean          @default(true)
+    createdAt     DateTime         @default(now())
+    updatedAt     DateTime         @default(now())
+}
+
+model Subscription {
+    id                  String                        @id @default(auto()) @map("_id") @db.ObjectId
+    startDate           DateTime?
+    endDate             DateTime?
+    amountPaid          Float?                        @default(0)
+    subscriptioinPlanId String?                       @db.ObjectId
+    plan                SubscriptionPlan?             @relation(fields: [subscriptioinPlanId], references: [id])
+    isTrialPeriod       Boolean?
+    type                String
+    owner               String?                       @db.ObjectId
+    createdAt           DateTime                      @default(now())
+    updatedAt           DateTime                      @default(now())
+    platformServices    PlatfromServiceSubscription[]
+    isActive            Boolean                       @default(false)
+}
+
+model PlatformService {
+    id                      String                    @id @default(auto()) @map("_id") @db.ObjectId
+    name                    LocalizedField[]
+    type                    String
+    description             LocalizedField[]
+    image                   String?
+    basePrice               Float
+    features                LocalizedField[]
+    customizationCategories CustomizationCategory[]
+    relatedServicesId       String[]
+    subscriptionRenewalInfo SubscriptionRenewalInfo[]
+    trialPeriod             Int                       @default(30)
+    duration                Int                       @default(90)
+}
+
+type SubscriptionRenewalInfo {
+    id             String           @default(uuid())
+    name           LocalizedField[]
+    duration       Int              @default(90)
+    trialPeriod    Int              @default(30)
+    discountAmount Int              @default(0)
+}
+
+type BenefitType {
+    tags         String[]
+    descriptions LocalizedField[]
+}
+
+type PlatfromServiceSubscription {
+    serviceId                 String              @db.ObjectId
+    serviceName               String?
+    startDate                 DateTime?
+    endDate                   DateTime?
+    isTrialPeriod             Boolean?
+    createdAt                 DateTime?
+    updatedAt                 DateTime?
+    selectedCustomizationInfo CustomizationInfo[]
+}
+
+type CustomizationCategory {
+    id                String           @default(uuid())
+    name              LocalizedField[]
+    selectionType     String           @default("SINGLE_SELECTION")
+    description       LocalizedField[]
+    selectionRequired Boolean          @default(true)
+    customizations    Customization[]
+}
+
+type Customization {
+    id               String           @default(uuid())
+    name             LocalizedField[]
+    value            String
+    additionalPrice  Float            @default(0)
+    actionIdentifier String
+    default          Boolean          @default(false)
+}
+
+type CustomizationInfo {
+    customizationId String
+    action          String
+}
+
+type LocalizedField {
+    key   String
+    value String
+}
