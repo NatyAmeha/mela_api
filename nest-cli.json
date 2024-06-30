@@ -78,6 +78,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/core/tsconfig.app.json"
       }
+    },
+    "order_service": {
+      "type": "application",
+      "root": "apps/order_service",
+      "entryFile": "main",
+      "sourceRoot": "apps/order_service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/order_service/tsconfig.app.json"
+      }
     }
   }
 }

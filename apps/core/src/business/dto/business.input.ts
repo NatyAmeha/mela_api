@@ -1,44 +1,81 @@
-import { InputType, OmitType, PartialType, PickType } from "@nestjs/graphql";
+import { Field, InputType, OmitType, PartialType, PickType } from "@nestjs/graphql";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
-import { LocalizedData } from "@app/common/model/localized_model";
-import { Address } from "../model/address.model";
-import { Gallery } from "../model/gallery.model";
-import { IsArray, IsNotEmpty, IsString, ValidateNested } from "class-validator";
-import { Type } from "class-transformer";
+import { LocalizedFieldInput } from "@app/common/model/localized_model";
+import { Address, AddressInput } from "../model/address.model";
+import { Gallery, GalleryInput } from "../model/gallery.model";
+import { IsArray, IsEmail, IsNotEmpty, IsPhoneNumber, IsString, ValidateNested } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { CreatePaymentOptionInput } from "./payment_option.input";
+import { PaymentOption } from "../model/payment_option.model";
+
 
 @InputType()
-export class CreateBusinessInput extends OmitType(Business, ['id', 'stage', 'createdAt', 'openingStatus', 'updatedAt', 'branches', 'isActive', 'creator', 'branchIds', 'branches'], InputType) {
+export class CreateBusinessInput {
+
+    @Field(types => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    @IsArray()
     @IsNotEmpty()
-    @Type(() => LocalizedData)
-    name: LocalizedData[];
+    name: LocalizedFieldInput[];
 
+    @Field(types => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    @IsArray()
     @IsNotEmpty()
-    @Type(() => LocalizedData)
-    description?: LocalizedData[];
+    description?: LocalizedFieldInput[];
 
-    @Type(() => Address)
-    mainAddress: Address;
+    @Field(types => [String])
+    @Transform((param) => (param.value as string[]).map(e => e.toUpperCase()))
+    @IsArray()
+    @IsNotEmpty()
+    categories: string[];
 
-    @Type(() => Gallery)
-    gallery: Gallery;
-
+    @Field()
+    @IsString()
     @IsNotEmpty()
     creator: string;
-    @IsNotEmpty()
-    @IsArray()
-    categories: string[];
-    @IsNotEmpty()
-    @IsString()
+
+    @Field(types => AddressInput)
+    mainAddress: AddressInput;
+
+    @Field()
+    @IsPhoneNumber()
     phoneNumber: string;
 
+    @Field()
+    @IsEmail()
+    email?: string;
+
+    @Field()
+    website?: string;
+
+    @Field(types => GalleryInput)
+    gallery: GalleryInput;
+
+    @Field(types => [CreatePaymentOptionInput])
+    paymentOptions?: CreatePaymentOptionInput[]
+
+
+
+
+
+    constructor(partial?: Partial<Business>) {
+        Object.assign(this, partial);
+    }
+
     toBusiness(): Business {
-        const business = new Business({ ...this, stage: BusinessRegistrationStage.BUSINESS_CREATED });
+        const business = new Business({
+            ...this,
+            paymentOptions: this.paymentOptions.map(option => PaymentOption.fromCreatePaymentOptionInput(option)),
+            stage: BusinessRegistrationStage.BUSINESS_CREATED
+        });
         return business;
     }
 }
 
+
 @InputType()
-export class UpdateBusinessInput extends PartialType(CreateBusinessInput) {
+export class UpdateBusinessInput extends PartialType(PickType(CreateBusinessInput, ['name', 'categories', 'description', 'email', 'gallery', 'mainAddress', 'email', 'phoneNumber', 'website', 'paymentOptions'], InputType)) {
 
     toBusinessInfo(): Business {
         const business = new Business({ ...this });

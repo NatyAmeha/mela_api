@@ -29,7 +29,6 @@ import { Configuration } from 'apps/mela_api/configuration';
         return {
           server: {
             context: async ({ req, }) => {
-              // console.log(httpService.axiosRef)
               return {
                 authorization: req?.headers?.authorization,
               }
@@ -40,9 +39,13 @@ import { Configuration } from 'apps/mela_api/configuration';
               return new RemoteGraphQLDataSource({
                 url: definition.url,
                 willSendRequest: (async ({ request, context }) => {
-                  var user = await appService.validateJwtAndQueryUser(context.authorization)
-                  request.http.headers.set("authorization", context.authorization)
-                  request.http.headers.set("user", JSON.stringify(user));
+                  var userResponse = await appService.validateJwtAndQueryUser(context.authorization)
+                  console.log("context", request.http?.url);
+                  if (userResponse != undefined) {
+                    request.http.headers.set("authorization", context.authorization)
+                    request.http.headers.set("user", JSON.stringify(userResponse.user));
+                    request.http.headers.set("accesses", JSON.stringify(userResponse.accesses));
+                  }
                 }),
 
               })
@@ -51,7 +54,8 @@ import { Configuration } from 'apps/mela_api/configuration';
             supergraphSdl: new IntrospectAndCompose({
               subgraphs: [
                 { name: "subscription_service", url: "http://localhost:3001/graphql" },
-                { name: "auth_service", url: "http://localhost:3002/graphql" }
+                { name: "auth_service", url: "http://localhost:3002/graphql" },
+                { name: "core_service", url: "http://localhost:3003/graphql" }
               ]
             }),
 

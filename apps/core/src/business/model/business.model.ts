@@ -1,30 +1,25 @@
-import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql";
-import { Customer } from "../../customer/model/customer.model";
-import { ProductGroup } from "./product_group.model";
-import { LocalizedData } from "@app/common/model/localized_model";
-import { Gallery } from "./gallery.model";
-import { Address } from "./address.model";
+import { Field, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Customer, CustomerInput } from "../../customer/model/customer.model";
+import { BusinessSection, CreateBusinessSectionInput } from "./business_section.model";
+import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
+import { Gallery, GalleryInput } from "./gallery.model";
+import { Address, AddressInput } from "./address.model";
 import { Branch } from "../../branch/model/branch.model";
 import { Product } from "../../product/model/product.model";
 import { Staff } from "../../staff/model/staff.model";
-import { Access, AccessOwnerType, AppResources, DefaultRoles, Permission } from "apps/auth/src/authorization/model/access.model";
-import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
-import { IMessageBrocker } from "libs/rmq/message_brocker";
-import { AuthServiceMessageType } from "libs/rmq/app_message_type";
-import { AppMsgQueues } from "libs/rmq/constants";
-import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
+import { BaseModel } from "@app/common/model/base.model";
+import { includes } from "lodash";
+import { DeliveryInfo } from "../../product/model/delivery.model";
+import { ProductBundle } from "../../product/model/product_bundle.model";
+import { PaymentOption } from "./payment_option.model";
 
 @ObjectType()
-@InputType("BusinessInput")
-export class Business {
-    @Field(types => ID)
-    id?: string;
+export class Business extends BaseModel {
+    @Field(type => ID)
+    id?: string
 
-    @Field(types => [LocalizedData])
-    name: LocalizedData[];
-
-    @Field(types => [LocalizedData])
-    description?: LocalizedData[];
+    @Field()
+    type: string
 
     @Field(types => [String])
     categories: string[];
@@ -45,14 +40,13 @@ export class Business {
     creator: string;
     @Field(types => [String])
     customersId?: string[];
-    @Field(types => [Customer])
-    customers?: Customer[];
+
 
     @Field(types => OpeningStatus)
     openingStatus: string;
 
-    @Field(types => [ProductGroup])
-    group?: ProductGroup[];
+    @Field(types => [BusinessSection])
+    sections?: BusinessSection[];
 
     @Field(types => [String])
     productIds?: string[];
@@ -75,35 +69,46 @@ export class Business {
     @Field(types => BusinessRegistrationStage)
     stage: string
 
-    @Field()
+    @Field(type => [Staff])
     staffs?: Staff[]
+    @Field()
+    activeSubscriptionId?: string
     @Field(types => [String])
-    subscriptionIds?: string[];
+    subscriptionIds?: string[]
     @Field(types => [String])
-    trialPeriodUsedServiceIds?: string[];
+    trialPeriodUsedServiceIds?: string[] = [];
+
+    @Field(types => [LocalizedField])
+    name: LocalizedField[];
+
+    @Field(types => [LocalizedField])
+    description?: LocalizedField[];
+
+    @Field(types => [Customer])
+    customers?: Customer[];
+
+    @Field(types => [DeliveryInfo])
+    deliveryInfo?: DeliveryInfo[]
+
+    @Field(types => [ProductBundle])
+    bundles?: ProductBundle[]
+
+    @Field(types => [PaymentOption])
+    paymentOptions?: PaymentOption[]
+
+    @Field(types => Int, { defaultValue: 0 })
+    totalViews: number;
+
+    platformServiceTrialPeriodUsed(platformServiceId: string) {
+        return includes(this.trialPeriodUsedServiceIds, platformServiceId)
+    }
 
     constructor(partial?: Partial<Business>) {
+        super();
         Object.assign(this, partial);
     }
-
-
-
-    generateDefaultBusinessOwnerPermission(): Access[] {
-        let manageBusinessPermission = new Access({
-            role: DefaultRoles.BUSINESS_OWNER,
-            owner: this.creator,
-            ownerType: AccessOwnerType.USER,
-            permissionType: PermissionType.PLATFORM_PERMISSION,
-            permissions: [
-                new Permission({ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourceTarget: this.id }),
-            ]
-        })
-        return [manageBusinessPermission]
-    }
-
-
-
 }
+
 
 enum OpeningStatus {
     OPEN = "OPEN",

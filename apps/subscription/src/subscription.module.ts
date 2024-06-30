@@ -7,13 +7,15 @@ import { LoggerModule } from '@app/logger';
 import { ApolloDriver, ApolloDriverConfig, ApolloFederationDriver } from '@nestjs/apollo';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SubscriptionRepository } from './repo/subscription.repository';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqModule } from 'libs/rmq/rmq_module';
-import { SubscriptionMessageBrocker } from './subscription_message_brocker';
+import { SubscriptionMessageBrocker } from './msg_brocker_client/subscription_message_brocker';
 import { PlatformServiceRepository } from './repo/platform_service.repo';
 import { PlatformServiceResolver } from './resolver/platform_service.resolver';
 import { PlatfromUsecase } from './usecase/platform.usecase';
-import { SubscriptionHelper } from './utils/subscription.helper';
+import { SubscriptionAccessGenerator } from './utils/subscription_access_generator';
+import { BusinessSubscriptionOption, PlatformSubscriptionOption, SubscriptionFactory } from './utils/subscrption_factory';
+import { CommonModule } from '@app/common';
+import { SubscriptionMsgProcessosor } from './msg_brocker_client/subscription_service_msg_processor';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { SubscriptionHelper } from './utils/subscription.helper';
     }),
     // RmqModule.register(SUBSCRIPTION_RMQ_CLIENT),
     RmqModule,
-
+    CommonModule,
     LoggerModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloFederationDriver,
@@ -62,6 +64,14 @@ import { SubscriptionHelper } from './utils/subscription.helper';
     { provide: SubscriptionRepository.InjectName, useClass: SubscriptionRepository },
     { provide: SubscriptionMessageBrocker.InjectName, useClass: SubscriptionMessageBrocker },
     { provide: PlatformServiceRepository.InjectName, useClass: PlatformServiceRepository },
-    SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase, SubscriptionHelper],
+    { provide: SubscriptionAccessGenerator.injectName, useClass: SubscriptionAccessGenerator },
+
+    { provide: SubscriptionMsgProcessosor.InjectName, useClass: SubscriptionMsgProcessosor },
+
+    SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase,
+    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository
+
+
+  ],
 })
 export class SubscriptionModule { }

@@ -1,18 +1,29 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { BusinessService } from "../usecase/business.service";
-import { Business } from "../model/business.model";
-import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
-import { BusinessResponse } from "../model/business.response";
+import { Business, BusinessRegistrationStage } from "../model/business.model";
+import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
 import { ProductService } from "../../product/product.service";
 import { BranchService } from "../../branch/usecase/branch.service";
 import { Product } from "../../product/model/product.model";
 import { Branch } from "../../branch/model/branch.model";
-import { CoreServiceMsgBrockerClient } from "../../core_service_msg_brocker";
-import { AppMsgQueues } from "libs/rmq/constants";
+import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
+import { AppMsgQueues, ExchangeTopics } from "libs/rmq/const/constants";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
-import { Access } from "apps/auth/src/authorization/model/access.model";
-import { UseGuards } from "@nestjs/common";
+import { Access, DefaultRoles, Permission } from "apps/auth/src/authorization/model/access.model";
+import { Inject, UseGuards } from "@nestjs/common";
 import { AuthzGuard } from "libs/common/authorization.guard";
+import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
+import { PermissionSelectionCriteria, RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
+import { PERMISSIONACTION, PermissionResourceType } from "@app/common/permission_helper/permission_constants";
+import { CurrentUser } from "libs/common/get_user_decorator";
+import { User } from "apps/auth/prisma/generated/prisma_auth_client";
+import { BusinessAccessGenerator } from "../business_access_factory";
+import { IAccessGenerator } from "@app/common/permission_helper/access_factory.interface";
+import { CreateBusinessInput, UpdateBusinessInput } from "../dto/business.input";
+import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
+import { CreateBusinessSectionInput } from "../model/business_section.model";
+import { BaseResponse } from "@app/common/model/base.response";
+import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 
 
 @Resolver(of => Business)
@@ -21,53 +32,97 @@ export class BusinessResolver {
         private businessService: BusinessService,
         private productService: ProductService,
         private branchService: BranchService,
-        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient
+        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient,
+        @Inject(BusinessAccessGenerator.injectName) private businessAccessGenerator: IAccessGenerator<Business>
     ) {
     }
+
+
     @Query(returns => BusinessResponse)
     async getBusinessDetails(@Args("id") id: string): Promise<BusinessResponse> {
         let business = await this.businessService.getBusiness(id);
-        var businessProducts = await this.productService.getBusinessProducts(id);
+        var businessProducts = await this.productService.getBusinessProducts(id, { page: 1, limit: 20 });
         var businessBranches = await this.branchService.getBusinessBranches(id);
-        return {
-            success: true,
-            business: business,
-            products: businessProducts,
-            branches: businessBranches
-        }
+        var respnse = new BusinessResponseBuilder().withBusiness(business).withProducts(businessProducts).withBranches(businessBranches).build();
+        return respnse;
     }
-    // @UseGuards(AuthzGuard)
+
+
+    @UseGuards(AuthzGuard)
     @Mutation(returns => BusinessResponse)
     async createBusiness(@Args('data') data: CreateBusinessInput): Promise<BusinessResponse> {
         let createdBusiness = await this.businessService.createBusiness(data.toBusiness());
-        var businessOwnerAccess = createdBusiness.generateDefaultBusinessOwnerPermission();
-
-        var messageInfo = this.coreServiceMsgBrocker.generateMessageInfoToCreateAccessPermission(businessOwnerAccess, AppMsgQueues.CORE_SERVICE_REPLY_QUEUE);
-        var reply = await this.coreServiceMsgBrocker.sendMessageGetReply<Access[], IMessageBrockerResponse>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        let businessOwnerAccess = await this.businessAccessGenerator.createAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
+        let reply = await this.coreServiceMsgBrocker.sendCreateAccessPermissionMessage(businessOwnerAccess);
         console.log("reply", reply)
-        return {
-            success: true,
-            business: createdBusiness
-        }
+        var response = new BusinessResponseBuilder().withBusiness(createdBusiness).build();
+        return response;
     }
 
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.CREATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BaseResponse)
+    async createBusinessSection(@Args("businessId") businessId: string, @Args({ name: "sections", type: () => [CreateBusinessSectionInput] }) sections: CreateBusinessSectionInput[]): Promise<BaseResponse> {
+        let result = await this.businessService.createBusienssSections(businessId, sections);
+        return result;
+    }
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.DELETE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BaseResponse)
+    async removeBusinessSection(@Args("businessId") businessId: string, @Args({ name: "sectionsId", type: () => [String] }) sectionId: string[]): Promise<BaseResponse> {
+        let result = await this.businessService.removeBusinessSection(businessId, sectionId);
+        return result;
+    }
+
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
     @Mutation(returns => BusinessResponse)
     async updateBusinessInfo(@Args('businessId') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
-        var response = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
-        return {
-            success: true,
-            business: response
-        }
+        var businessResult = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
+        var response = new BusinessResponseBuilder().withBusiness(businessResult).build();
+        return response;
     }
 
-    // @Mutation(returns => BusinessResponse)
-    // async updateBusinessRegistrationStage(@Args('businessId') businessId: string, @Args('stage') stage: string): Promise<BusinessResponse> {
-    //     await this.businessService.updateBusienssRegistrationStage(businessId, stage);
-    //     return {
-    //         success: true,
-    //         business: null
-    //     }
-    // }
+
+
+    @UseGuards(AuthzGuard)
+    @Mutation(returns => BusinessResponse)
+    async verifyBusinessRegistration(@Args('businessId') businessId: string): Promise<BusinessResponse> {
+        let result = await this.businessService.checkBusinessRegistrationFlow(businessId);
+        return result;
+    }
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.READ }] })
+    @UseGuards(PermissionGuard)
+    @Query(returns => BusinessResponse)
+    async getUserBusinesses(@CurrentUser() userInfo: User): Promise<BusinessResponse> {
+        let response = await this.businessService.getUserOwnedBusinesses(userInfo.id);
+        return response;
+    }
+
+
+    // Payment option opereration
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async addPaymentOptions(@Args("businessId") businessId: string, @Args({ name: "paymentOptions", type: () => [CreatePaymentOptionInput] }) paymentOptions: CreatePaymentOptionInput[]): Promise<BusinessResponse> {
+        let result = await this.businessService.addPaymentOptions(businessId, paymentOptions);
+        return result;
+
+    }
+
+
+
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    async deletePaymentOption(@Args("businessId") businessId: string, @Args({ name: "paymentOptionsId", type: () => [String] }) paymentOptionsId: string[]): Promise<BusinessResponse> {
+        let response = await this.businessService.removePaymentOption(businessId, paymentOptionsId);
+        return response;
+    }
 
 
     // ------------------ Nested Queries ------------------
@@ -75,7 +130,7 @@ export class BusinessResolver {
     // responsd for nested query for products field inside business type
     @ResolveField('products', returns => [Product])
     async getProductsforBusiness(@Parent() business: Business): Promise<Product[]> {
-        return await this.productService.getBusinessProducts(business.id);
+        return await this.productService.getBusinessProducts(business.id, {});
     }
 
     // responsd for nested query for branches field inside business type

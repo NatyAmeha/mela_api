@@ -1,18 +1,21 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { Field, ID, InputType, ObjectType, registerEnumType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
+import { Directive, Field, ID, InputType, ObjectType, PartialType, PickType, registerEnumType } from "@nestjs/graphql"; import { User } from "apps/auth/src/auth/model/user.model";
 import { CreateAccessInput } from "../dto/access.input";
 import { IsArray, IsOptional } from "class-validator";
 import { CreatePermissionInput, PermissionGroupInput } from "../dto/permission.input";
 import { PermissionType } from "./permission_type.enum";
 import { PERMISSIONACTION, PermissionEffectType, PermissionResourceType } from "@app/common/permission_helper/permission_constants";
-import { LocalizedData } from "@app/common/model/localized_model";
+import { LocalizedField } from "@app/common/model/localized_model";
+
 
 @ObjectType()
+@Directive('@extends')
+@Directive('@key(fields: "id name{key,value} resourceId role permissions{action,resourceType,resourceTarget,effect,groups{id,key,name{key,value}}} owner ownerType dateCreated dateUpdated permissionType")')
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
-    @Field(type => [LocalizedData])
-    name?: LocalizedData[]
+    @Field(type => [LocalizedField])
+    name?: LocalizedField[]
     @Field()
     resourceId?: string
     @Field()
@@ -44,12 +47,14 @@ export class Access extends BaseModel {
     }
 }
 
-@ObjectType()
+@ObjectType({ isAbstract: true })
+@Directive('@extends')
+@Directive('@key(fields: "id name{key,value} action resourceType resourceTarget effect groups{id,key,name{key,value}} userGenerated resourcTargetName")')
 export class Permission {
-    @Field(type => ID)
+    @Field(types => ID)
     id?: string
-    @Field(type => [LocalizedData])
-    name: LocalizedData[]
+    @Field(types => [LocalizedField])
+    name?: LocalizedField[]
     @Field()
     action: string = PERMISSIONACTION.ANY.toString()
     @Field()
@@ -62,6 +67,8 @@ export class Permission {
     groups?: PermissionGroup[]
     @Field()
     userGenerated?: boolean = false
+    @Field()
+    resourcTargetName?: string
 
 
     constructor(data: Partial<Permission>) {
@@ -73,20 +80,21 @@ export class Permission {
     }
 }
 
+
 @ObjectType()
 export class PermissionGroup {
     @Field()
     id: string
     @Field()
     key: string
-    @Field(type => [LocalizedData])
-    name: LocalizedData[]
+    @Field(type => [LocalizedField])
+    name: LocalizedField[]
     constructor(data: Partial<PermissionGroup>) {
         Object.assign(this, data)
     }
 
     static getPermissionGroupFromInput(inputs: PermissionGroupInput[]): PermissionGroup[] {
-        return inputs.map(grp => new PermissionGroup({ name: grp.name as LocalizedData[], key: grp.key }))
+        return inputs.map(grp => new PermissionGroup({ name: grp.name as LocalizedField[], key: grp.key }))
     }
 }
 
@@ -97,14 +105,7 @@ export enum AccessOwnerType {
 }
 registerEnumType(AccessOwnerType, { name: 'AccessOwnerType' })
 
-export enum AppResources {
-    BUSINESS = 'BUSINESS',
-    BRANCH = 'BRANCH',
-    STAFF = 'STAFF',
-    CUSTOMER = 'CUSTOMER',
-    USER = 'USER',
-    PLATFORM_SERVICES = 'PLATFORM_SERVICES',
-}
+
 
 export enum DefaultRoles {
     ADMIN = 'ADMIN',

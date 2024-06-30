@@ -1,29 +1,40 @@
 import { Field, Float, InputType, Int, OmitType, PartialType, } from "@nestjs/graphql";
-import { BenefitInfo, SubscriptionPlan } from "../model/subscription_plan.model";
+import { BenefitInfo, BenefitInfoInput, SubscriptionPlan } from "../model/subscription_plan.model";
 import { SubscriptionType } from "../model/subscription_type.enum";
 import { isNil, omitBy } from "lodash";
-import { LocalizedData } from "@app/common/model/localized_model";
+
 import { IsNotEmpty, IsNumber, isNotEmpty } from "class-validator";
 import { Transform, Type } from "class-transformer";
+import { LocalizedFieldInput } from "@app/common/model/localized_model";
+
 
 @InputType()
-export class CreateSubscriptionPlanInput extends OmitType(SubscriptionPlan, ["id", "subscriptions", "createdAt", "updatedAt", "isActive"] as const, InputType) {
+export class CreateSubscriptionPlanInput {
+    @Field(type => [BenefitInfoInput])
     @IsNotEmpty()
-    @Type(() => BenefitInfo)
-    benefits: BenefitInfo[];
+    @Type(() => BenefitInfoInput)
+    benefits: BenefitInfoInput[];
+
     @IsNotEmpty()
     @Transform((param) => (param.value as string[]).map(e => e.toUpperCase()))
     category: string[];
-    @Type(() => LocalizedData)
-    description?: LocalizedData[];
+
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    description?: LocalizedFieldInput[];
+
+    @Field(type => [LocalizedFieldInput])
     @IsNotEmpty()
-    @Type(() => LocalizedData)
-    name: LocalizedData[];
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[];
+
     @IsNumber()
     price: number;
+
     @Field(type => SubscriptionType, { description: "PLATFORM, BUSEINSS, PRODUCT, SERVICE" })
     @IsNotEmpty()
     type: string;
+
     @IsNumber()
     trialPeriod: number;
     owner?: string;

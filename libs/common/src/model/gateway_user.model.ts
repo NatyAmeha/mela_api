@@ -1,5 +1,12 @@
 // user info used by microservices to get the user info fetched from auth service
 // auth service has his own user class extending graphql fields
+
+export interface GatewayApiFetchResponse {
+    user?: UserInfo
+    accesses?: GatewayUserAccess[],
+
+}
+
 export interface UserInfo {
     id?: string
     email?: string

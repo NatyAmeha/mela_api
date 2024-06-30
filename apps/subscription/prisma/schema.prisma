@@ -10,9 +10,9 @@ datasource db {
 }
 
 model SubscriptionPlan {
-    id            String         @id @default(auto()) @map("_id") @db.ObjectId
-    name          NameType[]
-    description   NameType[]
+    id            String           @id @default(auto()) @map("_id") @db.ObjectId
+    name          LocalizedField[]
+    description   LocalizedField[]
     price         Float
     category      String[]
     benefits      BenefitType[]
@@ -20,16 +20,17 @@ model SubscriptionPlan {
     trialPeriod   Int?
     type          String
     subscriptions Subscription[]
-    owner         String?        @db.ObjectId
-    isActive      Boolean        @default(true)
-    createdAt     DateTime       @default(now())
-    updatedAt     DateTime       @default(now())
+    owner         String?          @db.ObjectId
+    isActive      Boolean          @default(true)
+    createdAt     DateTime         @default(now())
+    updatedAt     DateTime         @default(now())
 }
 
 model Subscription {
     id                  String                        @id @default(auto()) @map("_id") @db.ObjectId
     startDate           DateTime?
     endDate             DateTime?
+    amountPaid          Float?                        @default(0)
     subscriptioinPlanId String?                       @db.ObjectId
     plan                SubscriptionPlan?             @relation(fields: [subscriptioinPlanId], references: [id])
     isTrialPeriod       Boolean?
@@ -42,52 +43,68 @@ model Subscription {
 }
 
 model PlatformService {
-    id                      String                  @id @default(auto()) @map("_id") @db.ObjectId
-    name                    NameType[]
-    description             NameType[]
+    id                      String                    @id @default(auto()) @map("_id") @db.ObjectId
+    name                    LocalizedField[]
+    type                    String
+    description             LocalizedField[]
     image                   String?
     basePrice               Float
-    features                NameType[]
+    features                LocalizedField[]
     customizationCategories CustomizationCategory[]
     relatedServicesId       String[]
-    trialPeriod             Int                     @default(30)
-    duration                Int                     @default(90)
+    subscriptionRenewalInfo SubscriptionRenewalInfo[]
+    trialPeriod             Int                       @default(30)
+    duration                Int                       @default(90)
+}
+
+type SubscriptionRenewalInfo {
+    id             String           @default(uuid())
+    name           LocalizedField[]
+    duration       Int              @default(90)
+    trialPeriod    Int              @default(30)
+    discountAmount Int              @default(0)
 }
 
 type BenefitType {
     tags         String[]
-    descriptions NameType[]
+    descriptions LocalizedField[]
 }
 
 type PlatfromServiceSubscription {
-    serviceId               String    @db.ObjectId
-    serviceName             String?
-    startDate               DateTime?
-    endDate                 DateTime?
-    isTrialPeriod           Boolean?
-    createdAt               DateTime?
-    updatedAt               DateTime?
-    selectedCustomizationId String[]
+    serviceId                 String              @db.ObjectId
+    serviceName               String?
+    startDate                 DateTime?
+    endDate                   DateTime?
+    isTrialPeriod             Boolean?
+    createdAt                 DateTime?
+    updatedAt                 DateTime?
+    selectedCustomizationInfo CustomizationInfo[]
 }
 
 type CustomizationCategory {
-    id                String          @default(uuid())
-    name              NameType[]
-    selectionType     String          @default("SINGLE_SELECTION")
-    description       NameType[]
-    selectionRequired Boolean         @default(true)
+    id                String           @default(uuid())
+    name              LocalizedField[]
+    selectionType     String           @default("SINGLE_SELECTION")
+    description       LocalizedField[]
+    selectionRequired Boolean          @default(true)
     customizations    Customization[]
 }
 
 type Customization {
-    id              String     @default(uuid())
-    name            NameType[]
-    value           String
-    additionalPrice Float      @default(0)
-    default         Boolean    @default(false)
+    id               String           @default(uuid())
+    name             LocalizedField[]
+    value            String
+    additionalPrice  Float            @default(0)
+    actionIdentifier String
+    default          Boolean          @default(false)
 }
 
-type NameType {
+type CustomizationInfo {
+    customizationId String
+    action          String
+}
+
+type LocalizedField {
     key   String
     value String
 }

@@ -2,36 +2,55 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Access {
+  dateCreated: DateTime
+  dateUpdated: DateTime
+  id: ID
+  name: [LocalizedData!]
+  owner: String!
+  ownerType: AccessOwnerType!
+  permissionType: PermissionType!
+  permissions: [Permission!]
+  resourceId: String
+  role: String
+}
+
+enum AccessOwnerType {
+  BUSINESS
+  PLATFORM
+  USER
+}
+
 type BenefitInfo {
   descriptions: [LocalizedData!]!
   tags: [String!]
 }
 
-input BenefitInput {
-  descriptions: [LocalizedDataInput!]!
+input BenefitInfoInput {
+  descriptions: [LocalizedFieldInput!]!
   tags: [String!]
 }
 
-input CreatePlatformServiceSubscriptionInput {
-  selectedCustomizationId: [String!]!
-  serviceId: String!
-  serviceName: String!
+input CreatePlatformServiceInput {
+  basePrice: Float!
+  customizationCategories: [CustomizationCategoryInput!]
+  description: [LocalizedFieldInput!]
+  features: [LocalizedFieldInput!]
+  name: [LocalizedFieldInput!]!
+  subscriptionRenewalInfo: [SubscriptionRenewalInfoInput!]!
 }
 
-input CreateSubscriptionInput {
-  """owner can be business id, service id, product id"""
-  owner: String
-  selectedPlatformServices: [CreatePlatformServiceSubscriptionInput!]
-  subscriptioinPlanId: String
-  type: SubscriptionType!
+input CreatePlatformSubscriptionInput {
+  owner: String!
+  selectedPlatformServices: [SelectedPlatformServiceForSubscription!]
 }
 
 input CreateSubscriptionPlanInput {
-  benefits: [BenefitInput!]!
+  benefits: [BenefitInfoInput!]!
   category: [String!]!
-  description: [LocalizedDataInput!]
+  description: [LocalizedFieldInput!]
   duration: Float!
-  name: [LocalizedDataInput!]!
+  name: [LocalizedFieldInput!]!
   owner: String
   price: Float!
   trialPeriod: Float!
@@ -41,6 +60,7 @@ input CreateSubscriptionPlanInput {
 }
 
 type Customization {
+  actionIdentifier: String!
   additionalPrice: Float
   default: Boolean
   id: ID
@@ -59,18 +79,28 @@ type CustomizationCategory {
 
 input CustomizationCategoryInput {
   customizations: [CustomizationInput!]!
-  description: [LocalizedDataInput!]
-  id: ID
-  name: [LocalizedDataInput!]!
+  description: [LocalizedFieldInput!]
+  name: [LocalizedFieldInput!]!
   selectionRequired: Boolean
   selectionType: SelectionType
 }
 
+type CustomizationInfo {
+  action: String!
+  customizationId: String!
+  id: ID
+}
+
+input CustomizationInfoInput {
+  action: String!
+  customizationId: String!
+}
+
 input CustomizationInput {
+  actionIdentifier: String!
   additionalPrice: Float
   default: Boolean
-  id: ID
-  name: [LocalizedDataInput!]!
+  name: [LocalizedFieldInput!]!
   value: String!
 }
 
@@ -91,21 +121,24 @@ type LocalizedData {
   value: String!
 }
 
-input LocalizedDataInput {
+input LocalizedFieldInput {
   """the name of the language, ex. english, amharic"""
   key: LanguageKey!
   value: String!
 }
 
 type Mutation {
-  addPlatformServiceToSubscription(platformServiceInfo: [CreatePlatformServiceSubscriptionInput!]!, subscriptionId: String!): SubscriptionResponse!
   changeSubscriptionStatus(status: Boolean!, subscription: String!): Boolean!
   createBusinessSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
-  createPlatformService(serviceInfo: PlatformServiceInput!): PlatformService!
+  createPlatformService(serviceInfo: CreatePlatformServiceInput!): PlatformServiceResponse!
   createPlatformSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
   deleteSubscriptionPlan(id: String!): SubscriptionResponse!
-  subscribeToPlan(info: CreateSubscriptionInput!): SubscriptionResponse!
-  subscribeToPlatformServices(input: CreateSubscriptionInput!): SubscriptionResponse!
+  renewBusienssPlatformSubscription(id: String!, subscriptionUpdateInfo: SubscriptionUpgradeInput!): SubscriptionResponse!
+  subscribeBusinessToPlatformServices(
+    """id of the business"""
+    id: String!
+    input: CreatePlatformSubscriptionInput!
+  ): SubscriptionResponse!
   updateSubscriptionPlan(data: UpdateSubscriptionPlanInput!, id: String!): SubscriptionResponse!
 }
 
@@ -114,7 +147,7 @@ type Permission {
   effect: String!
   groups: [PermissionGroup!]
   id: ID
-  name: [LocalizedData!]!
+  name: [LocalizedData!]
   resourceTarget: String!
   resourceType: String!
   userGenerated: Boolean
@@ -126,50 +159,45 @@ type PermissionGroup {
   name: [LocalizedData!]!
 }
 
+enum PermissionType {
+  BUSINESS_MANAGEMENT_PERMISSION
+  PLATFORM_SERVICE_ACCESS_PERMISSION
+  PLATFORM_SERVICE_CUSTOMIZATION_PERMISSION
+}
+
 type PlatformService {
   basePrice: Float!
   customizationCategories: [CustomizationCategory!]
   description: [LocalizedData!]
-  duration: Int
   features: [LocalizedData!]
   id: ID
   image: String
   name: [LocalizedData!]!
   relatedServices: [PlatformService!]
   relatedServicesId: [String!]
-  trialPeriod: Int
+  subscriptionRenewalInfo: [SubscriptionRenewalInfo!]!
+  type: PlatformServiceType!
 }
 
-input PlatformServiceInput {
-  basePrice: Float!
-  customizationCategories: [CustomizationCategoryInput!]
-  description: [LocalizedDataInput!]
-  duration: Int = 90
-  features: [LocalizedDataInput!]
-  id: ID
-  image: String
-  name: [LocalizedDataInput!]!
-  relatedServices: [PlatformServiceInput!]
-  relatedServicesId: [String!]
-  trialPeriod: Int
+type PlatformServiceResponse {
+  code: Int
+  message: String
+  service: PlatformService!
+  success: Boolean!
 }
 
-input PlatformServiceSubscriptionInput {
-  createdAt: DateTime
-  endDate: DateTime!
-  isTrialPeriod: Boolean
-  selectedCustomizationId: [String!]!
-  serviceId: ID!
-  serviceName: String!
-  startDate: DateTime!
-  updatedAt: DateTime!
+enum PlatformServiceType {
+  INVENTORY
+  ONLINE_STORE
+  POINT_OF_SALE
 }
 
 type PlatfromServiceSubscription {
   createdAt: DateTime
   endDate: DateTime!
+  id: ID
   isTrialPeriod: Boolean
-  selectedCustomizationId: [String!]!
+  selectedCustomizationInfo: [CustomizationInfo!]!
   serviceId: ID!
   serviceName: String!
   startDate: DateTime!
@@ -179,7 +207,19 @@ type PlatfromServiceSubscription {
 type Query {
   getBusienssSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
   getPlatformServices: [PlatformService!]!
+  getPriceInfoToUpgradeSubscription(
+    """Subscritpion id"""
+    id: String!
+    subscriptionUpdateInfo: SubscriptionUpgradeInput!
+  ): SubscriptionUpgradeResponse!
   getSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
+}
+
+input SelectedPlatformServiceForSubscription {
+  selectedCustomizationInfo: [CustomizationInfoInput!]!
+  selectedRenewalId: String!
+  serviceId: String!
+  serviceName: String!
 }
 
 enum SelectionType {
@@ -188,33 +228,19 @@ enum SelectionType {
 }
 
 type Subscription {
+  amountPaid: Float
   createdAt: DateTime
   endDate: DateTime!
   id: ID
   isActive: Boolean
   isTrialPeriod: Boolean!
 
-  """owner can be business id, service id, product id"""
+  """
+  owner of the subscription. it will be a business id for platform service subscription and user id for business subscription
+  """
   owner: String
   plan: SubscriptionPlan
   platformServices: [PlatfromServiceSubscription!]
-  startDate: DateTime!
-  subscriptioinPlanId: String
-  type: SubscriptionType!
-  updatedAt: DateTime!
-}
-
-input SubscriptionInput {
-  createdAt: DateTime
-  endDate: DateTime!
-  id: ID
-  isActive: Boolean
-  isTrialPeriod: Boolean!
-
-  """owner can be business id, service id, product id"""
-  owner: String
-  plan: SubscriptionPlanInput
-  platformServices: [PlatformServiceSubscriptionInput!]
   startDate: DateTime!
   subscriptioinPlanId: String
   type: SubscriptionType!
@@ -240,31 +266,24 @@ type SubscriptionPlan {
   updatedAt: DateTime
 }
 
-input SubscriptionPlanInput {
-  benefits: [BenefitInput!]
-  category: [String!]
-  createdAt: DateTime
-  description: [LocalizedDataInput!]
-  duration: Int
+type SubscriptionRenewalInfo {
+  discountAmount: Int!
+  duration: Int!
   id: ID
-  isActive: Boolean
-  name: [LocalizedDataInput!]
-  owner: String
-  price: Float
-  subscriptions: [SubscriptionInput!]
-  trialPeriod: Int
+  name: [LocalizedData!]!
+  trialPeriod: Int!
+}
 
-  """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
-  type: SubscriptionType
-  updatedAt: DateTime
+input SubscriptionRenewalInfoInput {
+  discountAmount: Int! = 0
+  duration: Int! = 90
+  name: [LocalizedFieldInput!]!
+  trialPeriod: Int! = 90
 }
 
 type SubscriptionResponse {
   addedPlatformServices: [PlatfromServiceSubscription!]
   code: Int
-
-  """subscription info created"""
-  createdSubscription: Subscription
   deletedSubscritpions: [Subscription!]
 
   """existing subscription available for requested by planId and owner"""
@@ -275,6 +294,13 @@ type SubscriptionResponse {
   """Subscription plan info that is subscribed"""
   plan: SubscriptionPlan
   platformServicehavingFreeTrial: [String!]
+  platformServices: [PlatformService!]
+
+  """subscription info created"""
+  subscription: Subscription
+
+  """subscriptions"""
+  subscriptions: [Subscription!]
   success: Boolean!
 }
 
@@ -284,15 +310,36 @@ enum SubscriptionType {
   PRODUCT
 }
 
+input SubscriptionUpgradeInput {
+  addedServices: [UpdatePlatformSubscriptionInput!]
+  businessId: String!
+  removedServices: [UpdatePlatformSubscriptionInput!]
+}
+
+type SubscriptionUpgradeResponse {
+  addedPlatformServices: [PlatformService!]
+  code: Int
+  message: String
+  owner: String!
+  price: Float!
+  removedPlatformServices: [PlatformService!]
+  success: Boolean!
+}
+
+input UpdatePlatformSubscriptionInput {
+  selectedCustomizationInfo: [CustomizationInfoInput!]
+  serviceId: String!
+}
+
 input UpdateSubscriptionPlanInput {
-  benefits: [BenefitInput!]
+  benefits: [BenefitInfoInput!]
   category: [String!]
-  description: [LocalizedDataInput!]
-  duration: Int
-  name: [LocalizedDataInput!]
+  description: [LocalizedFieldInput!]
+  duration: Float
+  name: [LocalizedFieldInput!]
   owner: String
   price: Float
-  trialPeriod: Int
+  trialPeriod: Float
 
   """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
   type: SubscriptionType

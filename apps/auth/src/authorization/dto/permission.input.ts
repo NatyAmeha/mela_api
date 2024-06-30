@@ -3,6 +3,7 @@ import { Permission, PermissionGroup } from "../model/access.model";
 import { capitalize } from "lodash";
 import { Transform, Type } from "class-transformer";
 import { IsEmail, ValidateNested } from "class-validator";
+import { LocalizedFieldInput } from "@app/common/model/localized_model";
 
 @InputType()
 export class CreatePermissionInput {
@@ -26,18 +27,10 @@ export class CreatePermissionInput {
 
 @InputType()
 export class PermissionGroupInput {
-    @Field(type => [NameTypeInput])
+    @Field(type => [LocalizedFieldInput])
     @ValidateNested()
-    @Type(() => NameTypeInput)
-    name: NameTypeInput[]
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[]
     @Transform((param) => param.value?.toUpperCase())
     key: string
-}
-
-@InputType()
-export class NameTypeInput {
-    @Field()
-    key: string
-    @Field()
-    value: string
 }

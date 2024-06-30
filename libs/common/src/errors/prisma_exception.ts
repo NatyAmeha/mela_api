@@ -20,7 +20,7 @@ export class PrismaException implements AppException {
         var errorMsg: String[] = [];
         errorMsg.push(this.meta.message);
         errorMsg.push(this.message);
-        var finalMessage = errorMsg.length > 0 ? `${errorMsg.join(", ")}` : this.message;
+        var finalMessage = errorMsg.length > 0 ? `${errorMsg.join(", ")}` : this?.message;
         return new ErrorResponse([<AppException>{ message: finalMessage }])
     }
 }

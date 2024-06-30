@@ -3,7 +3,7 @@ import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { Subscription } from "../model/subscription.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
-import { SubscriptionResponse } from "../model/subscription.response";
+import { SubscriptionResponse, SubscriptionResponseBuilder } from "../model/response/subscription.response";
 import { PrismaClient } from '@prisma/client'
 
 
@@ -15,10 +15,18 @@ export interface ISubscritpionRepository {
     deleteSubscriptionPlan(planId: string): Promise<SubscriptionResponse>
 
     createSubscription(subscriptionInfo: Subscription): Promise<Subscription>
-    getSubscriptionInfo(id: string): Promise<Subscription>
+    getSubscriptionById(id: string): Promise<Subscription>
+    findSubscriptionInfo(query: QueryHelper<Subscription>): Promise<Subscription[]>
+    getSubscriptions(queryInfo: QueryHelper<Subscription>): Promise<SubscriptionResponse>
+
+    ownerHasSubscription(ownerId: string, subsciptionId: string): Promise<boolean>
+
+
     getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
     updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean>
     isplatformServiceInSubscription(platformServiceId: string[]): Promise<boolean>
+
+
 }
 
 export class SubscriptionRepository extends PrismaClient implements ISubscritpionRepository, OnModuleInit, OnModuleDestroy {
@@ -35,6 +43,7 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
         }
         return new SubscriptionPlan({ ...createResult });
     }
+
     async updateSubscriptionPlanInfo(planId: string, subscriptionInfo: Partial<SubscriptionPlan>): Promise<boolean> {
         var updateResult = await this.subscriptionPlan.update({
             where: { id: planId },
@@ -83,7 +92,7 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
                 }
             })
             var planToDelete = await tx.subscriptionPlan.delete({ where: { id: planId } })
-            var result: SubscriptionResponse = {
+            var result = <SubscriptionResponse>{
                 success: true,
                 plan: new SubscriptionPlan({ ...planToDelete }),
                 deletedSubscritpions: subscriptionsToDelete
@@ -93,12 +102,29 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
         return trResult;
     }
 
-    async getSubscriptionInfo(id: string): Promise<Subscription> {
+    async getSubscriptionById(id: string): Promise<Subscription> {
         var result = await this.subscription.findFirst({ where: { id: id } })
         if (!result.id) {
             throw new RequestValidationException({ message: "Unable to find subscritpion Info with this id" })
         }
         return new Subscription({ ...result });
+    }
+
+    async findSubscriptionInfo(query: QueryHelper<Subscription>): Promise<Subscription[]> {
+        var result = await this.subscription.findMany({ where: { ...query.query as any } })
+        return result.map(sub => new Subscription({ ...sub }))
+    }
+
+
+
+    async getSubscriptions(queryInfo: QueryHelper<Subscription>): Promise<SubscriptionResponse> {
+        var result = await this.subscription.findMany({ where: { ...queryInfo.query as any } })
+        if (!result) {
+            return new SubscriptionResponseBuilder().withError("Unable to find subscription fo").build()
+
+        }
+        var subscriptions = result.map(sub => new Subscription({ ...sub }))
+        return new SubscriptionResponseBuilder().withSubscriptions(subscriptions).build()
     }
 
     async updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean> {
@@ -110,6 +136,12 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
     async isplatformServiceInSubscription(platformServiceId: string[]): Promise<boolean> {
         var result = await this.subscription.findFirst({ where: { platformServices: { some: { serviceId: { in: platformServiceId } } } } })
         return result.id != undefined
+    }
+
+
+    async ownerHasSubscription(owner: string, subsciptionId: string): Promise<boolean> {
+        var result = await this.subscription.findFirst({ where: { owner: owner, id: subsciptionId } })
+        return result?.id != undefined
     }
 
     async onModuleDestroy() {

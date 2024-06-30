@@ -1,4 +1,4 @@
-import { AppMsgQueues } from "libs/rmq/constants";
+import { AppMsgQueues } from "libs/rmq/const/constants";
 
 export const Configuration = () => ({
     auth: {
@@ -7,8 +7,16 @@ export const Configuration = () => ({
         accessTokenExpiresIn: "1d",
         refreshTokenExpiresIn: "7d",
         userAccessEndpointFromAuthService: (userId: string) => {
-            return `http://localhost:3002/access?user=${userId}`;
+            return `http://localhost:3002/access/user?id=${userId}`;
+        },
+        businessAccessFetchEndpoint: (businessId: string) => {
+            return `http://localhost:3002/access/business?id=${businessId}`;
+        },
+        businessSubscriptionEndpoint: (businessId: string) => {
+            return `http://localhost:3002/subscription/business?id=${businessId}`
         }
+
     },
+
 });
 

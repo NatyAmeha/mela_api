@@ -8,5 +8,5 @@ export enum PermissionTargetType {
     ANY = "ANY"
 }
 export enum PERMISSIONACTION {
-    CREATE = "CREATE", READ = "READ", UPDATE = "UPDATE", DELETE = "DELETE", ANY = "ANY"
+    CREATE = "CREATE", READ = "READ", UPDATE = "UPDATE", DELETE = "DELETE", ANY = "ANY", MANAGE = "MANAGE", ASSIGN_UNASSIGN = "ASSIGN_UNASSIGN"
 }
