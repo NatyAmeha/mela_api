@@ -88,6 +88,10 @@ export class User extends BaseModel {
             email: this.email
         }
     }
+
+    getFavoriteBusinessIds(): string[] {
+        return this.favoriteBusinesses.map(business => business.businessId)
+    }
 }
 
 @ObjectType()

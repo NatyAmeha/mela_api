@@ -2,7 +2,6 @@ import { CanActivate, ExecutionContext, Injectable, SetMetadata } from "@nestjs/
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { AccountType, User } from "apps/auth/src/auth/model/user.model";
-import { Request } from "express";
 import { Observable } from "rxjs";
 
 export class AuthzGuard implements CanActivate {

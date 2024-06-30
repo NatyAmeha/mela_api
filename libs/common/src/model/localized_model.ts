@@ -14,6 +14,11 @@ export class LocalizedField {
         Object.assign(this, data)
 
     }
+
+    static selectValueByKey(key: LanguageKey, localizedFields: LocalizedField[]): string | undefined {
+        const field = localizedFields.find(field => field.key === key);
+        return field?.value;
+    }
 }
 
 @InputType()

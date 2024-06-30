@@ -27,7 +27,7 @@ export const CurrentUser = createParamDecorator((data: any, context: GqlExecutio
     if (userHeaderValue && userHeaderValue !== "undefined") {
         let userInfo = JSON.parse(userHeaderValue) as User;
         if (userInfo.id != undefined) {
-            return userInfo
+            return new User({ ...userInfo })
         }
         return undefined
 

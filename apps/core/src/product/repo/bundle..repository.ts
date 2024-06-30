@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ProductBundle } from "../model/product_bundle.model";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { Bundle, PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { uniq } from "lodash";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
@@ -8,12 +8,13 @@ import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { Business } from "../../business/model/business.model";
 import { Branch } from "../../branch/model/branch.model";
 import { Product } from "../model/product.model";
+import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export interface IBundleRepository {
     createBundle(bundle: ProductBundle): Promise<ProductBundle>
     getBundleDetails(bundleId: string): Promise<ProductBundle>
     getBundlesAvailableInBranch(branchId: string): Promise<ProductBundle[]>
-    getBusinessBundles(businessId: string): Promise<ProductBundle[]>
+    getBusinessBundles(businessId: string, queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
     updateBundleInfo(bundleId: string, bundle: Partial<ProductBundle>): Promise<ProductBundle>
     addProductToBundle(bundleId: string, productId: string[]): Promise<ProductBundle>
     removeProductFromBundle(bundleId: string, productId: string[]): Promise<ProductBundle>
@@ -89,10 +90,13 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
         }
     }
 
-    async getBusinessBundles(businessId: string): Promise<ProductBundle[]> {
+    async getBusinessBundles(businessId: string, queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]> {
         try {
             const result = await this.bundle.findMany({
-                where: { businessId }
+                where: { businessId },
+                orderBy: { ...queryHelper.orderBy as any },
+                skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
+                take: queryHelper?.limit,
             });
             return result?.map(bundle => new ProductBundle({ ...bundle }));
         } catch (ex) {

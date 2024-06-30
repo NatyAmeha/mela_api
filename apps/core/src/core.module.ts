@@ -37,6 +37,8 @@ import { InventoryResolver } from './inventory/inventory.resolver';
 import { ProductBundleRepository } from './product/repo/bundle..repository';
 import { BundleService } from './product/bundle.service';
 import { ProductAddonResolver } from './product/product_addon.resolver';
+import { DiscoverResolver } from './discover/discover.resolver';
+import { DiscoverService } from './discover/discover.service';
 
 
 @Module({
@@ -96,6 +98,8 @@ import { ProductAddonResolver } from './product/product_addon.resolver';
 
     { provide: CoreServiceMessageProcessor.InjectName, useClass: CoreServiceMessageProcessor },
     CoreServiceMsgBrockerClient,
+
+    DiscoverResolver, DiscoverService,
 
     // Builders and utils
     BusinessResponseBuilder, InventoryLocationBuilder

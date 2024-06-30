@@ -32,6 +32,8 @@ export interface IProductRepository {
 
     updateProductStats(productId: string, stats: Partial<Stat>): Promise<boolean>;
 
+    getBusinessTopProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
+
 
 }
 
@@ -393,6 +395,20 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
             return transactionResult;
         } catch (error) {
             throw new PrismaException({ source: "Remove payment option from product", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getBusinessTopProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: { businessId },
+                orderBy: { ...query.orderBy as any },
+                skip: query?.page ? ((query.page - 1) * query.limit) : 0,
+                take: query?.limit,
+            });
+            return products?.map(product => new Product({ ...product }));
+        } catch (ex) {
+            throw new PrismaException({ source: "Get business top products", statusCode: 400, code: ex.code, meta: ex.meta });
         }
     }
 

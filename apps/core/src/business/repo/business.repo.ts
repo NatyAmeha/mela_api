@@ -9,9 +9,13 @@ import { includes, isEqual, uniq, uniqBy, uniqWith } from "lodash";
 import { BusinessSection } from "../model/business_section.model";
 import { PaymentOption } from "../model/payment_option.model";
 import { Stat } from "../../product/model/product_stat.model";
+import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
+    findBusinesses(query: QueryHelper<Business>): Promise<Business[]>;
+    findBusinessesById(businessIds: string[]): Promise<Business[]>;
+
     updateBusiness(businessId: string, updatedBusinessData: Partial<Business>): Promise<Business>;
     updatedBusinessSubscriptionInfo(businessId: string, stage: string, { canActivate, subscriptionId, trialPeriodUsedServiceIds }?: { canActivate?: boolean, subscriptionId?: string, trialPeriodUsedServiceIds?: string[] }): Promise<Business>;
     getProductBusiness(productId: string): Promise<Business>;
@@ -109,6 +113,24 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             return new Business({ ...businessInfo });
         } catch (error) {
             throw new PrismaException({ source: "Remove business section", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async findBusinesses(query: QueryHelper<Business>): Promise<Business[]> {
+        try {
+            const businesses = await this.business.findMany({ where: { ...query.query as any } });
+            return businesses.map(business => new Business({ ...business }));
+        } catch (ex) {
+            throw new PrismaException({ source: "Find businesses", statusCode: 400, code: ex.code, meta: ex.meta });
+        }
+    }
+
+    async findBusinessesById(businessIds: string[]): Promise<Business[]> {
+        try {
+            const businesses = await this.business.findMany({ where: { id: { in: businessIds } } });
+            return businesses.map(business => new Business({ ...business }));
+        } catch (ex) {
+            throw new PrismaException({ source: "Find businesses by id", statusCode: 400, code: ex.code, meta: ex.meta });
         }
     }
 
