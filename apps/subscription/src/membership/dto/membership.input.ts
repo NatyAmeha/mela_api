@@ -1,8 +1,16 @@
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { PriceInput } from "@app/common/model/price.model";
-import { Field, InputType, Int, PartialType } from "@nestjs/graphql";
+import { Field, InputType, Int, OmitType, PartialType } from "@nestjs/graphql";
 import { MembershipPerkType, MembershipType } from "../model/memberhip.model";
 import { ArrayNotEmpty } from "class-validator";
+
+@InputType()
+export class BenefitInput {
+    @Field(type => [LocalizedFieldInput])
+    name: LocalizedFieldInput[]
+    @Field(type => MembershipPerkType)
+    perkType?: string
+}
 
 @InputType()
 export class CreateMembershipInput {
@@ -35,12 +43,10 @@ export class CreateMembershipInput {
     isActive?: boolean
 }
 
-
-
 @InputType()
-export class BenefitInput {
-    @Field(type => [LocalizedFieldInput])
-    name: LocalizedFieldInput[]
-    @Field(type => MembershipPerkType)
-    perkType?: string
+export class UpdateMembershipInput extends PartialType(OmitType(CreateMembershipInput, ['type'])) {
+
 }
+
+
+

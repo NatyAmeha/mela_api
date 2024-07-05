@@ -1,6 +1,6 @@
 import { Inject } from "@nestjs/common";
 import { IMembershipRepository, MembershipRepository } from "../repo/membership.repo";
-import { CreateMembershipInput } from "../dto/membership.input";
+import { CreateMembershipInput, UpdateMembershipInput } from "../dto/membership.input";
 import { Membership } from "../model/memberhip.model";
 import { Group } from "../model/group.model";
 import { MembershipResponse, MembershipResponseBuilder } from "../dto/membership.response";
@@ -29,7 +29,7 @@ export class MembershipService {
         return new MembershipResponseBuilder().withMembership(result).build();
     }
 
-    async updateMembershipPlan(planId: string, input: CreateMembershipInput) {
+    async updateMembershipPlan(planId: string, input: UpdateMembershipInput) {
         const membershipInfo = Membership.fromCreateMembershipPlanInput(input)
         const result = await this.membershipRepo.updateMembershipPlan(planId, membershipInfo)
         return new MembershipResponseBuilder().basicResponse(result)

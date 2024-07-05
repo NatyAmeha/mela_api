@@ -5,7 +5,7 @@ import { Subscription } from "../../model/subscription.model";
 import { BaseModel } from "@app/common/model/base.model";
 import { Benefit } from "./benefit.model";
 import { Group } from "./group.model";
-import { CreateMembershipInput } from "../dto/membership.input";
+import { CreateMembershipInput, UpdateMembershipInput } from "../dto/membership.input";
 import { Product } from "apps/core/src/product/model/product.model";
 import { Gallery } from "apps/core/src/business/model/gallery.model";
 import { plainToClass, plainToInstance } from "class-transformer";
@@ -66,7 +66,7 @@ export class Membership {
     }
 
 
-    static fromCreateMembershipPlanInput(data: CreateMembershipInput, ownerId?: string) {
+    static fromCreateMembershipPlanInput(data: CreateMembershipInput | UpdateMembershipInput, ownerId?: string) {
         const membershipInfo = new Membership({
             ...data, owner: ownerId,
             name: data.name?.map(name => new LocalizedField({ ...name })),

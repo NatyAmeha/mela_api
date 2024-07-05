@@ -8,7 +8,7 @@ import { Subscription } from "apps/subscription/src/model/subscription.model";
 import { SubscriptionType } from "apps/subscription/src/model/subscription_type.enum";
 import { PermissionType } from "apps/auth/src/authorization/model/permission_type.enum";
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
-import { string } from "joi";
+import { ResourceTargetIdentifier } from "../utils/resource_target_constants";
 
 export interface IPermissionHelper {
     isPermissionsGranted(grantedPermissions: Permission[], requiredPermission: PermissionConfiguration): boolean
@@ -73,10 +73,14 @@ export class BasePermissionHelper implements IPermissionHelper {
         // one of them should be present in the mutation/query arguments
         // possible parameter key-value provided inside resolver method. to get resource target by key
         var resourceTargetProvided: { key: string, value: any }[] = [
-            { key: "owner", value: args.owner }, { key: "ownerId", value: args.ownerId },
-            { key: "businessId", value: args.businessId }, { key: "productId", value: args.productId },
-            { key: "userId", value: args.userId }, { key: "id", value: args.id },
-            { key: "businessId", value: args.businessId }
+            { key: ResourceTargetIdentifier.OWNER, value: args.owner },
+            { key: ResourceTargetIdentifier.OWNERID, value: args.ownerId },
+            { key: ResourceTargetIdentifier.BUSINESSID, value: args.businessId },
+            { key: ResourceTargetIdentifier.PRODUCTID, value: args.productId },
+            { key: ResourceTargetIdentifier.USERID, value: args.userId },
+            { key: ResourceTargetIdentifier.ID, value: args.id },
+            { key: ResourceTargetIdentifier.SUBSCRIPTIONID, value: args.subscriptionId },
+            { key: ResourceTargetIdentifier.MEMBERSHIPID, value: args.membershipId },
         ]
         return resourceTargetProvided.filter(target => target.value != undefined)
     }
