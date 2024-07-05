@@ -64,10 +64,10 @@ export class SubscriptionResolver {
   }
 
 
-  @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }] })
+  @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }] })
   @UseGuards(PermissionGuard)
   @Mutation(returns => SubscriptionResponse)
-  async subscribeBusinessToPlatformServices(@Args("id", { description: "id of the business" }) businessId: string, @Args("input") planInput: CreatePlatformSubscriptionInput) {
+  async subscribeBusinessToPlatformServices(@Args("businessId", { description: "id of the business" }) businessId: string, @Args("input") planInput: CreatePlatformSubscriptionInput) {
     // get business info from core service
     let businessInfo = await this.subscriptionBroker.getBusinessInformationFromCoreService(businessId)
     let subscritpionResponse = await this.subscriptionService.subscribeToPlatformServices(planInput, businessInfo.business);

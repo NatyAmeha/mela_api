@@ -252,7 +252,8 @@ export enum PlatformServiceType {
     POINT_OF_SALE = "POINT_OF_SALE",
     INVENTORY = "INVENTORY",
     ONLINE_STORE = "ONLINE_STORE",
-    SUBSCRIPTION = "SUBSCRIPTION"
+    SUBSCRIPTION = "SUBSCRIPTION",
+    MEMBERSHIP = "MEMBERSHIP",
 }
 
 registerEnumType(SelectionType, { name: "SelectionType" })

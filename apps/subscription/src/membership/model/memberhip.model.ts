@@ -8,6 +8,7 @@ import { Group } from "./group.model";
 import { CreateMembershipInput } from "../dto/membership.input";
 import { Product } from "apps/core/src/product/model/product.model";
 import { Gallery } from "apps/core/src/business/model/gallery.model";
+import { plainToClass, plainToInstance } from "class-transformer";
 
 export enum MembershipType {
     BUSINESS = "BUSINESS",
@@ -25,7 +26,13 @@ export enum MembershipPerkType {
 
 
 @ObjectType()
-export class Membership extends BaseModel {
+export class Membership {
+    @Field(types => ID)
+    id: string;
+    @Field()
+    createdAt?: Date;
+    @Field()
+    updatedAt?: Date;
     @Field(type => [LocalizedField])
     name: LocalizedField[]
     @Field(type => [LocalizedField])
@@ -55,23 +62,19 @@ export class Membership extends BaseModel {
     subscriptions?: Subscription[]
 
     constructor(data: Partial<Membership>) {
-        super()
         Object.assign(this, data)
     }
 
 
-    static fromCreateMembershipPlanInput(data: CreateMembershipInput, ownerId: string) {
-        return new Membership({
-            name: data.name,
-            description: data.description,
-            price: data.price,
-            category: data.category,
-            benefits: data.benefits?.map(benefit => new Benefit(benefit)),
-            duration: data.duration,
-            type: data.type,
-            owner: ownerId,
-
+    static fromCreateMembershipPlanInput(data: CreateMembershipInput, ownerId?: string) {
+        const membershipInfo = new Membership({
+            ...data, owner: ownerId,
+            name: data.name?.map(name => new LocalizedField({ ...name })),
+            description: data.description?.map(description => new LocalizedField({ ...description })),
+            benefits: data.benefits?.map(benefit => new Benefit({ ...benefit })),
+            price: data.price?.map(price => new Price({ ...price })),
         })
+        return membershipInfo;
     }
 }
 

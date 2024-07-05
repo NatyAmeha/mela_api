@@ -107,7 +107,7 @@ export class RMQService implements IRMQService {
                 } catch (error) {
                     console.log("listen message beta", error)
                 }
-            }, { noAck: false })
+            }, { noAck: true })
         })
 
     }

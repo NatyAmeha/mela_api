@@ -1,7 +1,7 @@
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { PriceInput } from "@app/common/model/price.model";
-import { Field, InputType, Int } from "@nestjs/graphql";
-import { MembershipType } from "../model/memberhip.model";
+import { Field, InputType, Int, PartialType } from "@nestjs/graphql";
+import { MembershipPerkType, MembershipType } from "../model/memberhip.model";
 import { ArrayNotEmpty } from "class-validator";
 
 @InputType()
@@ -31,12 +31,16 @@ export class CreateMembershipInput {
     @Field(type => MembershipType)
     type: string
 
-
+    @Field({ defaultValue: true })
+    isActive?: boolean
 }
+
 
 
 @InputType()
 export class BenefitInput {
+    @Field(type => [LocalizedFieldInput])
     name: LocalizedFieldInput[]
-    perkType: string
+    @Field(type => MembershipPerkType)
+    perkType?: string
 }

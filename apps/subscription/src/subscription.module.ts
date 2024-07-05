@@ -19,6 +19,7 @@ import { SubscriptionMsgProcessosor } from './msg_brocker_client/subscription_se
 import { MembershipResolver } from './membership/resolver/membership.resolver';
 import { MembershipService } from './membership/resolver/membership.service';
 import { MembershipRepository } from './membership/repo/membership.repo';
+import { MembershipResourceTracker } from './membership/membership_resource_usage_tracker';
 
 @Module({
   imports: [
@@ -75,7 +76,7 @@ import { MembershipRepository } from './membership/repo/membership.repo';
     SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository,
 
     { provide: MembershipRepository.injectName, useClass: MembershipRepository },
-    MembershipResolver, MembershipService
+    MembershipResolver, MembershipService, MembershipResourceTracker
 
 
   ],

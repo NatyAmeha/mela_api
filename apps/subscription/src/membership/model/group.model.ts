@@ -30,7 +30,6 @@ export class Group {
     static getDefaultGroupForMembership(membershipInfo: Membership) {
         return new Group({
             name: membershipInfo.name,
-            membership: membershipInfo,
             members: [],
             default: true
         })

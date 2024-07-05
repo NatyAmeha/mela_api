@@ -79,6 +79,7 @@ model Group {
     id           String           @id @default(auto()) @map("_id") @db.ObjectId
     name         LocalizedField[]
     members      GroupMember[]
+    default      Boolean          @default(false)
     membershipId String?          @db.ObjectId
     membership   Membership?      @relation(fields: [membershipId], references: [id])
 }

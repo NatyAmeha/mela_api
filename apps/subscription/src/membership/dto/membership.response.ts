@@ -25,11 +25,13 @@ export class MembershipResponseBuilder extends BaseResponseBuilder {
     }
 
     withMembership(membership: Membership): MembershipResponseBuilder {
+        this.response.success = true;
         this.response.membership = membership;
         return this;
     }
 
     withMemberships(memberships: Membership[]): MembershipResponseBuilder {
+        this.response.success = true;
         this.response.memberships = memberships;
         return this;
     }

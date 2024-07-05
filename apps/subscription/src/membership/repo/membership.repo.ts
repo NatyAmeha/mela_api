@@ -29,8 +29,8 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
             var createResult = await this.membership.create({
                 data: {
                     ...resetMembershipInfo, groups: {
-                        create: {
-                            ...defaultGroups
+                        createMany: {
+                            data: defaultGroups
                         }
                     }
                 }
@@ -40,6 +40,7 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
             }
             return new Membership({ ...createResult });
         } catch (ex) {
+            console.log("error", ex)
             throw new PrismaException({ message: " Unable to create membership plan", exception: ex })
 
         }

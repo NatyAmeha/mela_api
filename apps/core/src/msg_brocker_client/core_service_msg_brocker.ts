@@ -58,7 +58,7 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
     async listenCoreServiceRequestAndReply() {
         var messageINfo = new MessageBrockerMsgBuilder().withExchange(ExchangeNames.CORE_DIRECT_EXCHANGE, ExchangeType.DIRECT).withRoutingKey(RoutingKey.CORE_SERVICE_ROUTING_KEY).build();
         this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (message) => {
-            console.log("Reply message received in Subscription service", message.content.toString());
+            console.log("Reply message received in Core service", message.content.toString());
             let replyCoorelationId = message.properties.correlationId;
             let msgProcessResult = await this.messageProcessor.processMessage(this.channel, message)
             await this.sendMessage(message.properties.replyTo, msgProcessResult, replyCoorelationId)

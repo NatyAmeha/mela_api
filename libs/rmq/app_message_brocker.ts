@@ -53,7 +53,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         } catch (ex) {
             console.log("error occured while sending message")
         } finally {
-            await this.channel.close();
+            // await this.channel.close();
         }
     }
 
@@ -81,7 +81,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
             } catch (error) {
                 console.log("error occured while sending message and waiting response")
             } finally {
-                await this.channel.close();
+                // await this.channel.close();
             }
         })();
         return Promise.race([operationPromise, timeoutPromise]);
@@ -103,7 +103,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         } catch (ex) {
             console.log("error occured while sending message")
         } finally {
-            await this.channel.close();
+            // await this.channel.close();
         }
     }
 

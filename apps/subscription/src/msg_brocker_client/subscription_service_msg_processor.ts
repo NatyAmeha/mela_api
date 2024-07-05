@@ -38,7 +38,7 @@ export class SubscriptionMsgProcessosor implements IReceivedMessageProcessor {
             }
             console.log("can ack message", canAckMessage)
             if (canAckMessage) {
-                // channel.ack(messageResult)
+                channel.ack(messageResult)
                 this.processedMessageIds.delete(messageId);
             }
             return replyResponse;
