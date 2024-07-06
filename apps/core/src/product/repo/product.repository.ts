@@ -7,6 +7,7 @@ import { result, uniq } from "lodash";
 import { ProductAddon } from "../model/product_addon.model";
 import { CommonBusinessErrorMessages, CommonProductErrorMessages } from "../../utils/const/error_constants";
 import { Stat } from "../model/product_stat.model";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
@@ -33,6 +34,10 @@ export interface IProductRepository {
     updateProductStats(productId: string, stats: Partial<Stat>): Promise<boolean>;
 
     getBusinessTopProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
+
+    addMembershipIdToProducts(productIds: string[], membershipId: string): Promise<boolean>;
+    removeMembershipIdFromProducts(productIds: string[], membershipId: string): Promise<boolean>;
+    getMembershipProducts(membershipId: string): Promise<Product[]>;
 
 
 }
@@ -409,6 +414,78 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
             return products?.map(product => new Product({ ...product }));
         } catch (ex) {
             throw new PrismaException({ source: "Get business top products", statusCode: 400, code: ex.code, meta: ex.meta });
+        }
+    }
+
+    async addMembershipIdToProducts(productIds: string[], membershipId: string): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const products = await prisma.product.findMany({
+                    where: {
+                        id: { in: productIds }
+                    }
+                });
+                if (products.length != productIds.length) {
+                    throw new RequestValidationException({ source: "Add membership ", statusCode: 400, message: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const updatedProducts = await Promise.all(products.map(product => {
+                    const uniqueMembershipIds = uniq([...product.membershipIds, membershipId]);
+                    return prisma.product.update({
+                        where: { id: product.id },
+                        data: {
+                            membershipIds: { set: uniqueMembershipIds }
+                        }
+                    });
+                }));
+                console.log("update product result ", updatedProducts.length);
+                return updatedProducts;
+            });
+            return true;
+        } catch (error) {
+            console.log("error", error)
+            throw new PrismaException({ source: "Add membership id to products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async removeMembershipIdFromProducts(productIds: string[], membershipId: string): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const products = await prisma.product.findMany({
+                    where: {
+                        id: { in: productIds }
+                    }
+                });
+                if (products.length != productIds.length) {
+                    throw new RequestValidationException({ source: "Remove membership id from products", statusCode: 400, message: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const updatedProducts = products.map(product => {
+                    const updatedMembershipIds = product.membershipIds?.filter(id => id !== membershipId);
+                    return prisma.product.update({
+                        where: { id: product.id },
+                        data: {
+                            membershipIds: { set: updatedMembershipIds }
+                        }
+                    });
+                });
+                return updatedProducts;
+            });
+            return true;
+        } catch (error) {
+            console.log("error", error)
+            throw new PrismaException({ source: "Remove membership id from products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getMembershipProducts(membershipId: string): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: {
+                    membershipIds: { has: membershipId }
+                }
+            });
+            return products?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get membership products", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

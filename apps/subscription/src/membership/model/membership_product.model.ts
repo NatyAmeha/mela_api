@@ -37,21 +37,11 @@ export class MembershipProduct {
     @Field(types => [String])
     reviewTopics?: string[];
 
-    // @Field()
-    // sku: string;
-    // @Field(types => [Productoption], { defaultValue: [] })
-    // options: Productoption[]
-    // @Field(types => [String], { defaultValue: [] })
-    // optionsIncluded: string[]
     @Field(types => [String])
     variantsId?: string[];
 
     @Field({ defaultValue: false })
     mainProduct?: boolean
-
-    // @Field(types => [Inventory])
-    // @Type(() => Inventory)
-    // inventory?: Inventory[]
 
     @Field(types => String, { defaultValue: "Order" })
     callToAction?: string;
@@ -59,19 +49,12 @@ export class MembershipProduct {
     @Field(types => [String])
     branchIds?: string[];
 
-    // @Field(types => String)
-    // deliveryInfoId?: string;
+    constructor(data: Partial<MembershipProduct>) {
+        Object.assign(this, data)
+    }
 
-    // @Field(types => [Branch])
-    // branches?: Branch[];
-
-    // @Field(types => [ProductAddon], { defaultValue: [] })
-    // addons?: ProductAddon[];
-
-    // @Field(types => [String], { defaultValue: [] })
-    // paymentOptionsId?: string[];
-
-    // // stats
-    // @Field(types => Int, { defaultValue: 0 })
-    // totalViews: number;
+    static getMembershipProductsfromRawProductDataInput(data: any[]) {
+        if (!data || data.length) return []
+        return data.map(product => new MembershipProduct({ ...product }));
+    }
 }

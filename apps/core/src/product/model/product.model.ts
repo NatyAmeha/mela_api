@@ -110,6 +110,9 @@ export class Product extends BaseModel {
     @Field(types => [String], { defaultValue: [] })
     paymentOptionsId?: string[];
 
+    @Field(types => [String])
+    membershipIds?: string[];
+
     // stats
     @Field(types => Int, { defaultValue: 0 })
     totalViews: number;

@@ -61,7 +61,9 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
             console.log("Reply message received in Core service", message.content.toString());
             let replyCoorelationId = message.properties.correlationId;
             let msgProcessResult = await this.messageProcessor.processMessage(this.channel, message)
-            await this.sendMessage(message.properties.replyTo, msgProcessResult, replyCoorelationId)
+            if (message.properties.replyTo) {
+                await this.sendMessage(message.properties.replyTo, msgProcessResult, replyCoorelationId)
+            }
         })
     }
 

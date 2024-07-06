@@ -6,12 +6,13 @@ import { CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq
 import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
 import { ChannelWrapper } from "amqp-connection-manager";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
+import { ProductService } from "../product/product.service";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class CoreServiceMessageProcessor implements IReceivedMessageProcessor {
     static InjectName = "CORE_SERVICE_MSG_PROCESSOR"
     processedMessageIds = new Set<string>();
-    constructor(private businessService: BusinessService) {
+    constructor(private businessService: BusinessService, private productService: ProductService) {
 
     }
 
@@ -34,6 +35,16 @@ export class CoreServiceMessageProcessor implements IReceivedMessageProcessor {
                     let businessInfo = await this.businessService.getBusinessResponse(businessId);
                     canAckMessage = businessInfo.isSafeErrorIfExist()
                     replyResponse = { success: true, data: businessInfo };
+                }
+                else if (messageResult.properties.correlationId == SubscriptionServiceMessageType.PRODUCT_ASSIGNMENT_TO_MEMBERSHIP) {
+                    const messageData = messageInfo.data as { membershipId: string, productIds: string[] }
+                    const productAssignmentResult = await this.productService.adddMembershipIdToProducts(messageData.productIds, messageData.membershipId);
+                    replyResponse = { success: true, data: productAssignmentResult };
+                }
+                else if (messageResult.properties.correlationId == SubscriptionServiceMessageType.GET_MEMBERSHIP_PRODUCTS) {
+                    const membershipId = messageInfo as string;
+                    const response = await this.productService.getMembershipProducts(membershipId);
+                    replyResponse = { success: true, data: response.products ?? [] };
                 }
             }
             if (canAckMessage) {

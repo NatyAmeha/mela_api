@@ -58,20 +58,22 @@ model PlatformService {
 }
 
 model Membership {
-    id              String           @id @default(auto()) @map("_id") @db.ObjectId
-    name            LocalizedField[]
-    description     LocalizedField[]
-    price           PriceInfo[]
-    category        String[]         @default([])
-    benefits        Benefit[]
-    duration        Int              @default(30)
-    trialPeriod     Int              @default(0)
-    type            String
-    owner           String
-    isActive        Boolean          @default(true)
-    groupsId        String[]
-    subscriptionsId String[]
-    groups          Group[]
+    id                String           @id @default(auto()) @map("_id") @db.ObjectId
+    name              LocalizedField[]
+    description       LocalizedField[]
+    price             PriceInfo[]
+    category          String[]         @default([])
+    benefits          Benefit[]
+    duration          Int              @default(30)
+    trialPeriod       Int              @default(0)
+    type              String
+    owner             String
+    isActive          Boolean          @default(true)
+    groupsId          String[]
+    membersProductIds String[]         @default([])
+    subscriptionsId   String[]
+    groups            Group[]
+
     // subscriptions?: Subscription[]
 }
 

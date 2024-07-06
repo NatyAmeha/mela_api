@@ -62,6 +62,21 @@ export class ProductService {
         return response.build()
     }
 
+    async adddMembershipIdToProducts(productId: string[], membershipId: string): Promise<ProductResponse> {
+        const result = await this.productRepository.addMembershipIdToProducts(productId, membershipId);
+        return new ProductResponseBuilder().basicResponse(result);
+    }
+
+    async removeMembershipIdFromProducts(productId: string[], membershipId: string): Promise<ProductResponse> {
+        const result = await this.productRepository.removeMembershipIdFromProducts(productId, membershipId);
+        return new ProductResponseBuilder().basicResponse(result);
+    }
+
+    async getMembershipProducts(membershipId: string): Promise<ProductResponse> {
+        const result = await this.productRepository.getMembershipProducts(membershipId);
+        return new ProductResponseBuilder().withProducts(result).build();
+    }
+
     // async createBulkProducts(businessId: string, products: BuilkProductCreateInput[], subscriptionInput: Subscription, platformServices: PlatformService[]): Promise<ProductResponse> {
     //     const productInfos = await Promise.all(products.map(async (product) => (Product.fromCreateProductInput(businessId, product));
     //     if (subscriptionInput == undefined || !platformServices || platformServices?.length == 0) {

@@ -44,6 +44,23 @@ export class RMQService implements IRMQService {
 
                 },
             });
+            channel.on('close', () => {
+                console.error('Channel closed, attempting to reconnect...');
+                // reconnect();
+            });
+
+            channel.on('error', (err) => {
+                console.error('Channel error:', err);
+            });
+
+            this.connection.on('error', (err) => {
+                console.error('Connection error:', err);
+            });
+
+            this.connection.on('close', () => {
+                console.error('Connection closed, attempting to reconnect...');
+                // reconnect();
+            });
             return channel;
         } catch (ex) {
             console.log("create channel exception", ex)
@@ -93,7 +110,6 @@ export class RMQService implements IRMQService {
     listenMessageBeta(channel: ChannelWrapper, queue: string, messageType?: string): Observable<ConsumeMessage> {
         return new Observable(observer => {
             channel.consume(queue, (response) => {
-                console.log("message received", response.content.toString(), messageType)
                 try {
                     if (messageType != undefined) {
                         observer.next(response)
@@ -140,7 +156,7 @@ export class RMQService implements IRMQService {
                             queue.queue,
                             (msg) => {
                                 observer.next(msg)
-                            },
+                            }, { noAck: true }
                         );
                     });
                 })

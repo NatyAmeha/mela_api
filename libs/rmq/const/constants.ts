@@ -2,7 +2,10 @@ export enum RoutingKey {
     SUBSCRIPTION_SERVICE_ROUTING_KEY = "SUBSCRIPTION_PUB_SUB",
     AUTH_SERVICE_ROUTING_KEY = "AUTH_PUB_SUB",
     CORE_SERVICE_ROUTING_KEY = "CORE_PUB_SUB",
-    CORE_SERVICE_EVENT = "event.subscription.create",
+
+    CORE_SERVICE_EVENT = "event.core.*",
+    AUTH_SERVICE_EVENT = "event.auth.*",
+    SUBSCRIPTION_SERVICE_EVENT = "event.subscription.*",
 
 }
 

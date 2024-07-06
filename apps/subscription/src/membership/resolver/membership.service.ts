@@ -8,10 +8,12 @@ import { MembershipResourceTracker } from "../membership_resource_usage_tracker"
 import { Subscription } from "../../model/subscription.model";
 import { PlatformService } from "../../model/platform_service.model";
 import { CommonSubscriptionErrorMessages } from "apps/core/src/utils/const/error_constants";
+import { SubscriptionMessageBrocker } from "../../msg_brocker_client/subscription_message_brocker";
 
 export class MembershipService {
     constructor(
         @Inject(MembershipRepository.injectName) private membershipRepo: IMembershipRepository,
+        @Inject(SubscriptionMessageBrocker.InjectName) private subscriptionBroker: SubscriptionMessageBrocker,
         private membershipResourceTracker: MembershipResourceTracker
     ) {
 
@@ -37,8 +39,20 @@ export class MembershipService {
 
     async getMembershipInfo(membershipId: string) {
         const result = await this.membershipRepo.getMembershipPlan(membershipId)
-        // const produc = result.
-        return new MembershipResponseBuilder().withMembership(result).build();
+        const membershipProducts = await this.subscriptionBroker.getMembershipProductsFromCoreService(membershipId)
+        return new MembershipResponseBuilder().withMembership(result).withProducts(membershipProducts).build();
+    }
+
+
+    async assignProductsToMembershipPlan(membershipId: string, productIds: string[]) {
+        // update membership data
+        const result = await this.membershipRepo.assignProductstoMembershipPlan(membershipId, productIds)
+        const messagePublishResult = await this.subscriptionBroker.sendProductAssignedToMembershipEvent(membershipId, productIds)
+        if (!messagePublishResult) {
+            await this.membershipRepo.unassignProductsFromMembershipPlan(membershipId, productIds)
+            return new MembershipResponseBuilder().basicResponse(false, "Error occured while assigning products to membership plan")
+        }
+        return new MembershipResponseBuilder().basicResponse(result)
     }
 
 

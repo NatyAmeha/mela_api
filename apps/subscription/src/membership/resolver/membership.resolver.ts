@@ -49,7 +49,22 @@ export class MembershipResolver {
     }
 
 
-    async getMembershipDetails(@Args("membershipId") membershipId: string): Promise<MembershipResponse> {
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.MEMBERSHIP, action: PERMISSIONACTION.UPDATE, resourcTargetName: ResourceTargetIdentifier.MEMBERSHIPID },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: ResourceTargetIdentifier.BUSINESSID }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => MembershipResponse)
+    async assignProductsToMembershipPlan(@Args(ResourceTargetIdentifier.BUSINESSID) businessId: string, @Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string, @Args({ name: "productIds", type: () => [String] }) productIds: string[]): Promise<MembershipResponse> {
+        const result = await this.membershipService.assignProductsToMembershipPlan(membershipId, productIds);
+        return result;
+    }
+
+
+    @Mutation(returns => MembershipResponse)
+    async getMembershipDetails(@Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string): Promise<MembershipResponse> {
         const result = await this.membershipService.getMembershipInfo(membershipId);
         return result;
     }

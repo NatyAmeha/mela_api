@@ -15,7 +15,7 @@ export interface IAppMessageBrocker {
     connectMessageBrocker(): Promise<void>
     sendMessage<T, K>(queue: string, message: T, messageId: string): Promise<boolean>
     sendMessageGetReply<T, K>(queue: string, messageInfo: IMessageBrocker<T>, waitForInSecond: number): Promise<IMessageBrockerResponse<K>>
-    publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string }): Promise<boolean>
+    publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string, routingKey: string }): Promise<boolean>
     // common message brocker methods
     generateAccessMessageToSendToAuthService(access: Access[], replyQueue: string): IMessageBrocker<Access[]>
 }
@@ -87,12 +87,12 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         return Promise.race([operationPromise, timeoutPromise]);
     }
 
-    async publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string }): Promise<boolean> {
+    async publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string, routingKey?: string }): Promise<boolean> {
         try {
             this.channel = await this.rmqService.createChannel([this.eventQueue])
             let messageInfo: IMessageBrocker<T> = {
                 data: message,
-                routingKey: RoutingKey.CORE_SERVICE_EVENT,
+                routingKey: options.routingKey,
                 exchange: topic,
                 messageId: options.messageId,
                 coorelationId: coorelationId,

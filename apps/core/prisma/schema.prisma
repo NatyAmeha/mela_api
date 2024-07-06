@@ -52,6 +52,7 @@ model Product {
     inventory        Inventory[]
     addons           ProductAddon[]
     paymentOptionsId String[]        @default([])
+    membershipIds    String[]        @default([]) @db.ObjectId
 
     totalViews Int? @default(0)
 }

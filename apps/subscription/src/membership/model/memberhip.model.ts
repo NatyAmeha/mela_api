@@ -1,14 +1,10 @@
 import { LocalizedField } from "@app/common/model/localized_model";
 import { Price } from "@app/common/model/price.model";
-import { Directive, Field, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Field, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Subscription } from "../../model/subscription.model";
-import { BaseModel } from "@app/common/model/base.model";
 import { Benefit } from "./benefit.model";
 import { Group } from "./group.model";
 import { CreateMembershipInput, UpdateMembershipInput } from "../dto/membership.input";
-import { Product } from "apps/core/src/product/model/product.model";
-import { Gallery } from "apps/core/src/business/model/gallery.model";
-import { plainToClass, plainToInstance } from "class-transformer";
 
 export enum MembershipType {
     BUSINESS = "BUSINESS",
@@ -60,6 +56,8 @@ export class Membership {
     subscriptionsId?: string[]
     @Field(type => [Subscription])
     subscriptions?: Subscription[]
+    @Field(type => [String])
+    membersProductIds?: string[]
 
     constructor(data: Partial<Membership>) {
         Object.assign(this, data)

@@ -35,6 +35,11 @@ export class MembershipResponseBuilder extends BaseResponseBuilder {
         this.response.memberships = memberships;
         return this;
     }
+    withProducts(products: MembershipProduct[]): MembershipResponseBuilder {
+        this.response.success = true;
+        this.response.products = products;
+        return this;
+    }
 
     build(): MembershipResponse {
         return this.response;
