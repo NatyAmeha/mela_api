@@ -2,19 +2,21 @@ import { Inject } from "@nestjs/common";
 import { IMembershipRepository, MembershipRepository } from "../repo/membership.repo";
 import { CreateMembershipInput, UpdateMembershipInput } from "../dto/membership.input";
 import { Membership } from "../model/memberhip.model";
-import { Group } from "../model/group.model";
+import { Group, GroupMember, GroupMemberStatus } from "../model/group.model";
 import { MembershipResponse, MembershipResponseBuilder } from "../dto/membership.response";
 import { MembershipResourceTracker } from "../membership_resource_usage_tracker";
 import { Subscription } from "../../model/subscription.model";
 import { PlatformService } from "../../model/platform_service.model";
 import { CommonSubscriptionErrorMessages } from "apps/core/src/utils/const/error_constants";
 import { SubscriptionMessageBrocker } from "../../msg_brocker_client/subscription_message_brocker";
+import { MembershipSubscriptionOption } from "../../utils/subscrption_factory";
 
 export class MembershipService {
     constructor(
         @Inject(MembershipRepository.injectName) private membershipRepo: IMembershipRepository,
         @Inject(SubscriptionMessageBrocker.InjectName) private subscriptionBroker: SubscriptionMessageBrocker,
-        private membershipResourceTracker: MembershipResourceTracker
+        private membershipResourceTracker: MembershipResourceTracker,
+        private membershipSubscriptionOption: MembershipSubscriptionOption,
     ) {
 
     }
@@ -53,6 +55,40 @@ export class MembershipService {
             return new MembershipResponseBuilder().basicResponse(false, "Error occured while assigning products to membership plan")
         }
         return new MembershipResponseBuilder().basicResponse(result)
+    }
+
+    async joinToMembershipGroups(userId: string, membershipId: string, options: { onlyDefaultGroups: boolean, groupMemberStatus: GroupMemberStatus, selectedGroupIds?: string[] }) {
+        let groupsResult: Group[] = []
+        if (options.onlyDefaultGroups) {
+            groupsResult = await this.membershipRepo.getDefaultGroupsForMembership(membershipId)
+        }
+        else {
+            if (options.selectedGroupIds && options.selectedGroupIds.length > 0) {
+                groupsResult = await this.membershipRepo.getMembershipSelectedGroups(membershipId, options.selectedGroupIds)
+            }
+            groupsResult = await this.membershipRepo.getMembershipGroups(membershipId)
+        }
+        if (groupsResult.length === 0) {
+            return new MembershipResponseBuilder().basicResponse(false, "No groups found for this membership")
+        }
+        const membersInfo = GroupMember.getGroupMembers([userId], options.groupMemberStatus)
+        const groupJoinResult = await this.membershipRepo.joinGroups(Group.getGroupIds(groupsResult), membersInfo)
+        return new MembershipResponseBuilder().basicResponse(groupJoinResult)
+    }
+
+    async approveUserMembershipRequest(membershipId: string, userIds: string[]) {
+        const membershipInfo = await this.membershipRepo.getMembershipPlan(membershipId)
+        const groups = await this.membershipRepo.getMembershipGroups(membershipId)
+        if (membershipInfo === null) {
+            return new MembershipResponseBuilder().basicResponse(false, "Membership not found")
+        }
+        if (groups.length === 0) {
+            return new MembershipResponseBuilder().basicResponse(false, "No groups found for this membership")
+        }
+        const subscriptionResponse = await this.membershipSubscriptionOption.createSubscriptionInfoBeta(membershipInfo)
+
+        const approveResult = await this.membershipRepo.approveUserMembershipRequest(membershipId, userIds, subscriptionResponse.subscription);
+        return new MembershipResponseBuilder().basicResponse(approveResult)
     }
 
 

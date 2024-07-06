@@ -140,9 +140,10 @@ type Benefit {
 }
 
 type GroupMember {
-    userId       String
-    memberStatus String
-    dateJoined   DateTime @default(now())
+    userId               String
+    memberStatus         String
+    activeSubscriptionId String?  @db.ObjectId
+    dateJoined           DateTime @default(now())
 }
 
 type LocalizedField {

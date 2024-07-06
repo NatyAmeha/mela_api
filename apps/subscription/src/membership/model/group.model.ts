@@ -1,6 +1,7 @@
 import { LocalizedField } from "@app/common/model/localized_model";
 import { Field, ID, ObjectType } from "@nestjs/graphql";
 import { Membership } from "./memberhip.model";
+import { Subscription } from "../../model/subscription.model";
 
 export enum GroupMemberStatus {
     PENDING = 'PENDING',
@@ -34,15 +35,27 @@ export class Group {
             default: true
         })
     }
+
+    static getGroupIds(groups: Group[]) {
+        return groups.map(group => group.id)
+
+    }
 }
 
 @ObjectType()
 export class GroupMember {
     userId: string;
     memberStatus: string
+    activeSubscriptionId?: string
+    @Field(type => Subscription)
+    activeSubscription?: Subscription
     dateJoined: Date;
 
     constructor(data: Partial<GroupMember>) {
         Object.assign(this, data)
+    }
+
+    static getGroupMembers(userId: string[], memberStatus: GroupMemberStatus = GroupMemberStatus.PENDING, activeSubscriptionId?: string) {
+        return userId.map(userId => new GroupMember({ userId, memberStatus: memberStatus, activeSubscriptionId: activeSubscriptionId, dateJoined: new Date() }))
     }
 }

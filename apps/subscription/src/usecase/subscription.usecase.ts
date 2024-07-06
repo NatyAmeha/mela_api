@@ -7,7 +7,7 @@ import { PlatfromServiceSubscription, Subscription } from '../model/subscription
 import { SubscriptionResponse, SubscriptionResponseBuilder } from '../model/response/subscription.response';
 import { SubscriptionType } from '../model/subscription_type.enum';
 import { IPlatformServiceRepo, PlatformServiceRepository } from '../repo/platform_service.repo';
-import { ISubscriptionOption, SubscriptionFactory } from '../utils/subscrption_factory';
+import { SubscriptionFactory } from '../utils/subscrption_factory';
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
 import { SubscriptionUpgradeInput } from '../dto/update_subscription.input';
 import { SubscriptionUpgradeResponse } from '../model/response/subscription_upgrade.response';

@@ -13,6 +13,7 @@ import { CurrentSubscriptionUpgradeResponse, DowngradePlatformSubscriptionDecora
 import { LanguageKey } from "@app/common/model/localized_model"
 import { CreateBusinessSubscriptionInput } from "../dto/business.subscription.input"
 import { Business } from "apps/core/src/business/model/business.model"
+import { Membership } from "../membership/model/memberhip.model"
 
 
 
@@ -22,7 +23,7 @@ export class SubscriptionFactory {
         @Inject(SubscriptionRepository.InjectName) private subscriptionRepo: ISubscritpionRepository,) {
 
     }
-    create(type: string): ISubscriptionOption {
+    create(type: string): ISubscriptionOption<any> {
         if (type == SubscriptionType.PLATFORM) {
             return new PlatformSubscriptionOption(this.platformServiceRepo)
         }
@@ -39,18 +40,25 @@ export class SubscriptionFactory {
     }
 }
 
-export interface ISubscriptionOption {
+export interface ISubscriptionOption<T> {
+    createSubscriptionInfoBeta(input: T): Promise<SubscriptionResponse>
+    // deprecated
     createSubscriptionInfo(subscriptionInput: SubscriptionInput, businessInfo?: Business): Promise<SubscriptionResponse>
     createSubscriptionInfoFromSubscriptionUpgradeInfo(planInfo: SubscriptionUpgradeResponse): Promise<SubscriptionResponse>
     getSubscriptionUpgradeInfo(subscriiptionInfo: Subscription, platformServices: PlatformService[], subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse>
 }
 
 @Injectable()
-export class PlatformSubscriptionOption implements ISubscriptionOption {
+export class PlatformSubscriptionOption implements ISubscriptionOption<PlatformService> {
     constructor(
         @Inject(PlatformServiceRepository.InjectName) private platformServiceRepo: IPlatformServiceRepo,
     ) {
 
+    }
+
+    async createSubscriptionInfoBeta(input: PlatformService): Promise<SubscriptionResponse> {
+
+        throw new Error("Method not implemented.");
     }
     async createSubscriptionInfo(subscriptionInput: CreatePlatformSubscriptionInput, businessInfo?: Business): Promise<SubscriptionResponse> {
         if (!subscriptionInput.selectedPlatformServices || isEmpty(subscriptionInput.selectedPlatformServices)) {
@@ -98,9 +106,13 @@ export class PlatformSubscriptionOption implements ISubscriptionOption {
 }
 
 @Injectable()
-export class BusinessSubscriptionOption implements ISubscriptionOption {
+export class BusinessSubscriptionOption implements ISubscriptionOption<Business> {
     constructor(@Inject(SubscriptionRepository.InjectName) private subscriptionRepo: ISubscritpionRepository) {
 
+    }
+
+    async createSubscriptionInfoBeta(input: Business): Promise<SubscriptionResponse> {
+        throw new Error("Method not implemented.");
     }
     async createSubscriptionInfo(subscriptionInput: CreateBusinessSubscriptionInput, businessInfo?: Business): Promise<SubscriptionResponse> {
         // let plan = await this.subscriptionRepo.getSubscriptionPlan(subscriptionInput.planId);
@@ -134,4 +146,36 @@ export class BusinessSubscriptionOption implements ISubscriptionOption {
     }
 
 
+}
+
+@Injectable()
+export class MembershipSubscriptionOption implements ISubscriptionOption<Membership> {
+    static InjectName = "MEMBERSHIP_SUBSCRIPTION_OPTION"
+    async createSubscriptionInfoBeta(input: Membership): Promise<SubscriptionResponse> {
+        try {
+            const startDate = new Date(Date.now())
+            const endDate = new Date(Date.now())
+            endDate.setDate(endDate.getDate() + input.duration)
+            const subscription = new Subscription({
+                type: SubscriptionType.MEMBERSHIP,
+                owner: input.owner,
+                isActive: true,
+                startDate: startDate,
+                endDate: endDate,
+                isTrialPeriod: false,
+            })
+            return new SubscriptionResponse({ success: true, subscription: subscription })
+        } catch (ex) {
+
+        }
+    }
+    createSubscriptionInfo(subscriptionInput: SubscriptionInput, businessInfo?: Business): Promise<SubscriptionResponse> {
+        throw new Error("Method not implemented.");
+    }
+    createSubscriptionInfoFromSubscriptionUpgradeInfo(planInfo: SubscriptionUpgradeResponse): Promise<SubscriptionResponse> {
+        throw new Error("Method not implemented.");
+    }
+    getSubscriptionUpgradeInfo(subscriiptionInfo: Subscription, platformServices: PlatformService[], subscriptionInput: SubscriptionUpgradeInput): Promise<SubscriptionUpgradeResponse> {
+        throw new Error("Method not implemented.");
+    }
 }

@@ -13,7 +13,7 @@ import { PlatformServiceRepository } from './repo/platform_service.repo';
 import { PlatformServiceResolver } from './resolver/platform_service.resolver';
 import { PlatfromUsecase } from './usecase/platform.usecase';
 import { SubscriptionAccessGenerator } from './utils/subscription_access_generator';
-import { BusinessSubscriptionOption, PlatformSubscriptionOption, SubscriptionFactory } from './utils/subscrption_factory';
+import { BusinessSubscriptionOption, MembershipSubscriptionOption, PlatformSubscriptionOption, SubscriptionFactory } from './utils/subscrption_factory';
 import { CommonModule } from '@app/common';
 import { SubscriptionMsgProcessosor } from './msg_brocker_client/subscription_service_msg_processor';
 import { MembershipResolver } from './membership/resolver/membership.resolver';
@@ -73,10 +73,10 @@ import { MembershipResourceTracker } from './membership/membership_resource_usag
     { provide: SubscriptionMsgProcessosor.InjectName, useClass: SubscriptionMsgProcessosor },
 
     SubscriptionResolver, SubscriptionService, PlatformServiceResolver, PlatfromUsecase,
-    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository,
+    SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository, MembershipSubscriptionOption,
 
     { provide: MembershipRepository.injectName, useClass: MembershipRepository },
-    MembershipResolver, MembershipService, MembershipResourceTracker
+    MembershipResolver, MembershipService, MembershipResourceTracker,
 
 
   ],
