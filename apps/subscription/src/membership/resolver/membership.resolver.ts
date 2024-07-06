@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { Membership } from "../model/memberhip.model";
 import { MembershipService } from "./membership.service";
 import { create } from "lodash";
@@ -20,6 +20,12 @@ export class MembershipResolver {
 
     }
 
+    @Query(returns => MembershipResponse)
+    async getMembershipDetails(@Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string): Promise<MembershipResponse> {
+        const result = await this.membershipService.getMembershipInfo(membershipId);
+        return result;
+    }
+
     @RequiresPermission({
         permissions: [
             { resourceType: AppResources.MEMBERSHIP, action: PERMISSIONACTION.CREATE, resourcTargetName: ResourceTargetIdentifier.BUSINESSID },
@@ -34,6 +40,7 @@ export class MembershipResolver {
         const result = await this.membershipService.createMembershipPlan({ businessId: businessId, input: input, businessSubscription: businessSubscriptionResponse.subscription, platformServices: platformServices });
         return result;
     }
+
 
     @RequiresPermission({
         permissions: [
@@ -63,9 +70,5 @@ export class MembershipResolver {
     }
 
 
-    @Mutation(returns => MembershipResponse)
-    async getMembershipDetails(@Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string): Promise<MembershipResponse> {
-        const result = await this.membershipService.getMembershipInfo(membershipId);
-        return result;
-    }
+
 }

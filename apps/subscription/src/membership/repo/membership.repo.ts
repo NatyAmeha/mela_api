@@ -74,7 +74,7 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
 
     async getMembershipPlan(planId: string): Promise<Membership> {
         try {
-            const result = await this.membership.findUnique({ where: { id: planId } })
+            const result = await this.membership.findUnique({ where: { id: planId }, include: { groups: true } })
             return new Membership({ ...result })
         } catch (ex) {
             throw new PrismaException({ message: " Unable to get membership plan", exception: ex })
