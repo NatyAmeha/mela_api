@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
-import { CoreServiceMessageType, DEFAULT_REPLY_RESPONSE_TIMEOUT, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
+import { CoreServiceMessageType, DEFAULT_REPLY_RESPONSE_TIMEOUT, MembershipMessageType, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
 import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/const/constants";
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IRMQService, RMQService } from "libs/rmq/rmq_client.interface";
@@ -12,6 +12,7 @@ import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 import { CoreServiceMessageProcessor } from "./core_service_msg_processor";
+import { BusinessMembership } from "../business/model/business_memership.model";
 
 
 export interface ICoreServiceMsgBrocker {
@@ -41,6 +42,17 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
             .build();
         let reply = await this.sendMessageGetReply<string, SubscriptionResponse>(AppMsgQueues.SUBSCRIPTION_SERVICE_REQUEST_QUEUE, messageInfo);
         return reply;
+    }
+
+    async getBusinessMembershipsFromMembershipService(businessId: string): Promise<BusinessMembership[]> {
+        let messageInfo = new MessageBrockerMsgBuilder<string>().withData(businessId)
+            .withReplyQueue(AppMsgQueues.CORE_SERVICE_REPLY_QUEUE)
+            .withMessageId(`${MembershipMessageType.GET_BUSINESS_MEMBERSHIPS}-${businessId}`)
+            .withCoorelationId(MembershipMessageType.GET_BUSINESS_MEMBERSHIPS)
+            .withExpiration(DEFAULT_REPLY_RESPONSE_TIMEOUT)
+            .build();
+        let reply = await this.sendMessageGetReply<string, BusinessMembership[]>(AppMsgQueues.SUBSCRIPTION_SERVICE_REQUEST_QUEUE, messageInfo);
+        return BusinessMembership.fromRawMembershipInfo(reply.data);
     }
 
     async onModuleInit() {

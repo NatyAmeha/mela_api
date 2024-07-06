@@ -3,17 +3,19 @@ import { ChannelWrapper } from "amqp-connection-manager";
 import { ConsumeMessage } from "amqplib";
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 
-import { AuthServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
+import { AuthServiceMessageType, MembershipMessageType, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
 
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { SubscriptionService } from "../usecase/subscription.usecase";
 import { IPlatformServiceRepo, PlatformServiceRepository } from "../repo/platform_service.repo";
+import { IMembershipRepository, MembershipRepository } from "../membership/repo/membership.repo";
 
 @Injectable()
 export class SubscriptionMsgProcessosor implements IReceivedMessageProcessor {
     static InjectName = "SUBSCRIPTION_SERVICE_MSG_PROCESSOR"
     processedMessageIds = new Set<string>();
-    constructor(private subscriptionService: SubscriptionService, private platformServiceRepo: PlatformServiceRepository) {
+    constructor(private subscriptionService: SubscriptionService, private platformServiceRepo: PlatformServiceRepository,
+        @Inject(MembershipRepository.injectName) private membershipRepo: IMembershipRepository) {
 
     }
 
@@ -34,6 +36,11 @@ export class SubscriptionMsgProcessosor implements IReceivedMessageProcessor {
 
                     canAckMessage = subscritpionResult.isSafeErrorIfExist();
                     replyResponse = { success: true, data: subscritpionResult };
+                }
+                else if (messageResult.properties.correlationId == MembershipMessageType.GET_BUSINESS_MEMBERSHIPS) {
+                    const businessId = messageContent as string;
+                    const membershipPlans = await this.membershipRepo.getBusinessMembershipPlans(businessId)
+                    replyResponse = { success: true, data: membershipPlans }
                 }
             }
             console.log("can ack message", canAckMessage)

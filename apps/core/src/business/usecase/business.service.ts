@@ -12,6 +12,7 @@ import { ClassDecoratorValidator } from "@app/common/validation_utils/class_deco
 import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
+import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
 
 @Injectable()
 export class BusinessService {
@@ -25,20 +26,20 @@ export class BusinessService {
         return await this.businessRepo.createBusiness(data);
     }
 
-    async getBusiness(id: string) {
+    async getBusinessDetails(id: string) {
         const businessResult = await this.businessRepo.getBusiness(id);
         await this.businessRepo.updateBusinessStats(businessResult.id, { totalViews: businessResult.totalViews + 1 })
         return businessResult;
     }
 
     async isBusinessExist(businessId: string): Promise<boolean> {
-        const businessInfo = await this.getBusiness(businessId);
+        const businessInfo = await this.getBusinessDetails(businessId);
         return businessInfo.id ? true : false;
     }
 
     async getBusinessResponse(id: string): Promise<BusinessResponse> {
         try {
-            let business = await this.getBusiness(id);
+            let business = await this.getBusinessDetails(id);
             return new BusinessResponse({ business: business, success: true });
         } catch (error) {
             return new BusinessResponse({ success: false, message: "Business not found" });
@@ -107,7 +108,7 @@ export class BusinessService {
 
     async addPaymentOptions(businessId: string, paymentOptions: CreatePaymentOptionInput[]): Promise<BusinessResponse> {
         await this.inputValidator.validateArrayInput(paymentOptions, CreatePaymentOptionInput);
-        const businessInfo = await this.getBusiness(businessId)
+        const businessInfo = await this.getBusinessDetails(businessId)
         if (!businessInfo.id) {
             return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BUSINESS_NOT_FOUND);
         }
@@ -147,7 +148,7 @@ export class BusinessService {
     }
 
     async getBusinessPaymentOptions(businessId: string, paymentOptionId?: string[]): Promise<PaymentOption[]> {
-        const businessInfo = await this.getBusiness(businessId);
+        const businessInfo = await this.getBusinessDetails(businessId);
         if (!businessInfo.id) {
             return [];
         }

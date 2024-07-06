@@ -6,6 +6,7 @@ import { Product } from "../../product/model/product.model";
 import { Access } from "apps/auth/src/authorization/model/access.model";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { PaymentOption } from "./payment_option.model";
+import { BusinessMembership } from "./business_memership.model";
 
 @ObjectType()
 export class BusinessResponse extends BaseResponse {
@@ -22,8 +23,12 @@ export class BusinessResponse extends BaseResponse {
     @Field(type => [Branch])
     branchUpdated?: Branch[]
 
+    @Field(type => [])
+
     @Field(type => [PaymentOption])
     paymentOptions?: PaymentOption[]
+    @Field(type => [BusinessMembership])
+    memberships?: BusinessMembership[]
 
     accesses?: Access[]
 
@@ -108,6 +113,12 @@ export class BusinessResponseBuilder extends BaseResponseBuilder {
     withAccesses(accesses: Access[]): BusinessResponseBuilder {
         this.response.success = true;
         this.response.accesses = accesses;
+        return this;
+    }
+
+    withMemberships(memberships: BusinessMembership[]): BusinessResponseBuilder {
+        this.response.success = true;
+        this.response.memberships = memberships;
         return this;
     }
 

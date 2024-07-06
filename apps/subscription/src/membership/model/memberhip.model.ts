@@ -37,6 +37,7 @@ export class Membership {
     price: Price[]
     @Field(type => [String])
     category?: string[]
+    @Field(type => [Benefit])
     benefits: Benefit[]
     @Field(type => Int, { defaultValue: 30 })
     duration: number

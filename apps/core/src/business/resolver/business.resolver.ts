@@ -40,10 +40,11 @@ export class BusinessResolver {
 
     @Query(returns => BusinessResponse)
     async getBusinessDetails(@Args("id") id: string): Promise<BusinessResponse> {
-        let business = await this.businessService.getBusiness(id);
-        var businessProducts = await this.productService.getBusinessProducts(id, { page: 1, limit: 20 });
-        var businessBranches = await this.branchService.getBusinessBranches(id);
-        var respnse = new BusinessResponseBuilder().withBusiness(business).withProducts(businessProducts).withBranches(businessBranches).build();
+        let business = await this.businessService.getBusinessDetails(id);
+        let businessProducts = await this.productService.getBusinessProducts(id, { page: 1, limit: 20 });
+        let businessBranches = await this.branchService.getBusinessBranches(id);
+        const businessMemberships = await this.coreServiceMsgBrocker.getBusinessMembershipsFromMembershipService(id);
+        let respnse = new BusinessResponseBuilder().withBusiness(business).withProducts(businessProducts).withBranches(businessBranches).withMemberships(businessMemberships).build();
         return respnse;
     }
 
@@ -55,7 +56,7 @@ export class BusinessResolver {
         let businessOwnerAccess = await this.businessAccessGenerator.createAccess(createdBusiness, DefaultRoles.BUSINESS_OWNER);
         let reply = await this.coreServiceMsgBrocker.sendCreateAccessPermissionMessage(businessOwnerAccess);
         console.log("reply", reply)
-        var response = new BusinessResponseBuilder().withBusiness(createdBusiness).build();
+        let response = new BusinessResponseBuilder().withBusiness(createdBusiness).build();
         return response;
     }
 
@@ -81,8 +82,8 @@ export class BusinessResolver {
     @UseGuards(PermissionGuard)
     @Mutation(returns => BusinessResponse)
     async updateBusinessInfo(@Args('businessId') businessId: string, @Args('data') data: UpdateBusinessInput): Promise<BusinessResponse> {
-        var businessResult = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
-        var response = new BusinessResponseBuilder().withBusiness(businessResult).build();
+        let businessResult = await this.businessService.updateBusinessInfo(businessId, data.toBusinessInfo());
+        let response = new BusinessResponseBuilder().withBusiness(businessResult).build();
         return response;
     }
 
