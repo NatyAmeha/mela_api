@@ -7,9 +7,10 @@ import { IsNotEmpty, IsNumber, IsOptional, ValidateIf, isNotEmpty, } from "class
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model"
 
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 @Directive('@extends')
 @Directive('@key(fields: "id")')
+@Directive('@shareable')
 export class SubscriptionPlan extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -53,9 +54,9 @@ export class SubscriptionPlan extends BaseModel {
 }
 
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 @Directive('@extends')
-// @Directive('@key(fields: "id")')
+@Directive('@shareable')
 export class BenefitInfo {
     @Field(type => [String])
     tags?: string[]

@@ -41,7 +41,8 @@ export class SubscriptionFactory {
 }
 
 export interface ISubscriptionOption<T> {
-    createSubscriptionInfoBeta(input: T): Promise<SubscriptionResponse>
+    createSubscriptionInfoBeta(input: T, owner?: string): Promise<SubscriptionResponse>
+
     // deprecated
     createSubscriptionInfo(subscriptionInput: SubscriptionInput, businessInfo?: Business): Promise<SubscriptionResponse>
     createSubscriptionInfoFromSubscriptionUpgradeInfo(planInfo: SubscriptionUpgradeResponse): Promise<SubscriptionResponse>
@@ -56,7 +57,7 @@ export class PlatformSubscriptionOption implements ISubscriptionOption<PlatformS
 
     }
 
-    async createSubscriptionInfoBeta(input: PlatformService): Promise<SubscriptionResponse> {
+    async createSubscriptionInfoBeta(input: PlatformService, owner?: string): Promise<SubscriptionResponse> {
 
         throw new Error("Method not implemented.");
     }
@@ -111,7 +112,7 @@ export class BusinessSubscriptionOption implements ISubscriptionOption<Business>
 
     }
 
-    async createSubscriptionInfoBeta(input: Business): Promise<SubscriptionResponse> {
+    async createSubscriptionInfoBeta(input: Business, owner?: string): Promise<SubscriptionResponse> {
         throw new Error("Method not implemented.");
     }
     async createSubscriptionInfo(subscriptionInput: CreateBusinessSubscriptionInput, businessInfo?: Business): Promise<SubscriptionResponse> {
@@ -151,14 +152,15 @@ export class BusinessSubscriptionOption implements ISubscriptionOption<Business>
 @Injectable()
 export class MembershipSubscriptionOption implements ISubscriptionOption<Membership> {
     static InjectName = "MEMBERSHIP_SUBSCRIPTION_OPTION"
-    async createSubscriptionInfoBeta(input: Membership): Promise<SubscriptionResponse> {
+    async createSubscriptionInfoBeta(input: Membership, owner?: string): Promise<SubscriptionResponse> {
         try {
             const startDate = new Date(Date.now())
             const endDate = new Date(Date.now())
             endDate.setDate(endDate.getDate() + input.duration)
             const subscription = new Subscription({
                 type: SubscriptionType.MEMBERSHIP,
-                owner: input.owner,
+                owner: owner,
+                subscribedTo: input.id,
                 isActive: true,
                 startDate: startDate,
                 endDate: endDate,

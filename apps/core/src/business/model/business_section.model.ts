@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import { types } from 'joi';
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class BusinessSection {
     @Field()
     id: string;

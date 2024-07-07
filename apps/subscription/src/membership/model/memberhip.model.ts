@@ -1,10 +1,11 @@
 import { LocalizedField } from "@app/common/model/localized_model";
 import { Price } from "@app/common/model/price.model";
-import { Field, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Subscription } from "../../model/subscription.model";
 import { Benefit } from "./benefit.model";
 import { Group } from "./group.model";
 import { CreateMembershipInput, UpdateMembershipInput } from "../dto/membership.input";
+import { User } from "apps/auth/src/auth/model/user.model";
 
 export enum MembershipType {
     BUSINESS = "BUSINESS",
@@ -22,6 +23,7 @@ export enum MembershipPerkType {
 
 
 @ObjectType()
+@Directive('@shareable')
 export class Membership {
     @Field(types => ID)
     id: string;
@@ -74,6 +76,10 @@ export class Membership {
             price: data.price?.map(price => new Price({ ...price })),
         })
         return membershipInfo;
+    }
+
+    getCurrentUserMembershipInfo(user: User) {
+        return this.groups
     }
 }
 

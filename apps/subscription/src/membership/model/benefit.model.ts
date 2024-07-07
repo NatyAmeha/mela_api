@@ -1,8 +1,9 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Field, ID, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, ID, ObjectType } from "@nestjs/graphql";
 import { MembershipPerkType } from "./memberhip.model";
 
 @ObjectType()
+@Directive('@shareable')
 export class Benefit {
     @Field(type => ID)
     id: string;

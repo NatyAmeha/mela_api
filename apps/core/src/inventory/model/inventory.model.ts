@@ -13,7 +13,7 @@ export enum ProductUnitType {
     Litre = "Litre",
 }
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class Inventory extends BaseModel {
     @Field(types => ID)
     id: string;

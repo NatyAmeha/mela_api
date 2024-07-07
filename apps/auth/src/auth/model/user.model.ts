@@ -20,6 +20,7 @@ registerEnumType(AccountType, {
 });
 
 @ObjectType()
+@Directive('@shareable')
 export class User extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -95,7 +96,7 @@ export class User extends BaseModel {
 }
 
 @ObjectType()
-@Directive('@key(fields: "id, businessId, businessName{key,value}, image ")')
+@Directive('@shareable')
 export class FavoriteBusinessInfo {
     @Field(() => ID)
     id: string;

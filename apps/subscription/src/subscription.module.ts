@@ -20,6 +20,7 @@ import { MembershipResolver } from './membership/resolver/membership.resolver';
 import { MembershipService } from './membership/resolver/membership.service';
 import { MembershipRepository } from './membership/repo/membership.repo';
 import { MembershipResourceTracker } from './membership/membership_resource_usage_tracker';
+import { GroupResolver } from './membership/resolver/group.resolver';
 
 @Module({
   imports: [
@@ -76,7 +77,7 @@ import { MembershipResourceTracker } from './membership/membership_resource_usag
     SubscriptionFactory, PlatformSubscriptionOption, BusinessSubscriptionOption, PlatformServiceRepository, MembershipSubscriptionOption,
 
     { provide: MembershipRepository.injectName, useClass: MembershipRepository },
-    MembershipResolver, MembershipService, MembershipResourceTracker,
+    MembershipResolver, MembershipService, MembershipResourceTracker, GroupResolver,
 
 
   ],

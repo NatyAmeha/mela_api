@@ -1,6 +1,7 @@
 import { LocalizedField } from "@app/common/model/localized_model";
 import { Price } from "@app/common/model/price.model";
 import { Directive, Field, ID, Int, ObjectType } from "@nestjs/graphql";
+import { Benefit } from "apps/subscription/src/membership/model/benefit.model";
 
 // Contains the BusinessMembership information for the business, extension of Main Membership model inside subscription servivce
 @ObjectType()
@@ -19,6 +20,8 @@ export class BusinessMembership {
     price: Price[]
     @Field(type => [String])
     category?: string[]
+    @Field(type => [Benefit])
+    benefits: Benefit[]
 
     @Field(type => Int, { defaultValue: 30 })
     duration: number

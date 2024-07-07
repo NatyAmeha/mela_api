@@ -47,7 +47,7 @@ export class Access extends BaseModel {
     }
 }
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 @Directive('@extends')
 @Directive('@key(fields: "id name{key,value} action resourceType resourceTarget effect groups{id,key,name{key,value}} userGenerated resourcTargetName")')
 export class Permission {

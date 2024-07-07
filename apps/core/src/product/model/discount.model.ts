@@ -15,7 +15,7 @@ export enum DiscountCondition {
 
 }
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class Discount {
     @Field(types => DiscountType)
     type: string

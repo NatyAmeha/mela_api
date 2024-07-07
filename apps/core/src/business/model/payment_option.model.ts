@@ -9,7 +9,7 @@ export enum PaymentOptionType {
     PAY_LATER = 'PAY_LATER'
 }
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class PaymentOption {
     @Field(type => String)
     id?: string;

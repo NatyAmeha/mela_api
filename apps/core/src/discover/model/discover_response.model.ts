@@ -4,7 +4,7 @@ import { Product } from "../../product/model/product.model";
 
 
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export abstract class DiscoverResponse<T> {
     title: string
     subtitle?: string

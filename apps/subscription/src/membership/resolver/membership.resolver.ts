@@ -1,4 +1,4 @@
-import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { Membership } from "../model/memberhip.model";
 import { MembershipService } from "./membership.service";
 import { create } from "lodash";
@@ -15,7 +15,7 @@ import { PlatfromUsecase } from "../../usecase/platform.usecase";
 import { ResourceTargetIdentifier } from "@app/common/utils/resource_target_constants";
 import { CurrentUser } from "libs/common/get_user_decorator";
 import { User } from "apps/auth/src/auth/model/user.model";
-import { GroupMemberStatus } from "../model/group.model";
+import { Group, GroupMemberStatus } from "../model/group.model";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { ISubscriptionOption, MembershipSubscriptionOption } from "../../utils/subscrption_factory";
 
@@ -24,15 +24,15 @@ export class MembershipResolver {
     constructor(
         private membershipService: MembershipService,
         private subscriptionService: SubscriptionService,
-        private subscriptionOption: MembershipSubscriptionOption,
         private platformService: PlatfromUsecase) {
 
     }
 
+    @UseGuards(AuthzGuard)
     @Query(returns => MembershipResponse)
-    async getMembershipDetails(@Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string): Promise<MembershipResponse> {
-        const result = await this.membershipService.getMembershipInfo(membershipId);
-        return result;
+    async getMembershipDetails(@Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string, @CurrentUser() user: User): Promise<MembershipResponse> {
+        const response = await this.membershipService.getMembershipInfo(membershipId, user);
+        return response.build();
     }
 
     @RequiresPermission({
@@ -98,8 +98,10 @@ export class MembershipResolver {
     async approveMembershipRequest(@Args(ResourceTargetIdentifier.BUSINESSID) businessId: string, @Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string, @Args({ name: "membersId", type: () => [String] },) membersId: string[]) {
         const result = await this.membershipService.approveUserMembershipRequest(membershipId, membersId);
         return result;
-
     }
+
+
+
 
 
 

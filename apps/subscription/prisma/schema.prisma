@@ -35,6 +35,7 @@ model Subscription {
     plan                SubscriptionPlan?             @relation(fields: [subscriptioinPlanId], references: [id])
     isTrialPeriod       Boolean?
     type                String
+    subscribedTo        String?                       @db.ObjectId
     owner               String?                       @db.ObjectId
     createdAt           DateTime                      @default(now())
     updatedAt           DateTime                      @default(now())

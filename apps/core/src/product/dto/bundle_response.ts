@@ -5,7 +5,7 @@ import { Product } from "../model/product.model";
 import { Branch } from "../../branch/model/branch.model";
 import { Business } from "../../business/model/business.model";
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class BundleResponse extends BaseResponse {
     @Field(types => ProductBundle)
     bundle?: ProductBundle

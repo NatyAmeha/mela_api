@@ -10,10 +10,13 @@ import { PlatformService } from "../../model/platform_service.model";
 import { CommonSubscriptionErrorMessages } from "apps/core/src/utils/const/error_constants";
 import { SubscriptionMessageBrocker } from "../../msg_brocker_client/subscription_message_brocker";
 import { MembershipSubscriptionOption } from "../../utils/subscrption_factory";
+import { SubscriptionRepository } from "../../repo/subscription.repository";
+import { User } from "apps/auth/src/auth/model/user.model";
 
 export class MembershipService {
     constructor(
         @Inject(MembershipRepository.injectName) private membershipRepo: IMembershipRepository,
+        @Inject(SubscriptionRepository.InjectName) private subscriptionRepo: SubscriptionRepository,
         @Inject(SubscriptionMessageBrocker.InjectName) private subscriptionBroker: SubscriptionMessageBrocker,
         private membershipResourceTracker: MembershipResourceTracker,
         private membershipSubscriptionOption: MembershipSubscriptionOption,
@@ -39,10 +42,11 @@ export class MembershipService {
         return new MembershipResponseBuilder().basicResponse(result)
     }
 
-    async getMembershipInfo(membershipId: string) {
+    async getMembershipInfo(membershipId: string, user: User): Promise<MembershipResponseBuilder> {
         const result = await this.membershipRepo.getMembershipPlan(membershipId)
         const membershipProducts = await this.subscriptionBroker.getMembershipProductsFromCoreService(membershipId)
-        return new MembershipResponseBuilder().withMembership(result).withProducts(membershipProducts).build();
+        const userActiveSubscription = await this.subscriptionRepo.getUserActiveMembershipSubscription(user.id, membershipId)
+        return new MembershipResponseBuilder().withMembership(result).withProducts(membershipProducts).withCurrentUserSubscription(userActiveSubscription);
     }
 
 

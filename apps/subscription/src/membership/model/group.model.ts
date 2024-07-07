@@ -1,7 +1,8 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Field, ID, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, ID, ObjectType } from "@nestjs/graphql";
 import { Membership } from "./memberhip.model";
 import { Subscription } from "../../model/subscription.model";
+import { User } from "apps/auth/src/auth/model/user.model";
 
 export enum GroupMemberStatus {
     PENDING = 'PENDING',
@@ -11,6 +12,7 @@ export enum GroupMemberStatus {
 
 }
 @ObjectType()
+@Directive('@shareable')
 export class Group {
     @Field(type => ID)
     id: string;
@@ -43,8 +45,11 @@ export class Group {
 }
 
 @ObjectType()
+@Directive('@shareable')
 export class GroupMember {
     userId: string;
+    @Field(type => User)
+    user?: User
     memberStatus: string
     activeSubscriptionId?: string
     @Field(type => Subscription)

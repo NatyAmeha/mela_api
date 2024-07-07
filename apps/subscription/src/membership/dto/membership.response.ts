@@ -1,8 +1,8 @@
 import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.response";
 import { Membership } from "../model/memberhip.model";
 import { Field, ObjectType } from "@nestjs/graphql";
-import { Product } from "apps/core/src/product/model/product.model";
 import { MembershipProduct } from "../model/membership_product.model";
+import { Subscription } from "../../model/subscription.model";
 
 @ObjectType()
 export class MembershipResponse extends BaseResponse {
@@ -12,6 +12,9 @@ export class MembershipResponse extends BaseResponse {
     memberships?: Membership[]
     @Field(type => [MembershipProduct])
     products?: MembershipProduct[]
+
+    @Field(type => Subscription)
+    currentUserSubscription?: Subscription
 
     constructor(data: Partial<MembershipResponse>) {
         super()
@@ -38,6 +41,12 @@ export class MembershipResponseBuilder extends BaseResponseBuilder {
     withProducts(products: MembershipProduct[]): MembershipResponseBuilder {
         this.response.success = true;
         this.response.products = products;
+        return this;
+    }
+
+    withCurrentUserSubscription(currentUserSubscription?: Subscription): MembershipResponseBuilder {
+        this.response.success = true;
+        this.response.currentUserSubscription = currentUserSubscription;
         return this;
     }
 

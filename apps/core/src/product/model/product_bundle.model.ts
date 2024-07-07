@@ -18,7 +18,7 @@ export enum BundleType {
 
 }
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class ProductBundle {
     @Field(types => ID)
     id: string
