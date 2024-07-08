@@ -22,22 +22,27 @@ export interface IProductRepository {
     getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
     createProductsWithVariants(products: Product[]): Promise<Product[]>;
 
+    // Productd addon
     createProductAddon(productId: string, productAddon: ProductAddon[]): Promise<boolean>;
     getProductAddons(productId: string): Promise<ProductAddon[]>;
     updateProductAddon(productId: string, productAddonInfo: ProductAddon[]): Promise<boolean>;
     deleteAllProductAddon(productId: string): Promise<boolean>;
     deleteProductAddon(productId: string, productAddonId: string): Promise<boolean>;
 
+    // Payment option
     assignPaymentOptionToProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
     removePaymentOptionFromProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
 
     updateProductStats(productId: string, stats: Partial<Stat>): Promise<boolean>;
 
-    getBusinessTopProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
 
     addMembershipIdToProducts(productIds: string[], membershipId: string): Promise<boolean>;
     removeMembershipIdFromProducts(productIds: string[], membershipId: string): Promise<boolean>;
     getMembershipProducts(membershipId: string): Promise<Product[]>;
+
+    //discovery
+    queryProducts(queryHelper: QueryHelper<Product>): Promise<Product[]>
+    getBusinessTopProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
 
 
 }
@@ -486,6 +491,22 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
             return products?.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Get membership products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async queryProducts(queryHelper: QueryHelper<Product>): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: { ...queryHelper.query as any },
+                orderBy: {
+                    ...queryHelper.orderBy as any
+                },
+                skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
+                take: queryHelper?.limit,
+            });
+            return products?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get popular products", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

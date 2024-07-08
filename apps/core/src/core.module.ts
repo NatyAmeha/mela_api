@@ -34,7 +34,7 @@ import { InventoryService } from './inventory/inventory.service';
 import { BusinessResponseBuilder } from './business/model/business.response';
 import { InventoryLocationBuilder } from './inventory/model/inventory_location.model';
 import { InventoryResolver } from './inventory/inventory.resolver';
-import { ProductBundleRepository } from './product/repo/bundle..repository';
+import { ProductBundleRepository } from './product/repo/bundle.repository';
 import { BundleService } from './product/bundle.service';
 import { ProductAddonResolver } from './product/product_addon.resolver';
 import { DiscoverResolver } from './discover/discover.resolver';

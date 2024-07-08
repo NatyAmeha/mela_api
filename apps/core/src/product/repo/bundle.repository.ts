@@ -12,6 +12,7 @@ import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export interface IBundleRepository {
     createBundle(bundle: ProductBundle): Promise<ProductBundle>
+    queryBundles(queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
     getBundleDetails(bundleId: string): Promise<ProductBundle>
     getBundlesAvailableInBranch(branchId: string): Promise<ProductBundle[]>
     getBusinessBundles(businessId: string, queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
@@ -21,6 +22,8 @@ export interface IBundleRepository {
     assignBundleToBranch(bundleId: string, branchId: string[]): Promise<ProductBundle>
     unassignBundleFromBranch(bundleId: string, branchId: string[]): Promise<ProductBundle>
     deleteBundle(bundleId: string): Promise<ProductBundle>
+
+
 }
 @Injectable()
 export class ProductBundleRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBundleRepository {
@@ -76,6 +79,20 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
                 throw ex;
             }
             throw new PrismaException({ source: "Get bundle", statusCode: 400, code: ex?.code, meta: ex?.meta });
+        }
+    }
+
+    async queryBundles(queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]> {
+        try {
+            const result = await this.bundle.findMany({
+                where: { ...queryHelper.query as any },
+                orderBy: { ...queryHelper.orderBy as any },
+                skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
+                take: queryHelper?.limit,
+            });
+            return result?.map(bundle => new ProductBundle({ ...bundle }));
+        } catch (ex) {
+            throw new PrismaException({ source: "Query bundles", statusCode: 400, code: ex?.code, meta: ex?.meta });
         }
     }
 

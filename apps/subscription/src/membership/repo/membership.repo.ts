@@ -6,6 +6,7 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { result, uniq, uniqBy, update } from "lodash";
 import { Subscription } from "../../model/subscription.model";
+import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
 export interface IMembershipRepository {
     createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[]): Promise<Membership>
@@ -27,6 +28,10 @@ export interface IMembershipRepository {
     updateGroupMembersInfos(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean>
 
     approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription): Promise<boolean>
+
+
+    // Discovery
+    getPopularMemberships(queryHelper: QueryHelper<Membership>): Promise<Membership[]>
 
 }
 
@@ -293,6 +298,21 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         } catch (ex) {
             console.log("error", ex);
             throw new PrismaException({ message: " Unable to approve user membership request", exception: ex })
+        }
+    }
+
+    async getPopularMemberships(queryHelper: QueryHelper<Membership>): Promise<Membership[]> {
+        try {
+            const popularMembershipResult = await this.membership.findMany({
+                where: { ...queryHelper.query as any },
+                orderBy: { ...queryHelper.orderBy as any },
+                skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
+                take: queryHelper?.limit,
+            })
+            return popularMembershipResult.map(membership => new Membership({ ...membership }))
+        } catch (ex) {
+            throw new PrismaException({ message: " Unable to get popular memberships", exception: ex })
+
         }
     }
 

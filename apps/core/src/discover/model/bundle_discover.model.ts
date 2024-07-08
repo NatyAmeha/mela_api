@@ -1,14 +1,14 @@
 import { Field, ObjectType } from "@nestjs/graphql"
-import { DiscoverResponse, DiscoverTypes } from "./discover_response.model"
+import { IDiscovery, DiscoverTypes } from "./discovery_interface.response"
 import { ProductBundle } from "../../product/model/product_bundle.model"
 import { LanguageKey, LocalizedField } from "@app/common/model/localized_model"
 
 @ObjectType()
-export class BundleDiscoverResponse extends DiscoverResponse<ProductBundle> {
+export class BundleDiscovery extends IDiscovery<ProductBundle> {
 
     @Field(type => [ProductBundle])
     items: ProductBundle[]
-    constructor(partial?: Partial<BundleDiscoverResponse>) {
+    constructor(partial?: Partial<BundleDiscovery>) {
         super(partial)
 
     }
@@ -41,12 +41,26 @@ export class BundleDiscoverResponse extends DiscoverResponse<ProductBundle> {
         }
     }
 
-    static toDiscoverResponse({ lcoalizedField, items, sequence, discoverType, selectedLanguage, addSubtitle }: { lcoalizedField: LocalizedField[]; items: ProductBundle[]; selectedLanguage: LanguageKey; sequence: number; discoverType: DiscoverTypes; addSubtitle?: boolean; }): BundleDiscoverResponse {
-        return new BundleDiscoverResponse({
+    static toDiscoverResponse({ lcoalizedField, items, sequence, discoverType, selectedLanguage, addSubtitle }: { lcoalizedField: LocalizedField[]; items: ProductBundle[]; selectedLanguage: LanguageKey; sequence: number; discoverType: DiscoverTypes; addSubtitle?: boolean; }): BundleDiscovery {
+        return new BundleDiscovery({
             title: this.getLocalizedTitle(lcoalizedField, discoverType, selectedLanguage),
             subtitle: addSubtitle ? this.getSubtitleBasedOnDiscoverType(discoverType, selectedLanguage) : undefined,
             items: items,
             sequence: sequence
         })
+    }
+
+    static getTopBundlesTitle(): LocalizedField[] {
+        return [
+            new LocalizedField({ key: LanguageKey.ENGLISH, value: "Top Bundles" }),
+            new LocalizedField({ key: LanguageKey.AMHARIC, value: "የቅርብ ጥቅሎች" })
+        ]
+    }
+
+    static getNewBundlesTitle(): LocalizedField[] {
+        return [
+            new LocalizedField({ key: LanguageKey.ENGLISH, value: "New Bundles" }),
+            new LocalizedField({ key: LanguageKey.AMHARIC, value: "አዲስ ጥቅሎች" })
+        ]
     }
 }

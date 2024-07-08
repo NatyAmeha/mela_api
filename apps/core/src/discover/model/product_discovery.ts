@@ -1,14 +1,14 @@
 import { Field, ObjectType } from "@nestjs/graphql"
-import { DiscoverResponse, DiscoverTypes } from "./discover_response.model"
+import { IDiscovery, DiscoverTypes } from "./discovery_interface.response"
 import { Product } from "../../product/model/product.model"
 import { LanguageKey, LocalizedField } from "@app/common/model/localized_model"
 
 @ObjectType()
-export class ProductDiscoverResponse extends DiscoverResponse<Product> {
+export class ProductDiscovery extends IDiscovery<Product> {
 
     @Field(type => [Product])
     items: Product[]
-    constructor(partial?: Partial<ProductDiscoverResponse>) {
+    constructor(partial?: Partial<ProductDiscovery>) {
         super(partial)
 
     }
@@ -41,12 +41,26 @@ export class ProductDiscoverResponse extends DiscoverResponse<Product> {
         }
     }
 
-    static toDiscoverResponse({ lcoalizedField, items, sequence, discoverType, selectedLanguage, addSubtitle }: { lcoalizedField: LocalizedField[]; items: Product[]; selectedLanguage: LanguageKey; sequence: number; discoverType: DiscoverTypes; addSubtitle?: boolean; }): ProductDiscoverResponse {
-        return new ProductDiscoverResponse({
+    static toDiscoverResponse({ lcoalizedField, items, sequence, discoverType, selectedLanguage, addSubtitle }: { lcoalizedField: LocalizedField[]; items: Product[]; selectedLanguage: LanguageKey, sequence: number, discoverType: DiscoverTypes, addSubtitle?: boolean }): ProductDiscovery {
+        return new ProductDiscovery({
             title: this.getLocalizedTitle(lcoalizedField, discoverType, selectedLanguage),
             subtitle: addSubtitle ? this.getSubtitleBasedOnDiscoverType(discoverType, selectedLanguage) : undefined,
             items: items,
             sequence: sequence
         })
+    }
+
+    static getTopProductsTitle(): LocalizedField[] {
+        return [
+            new LocalizedField({ key: LanguageKey.ENGLISH, value: "Top Products" }),
+            new LocalizedField({ key: LanguageKey.AMHARIC, value: "የቅርብ አገልግሎቶች" })
+        ]
+    }
+
+    static getNewProductsTitle(): LocalizedField[] {
+        return [
+            new LocalizedField({ key: LanguageKey.ENGLISH, value: "New Products" }),
+            new LocalizedField({ key: LanguageKey.AMHARIC, value: "አዲስ አገልግሎቶች" })
+        ]
     }
 }

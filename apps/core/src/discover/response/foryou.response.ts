@@ -1,21 +1,21 @@
 import { Business } from "../../business/model/business.model";
-import { DiscoverResponse } from "./discover_response.model";
+import { IDiscovery } from "../model/discovery_interface.response";
 import { Field, ObjectType } from "@nestjs/graphql";
 import { Product } from "../../product/model/product.model";
 import { ProductBundle } from "../../product/model/product_bundle.model";
 import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.response";
-import { ProductDiscoverResponse } from "./product_discover.response";
-import { BundleDiscoverResponse } from "./bundle_discover.response";
+import { ProductDiscovery } from "../model/product_discovery";
+import { BundleDiscovery } from "../model/bundle_discover.model";
 
 
 @ObjectType()
 export class ForYouResponse extends BaseResponse {
     @Field(type => [Business])
     favoriteBusinesses?: Business[];
-    @Field(type => [ProductDiscoverResponse])
-    topProductsByBusiness?: ProductDiscoverResponse[]
-    @Field(type => [BundleDiscoverResponse])
-    bundles?: BundleDiscoverResponse[]
+    @Field(type => [ProductDiscovery])
+    topProductsByBusiness?: ProductDiscovery[]
+    @Field(type => [BundleDiscovery])
+    bundles?: BundleDiscovery[]
 
     constructor(data: Partial<ForYouResponse>) {
         super()
@@ -34,13 +34,13 @@ export class ForYouResponseResponseBuilder extends BaseResponseBuilder {
         return this;
     }
 
-    withTopProductsByBusiness(topProductsByBusiness: ProductDiscoverResponse[]): ForYouResponseResponseBuilder {
+    withTopProductsByBusiness(topProductsByBusiness: ProductDiscovery[]): ForYouResponseResponseBuilder {
         this.response.success = true;
         this.response.topProductsByBusiness = topProductsByBusiness;
         return this;
     }
 
-    withBundles(bundles: BundleDiscoverResponse[]): ForYouResponseResponseBuilder {
+    withBundles(bundles: BundleDiscovery[]): ForYouResponseResponseBuilder {
         this.response.success = true;
         this.response.bundles = bundles;
         return this;

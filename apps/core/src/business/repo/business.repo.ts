@@ -31,6 +31,8 @@ export interface IBusinessRepository {
     updatePaymentOption(businessId: string, paymentOption: PaymentOption): Promise<boolean>
 
     updateBusinessStats(businessId: string, stats: Partial<Stat>): Promise<boolean>
+
+    queryBusinesses(queryHelper: QueryHelper<Business>): Promise<Business[]>
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -306,6 +308,21 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
                 throw error;
             }
             throw new PrismaException({ source: "Update payment option", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async queryBusinesses(queryHelper: QueryHelper<Business>): Promise<Business[]> {
+        try {
+            const businesses = await this.business.findMany({
+                where: { ...queryHelper.query as any },
+                orderBy: { ...queryHelper.orderBy as any },
+                skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
+                take: queryHelper?.limit,
+
+            });
+            return businesses.map(business => new Business({ ...business }));
+        } catch (ex) {
+            throw new PrismaException({ source: "Find businesses", statusCode: 400, code: ex.code, meta: ex.meta });
         }
     }
 
