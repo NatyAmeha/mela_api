@@ -39,6 +39,7 @@ import { BundleService } from './product/bundle.service';
 import { ProductAddonResolver } from './product/product_addon.resolver';
 import { DiscoverResolver } from './discover/discover.resolver';
 import { DiscoverService } from './discover/discover.service';
+import { BundleResolver } from './product/bundle/bundle.resolver';
 
 
 @Module({
@@ -84,7 +85,7 @@ import { DiscoverService } from './discover/discover.service';
 
     { provide: ProductRepository.injectName, useClass: ProductRepository },
     { provide: ProductResourceUsageTracker.injectName, useClass: ProductResourceUsageTracker },
-    ProductService, ProductResolver, ProductAddonResolver,
+    ProductService, ProductResolver, ProductAddonResolver, BundleResolver,
 
     { provide: ProductBundleRepository.injectName, useClass: ProductBundleRepository },
     BundleService,

@@ -97,7 +97,7 @@ export class Business extends BaseModel {
     paymentOptions?: PaymentOption[]
 
     @Field(types => Int, { defaultValue: 0 })
-    totalViews: number;
+    totalViews?: number;
 
     platformServiceTrialPeriodUsed(platformServiceId: string) {
         return includes(this.trialPeriodUsedServiceIds, platformServiceId)

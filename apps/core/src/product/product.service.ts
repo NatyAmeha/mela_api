@@ -107,6 +107,10 @@ export class ProductService {
         return await this.productRepository.getBranchProducts(branchId);
     }
 
+    async getProductsById(productIds: string[]): Promise<Product[]> {
+        return await this.productRepository.getProductsById(productIds);
+    }
+
     async getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]> {
         return await this.productRepository.getBusinessProducts(businessId, query);
     }

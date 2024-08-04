@@ -13,8 +13,6 @@ export enum AddonInputType {
     DATE_INPUT = "DATE_INPUT",
     TIME_INPUT = "TIME_INPUT",
     DATE_TIME_INPUT = "DATE_TIME_INPUT",
-
-
 }
 
 @ObjectType()
@@ -71,6 +69,7 @@ export class ProductAddonOption {
     name: LocalizedField[]
     @Field(types => [String], { defaultValue: [] })
     images?: string[]
+
 }
 
 @InputType()

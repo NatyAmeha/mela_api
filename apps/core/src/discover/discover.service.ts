@@ -29,10 +29,10 @@ export class DiscoverService {
     }
 
     async getDiscoverData(): Promise<DiscoveryResponse> {
-        const topProducts = await this.productRepo.queryProducts({ orderBy: { totalViews: "desc" }, limit: 5 });
+        const topProducts = await this.productRepo.queryProducts({ query: { mainProduct: true }, orderBy: { totalViews: "desc" }, limit: 5 });
         const topProductDiscoveryResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: ProductDiscovery.getTopProductsTitle(), items: topProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.TOP_PRODUCTS, sequence: 0 });
 
-        const newProducts = await this.productRepo.queryProducts({ orderBy: { createdAt: "desc" }, limit: 5 });
+        const newProducts = await this.productRepo.queryProducts({ query: { mainProduct: true }, orderBy: { createdAt: "desc" }, limit: 5 });
         const newProductDiscoveryResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: ProductDiscovery.getNewProductsTitle(), items: newProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.NEW_PRODUCTS, sequence: 1 });
 
         const topBusinesses = await this.businessRepo.queryBusinesses({ orderBy: { totalViews: "desc" }, limit: 5 });
