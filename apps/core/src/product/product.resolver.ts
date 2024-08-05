@@ -1,6 +1,6 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { Product } from "./model/product.model";
-import { ProductService } from "./product.service";
+import { ProductService } from "./usecase/product.service";
 import { BuilkProductCreateInput, CreateProductInput, UpdateProductInput } from "./dto/product.input";
 import { ProductResponse, ProductResponseBuilder } from "./model/product.response";
 import { Branch } from "../branch/model/branch.model";
@@ -22,7 +22,8 @@ import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
 import { CreateBundleInput, UpdateBundleInput } from "./dto/product_bundle.input";
 import { BundleResponse } from "./dto/bundle_response";
-import { BundleService } from "./bundle.service";
+import { BundleService } from "./usecase/bundle.service";
+import { CreateProductPriceInput, UpdateProductPriceInput } from "./dto/product_price.input";
 
 @Resolver(of => Product)
 export class ProductResolver {
@@ -59,12 +60,13 @@ export class ProductResolver {
         @Args("productId") productId: string,
         @Args({ name: "branchId", nullable: true }) branchId?: string,
         @Args({ name: "locationId", nullable: true }) locationId?: string,
+        @Args({ name: "priceListId", nullable: true }) priceListId?: string,
     ): Promise<ProductResponse> {
         let branchInfo: Branch
         if (branchId) {
             branchInfo = await this.branchService.getBranch(branchId);
         }
-        const productDetailResult = await this.productService.getProductDetailsWithInventory(productId, locationId, branchInfo);
+        const productDetailResult = await this.productService.getProductDetailsWithInventory(productId, locationId, branchInfo, priceListId);
         return productDetailResult;
     }
 
@@ -301,6 +303,33 @@ export class ProductResolver {
     @Mutation(returns => ProductResponse)
     async removePaymentOptionFromProduct(@Args("businessId") businessId: string, @Args('productId') productId: string, @Args({ name: "paymentOptionId", type: () => [String] }) paymentOptionsId: string[]): Promise<ProductResponse> {
         return await this.productService.removePaymentOptions(productId, paymentOptionsId);
+    }
+
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE, resourcTargetName: "productId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => ProductResponse)
+    async createProductPrice(@Args("businessId") businessId: string, @Args("productId") productId: string, @Args({ name: "input", type: () => [CreateProductPriceInput] }) price: CreateProductPriceInput[]): Promise<ProductResponse> {
+        const result = await this.productService.createProductPricing(productId, price);
+        return result;
+    }
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.PRODUCT, action: PERMISSIONACTION.CREATE, resourcTargetName: "productId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => ProductResponse)
+    async updateProductPricing(@Args("businessId") businessId: string, @Args("productId") productId: string, @Args({ name: "input", type: () => [UpdateProductPriceInput] }) price: UpdateProductPriceInput[]): Promise<ProductResponse> {
+        const result = await this.productService.updateProductPricing(productId, price);
+        return result;
     }
 
 

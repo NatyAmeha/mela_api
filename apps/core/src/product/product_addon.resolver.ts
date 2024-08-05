@@ -1,7 +1,7 @@
 import { Args, Mutation, Resolver } from "@nestjs/graphql";
 import { ProductAddon } from "./model/product_addon.model";
 import { CreateProductAddonInput, UpdateProductAddonInput } from "./dto/product_addon.input";
-import { ProductService } from "./product.service";
+import { ProductService } from "./usecase/product.service";
 import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";

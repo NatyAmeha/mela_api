@@ -3,8 +3,8 @@ import { of } from "rxjs";
 import { ProductBundle } from "../model/product_bundle.model";
 import { Product } from "../model/product.model";
 import { BundleResponse } from "../dto/bundle_response";
-import { BundleService } from "../bundle.service";
-import { ProductService } from "../product.service";
+import { BundleService } from "../usecase/bundle.service";
+import { ProductService } from "../usecase/product.service";
 
 @Resolver(of => ProductBundle)
 export class BundleResolver {

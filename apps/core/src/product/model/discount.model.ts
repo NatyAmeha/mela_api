@@ -1,4 +1,5 @@
-import { Field, Float, ObjectType, registerEnumType } from "@nestjs/graphql"
+import { Directive, Field, Float, ObjectType, registerEnumType } from "@nestjs/graphql"
+import { share } from "rxjs"
 
 export enum DiscountType {
     PERCENTAGE = "PERCENTAGE",
@@ -16,6 +17,7 @@ export enum DiscountCondition {
 }
 
 @ObjectType()
+@Directive('@shareable')
 export class Discount {
     @Field(types => DiscountType)
     type: string

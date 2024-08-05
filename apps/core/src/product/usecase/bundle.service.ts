@@ -1,8 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { IBundleRepository, ProductBundleRepository } from "./repo/bundle.repository";
-import { BundleResponse, BundleResponseBuilder } from "./dto/bundle_response";
-import { ProductBundle } from "./model/product_bundle.model";
-import { CreateBundleInput, UpdateBundleInput } from "./dto/product_bundle.input";
+import { IBundleRepository, ProductBundleRepository } from "../repo/bundle.repository";
+import { BundleResponse, BundleResponseBuilder } from "../dto/bundle_response";
+import { ProductBundle } from "../model/product_bundle.model";
+import { CreateBundleInput, UpdateBundleInput } from "../dto/product_bundle.input";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
 
