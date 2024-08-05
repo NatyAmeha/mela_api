@@ -12,6 +12,7 @@ import { includes } from "lodash";
 import { DeliveryInfo } from "../../product/model/delivery.model";
 import { ProductBundle } from "../../product/model/product_bundle.model";
 import { PaymentOption } from "./payment_option.model";
+import { PriceList } from "../../product/model/price_list_.model";
 
 @ObjectType()
 export class Business extends BaseModel {
@@ -95,6 +96,9 @@ export class Business extends BaseModel {
 
     @Field(types => [PaymentOption])
     paymentOptions?: PaymentOption[]
+
+    @Field(types => [PriceList])
+    priceLists?: PriceList[]
 
     @Field(types => Int, { defaultValue: 0 })
     totalViews?: number;

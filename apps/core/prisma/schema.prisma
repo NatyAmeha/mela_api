@@ -54,7 +54,8 @@ model Product {
     paymentOptionsId String[]        @default([])
     membershipIds    String[]        @default([]) @db.ObjectId
 
-    totalViews Int? @default(0)
+    totalViews Int?           @default(0)
+    prices     ProductPrice[]
 }
 
 type ProductOption {
@@ -137,6 +138,7 @@ model Business {
     bundles                   Bundle[]
     paymentOptions            PaymentOption[]
     totalViews                Int?                @default(0)
+    priceLists                PriceList[]
 }
 
 // branch.model.ts
@@ -161,6 +163,7 @@ model Branch {
     inventoryLocations InventoryLocation[]
     createdAt          DateTime?           @default(now())
     updatedAt          DateTime?           @updatedAt
+    productPrices      ProductPrice[]
 }
 
 // staff.model.ts
@@ -195,6 +198,32 @@ model Bundle {
     isActive    Boolean?        @default(false)
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @updatedAt
+}
+
+model ProductPrice {
+    id          String      @id @default(auto()) @map("_id") @db.ObjectId
+    product     Product     @relation(fields: [productId], references: [id])
+    productId   String      @db.ObjectId
+    branchId    String?     @db.ObjectId
+    branch      Branch?     @relation(fields: [branchId], references: [id])
+    price       PriceInfo[]
+    priceListId String?     @default(uuid())
+    isDefault   Boolean     @default(false)
+    isActive    Boolean     @default(true)
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime?   @updatedAt
+
+    @@unique([productId, branchId, priceListId])
+}
+
+type PriceList {
+    id          String          @default(uuid())
+    name        LocalizedData[]
+    description LocalizedData[]
+    branchIds   String[]        @default([]) @db.ObjectId
+    isActive    Boolean         @default(true)
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime?
 }
 
 type ProductAddon {
@@ -250,7 +279,7 @@ type Gallery {
     images     GalleryData[]
     videos     GalleryData[]
     createdAt  DateTime      @default(now())
-    updatedAt  DateTime      @default(now())
+    updatedAt  DateTime?     @default(now())
 }
 
 type Address {

@@ -2,7 +2,7 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/g
 import { BusinessService } from "../usecase/business.service";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
-import { ProductService } from "../../product/product.service";
+import { ProductService } from "../../product/usecase/product.service";
 import { BranchService } from "../../branch/usecase/branch.service";
 import { Product } from "../../product/model/product.model";
 import { Branch } from "../../branch/model/branch.model";
@@ -24,6 +24,7 @@ import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 import { CreateBusinessSectionInput } from "../model/business_section.model";
 import { BaseResponse } from "@app/common/model/base.response";
 import { CreatePaymentOptionInput } from "../dto/payment_option.input";
+import { CreatePriceListInput, UpdatePriceListInput } from "../../product/dto/price_list.input";
 
 
 @Resolver(of => Business)
@@ -120,8 +121,34 @@ export class BusinessResolver {
 
     @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
     @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
     async deletePaymentOption(@Args("businessId") businessId: string, @Args({ name: "paymentOptionsId", type: () => [String] }) paymentOptionsId: string[]): Promise<BusinessResponse> {
         let response = await this.businessService.removePaymentOption(businessId, paymentOptionsId);
+        return response;
+    }
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async addPriceListTobusiness(@Args("businessId") businessId: string, @Args({ name: "input", type: () => [CreatePriceListInput] }) input: CreatePriceListInput[]): Promise<BusinessResponse> {
+        let response = await this.businessService.createBusinessPriceList(businessId, input);
+        return response;
+    }
+
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async updateBusinessPriceList(@Args("businessId") businessId: string, @Args({ name: "input", type: () => [UpdatePriceListInput] }) input: UpdatePriceListInput[]): Promise<BusinessResponse> {
+        let response = await this.businessService.updatePriceList(businessId, input);
+        return response;
+    }
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.DELETE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async deleteBusinessPriceLlist(@Args("businessId") businessId: string, @Args({ name: "priceListIds", type: () => [String] }) priceListIds: string[]): Promise<BusinessResponse> {
+        let response = await this.businessService.deletePriceList(businessId, priceListIds);
         return response;
     }
 

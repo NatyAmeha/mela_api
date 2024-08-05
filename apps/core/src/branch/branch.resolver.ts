@@ -7,7 +7,7 @@ import { Business } from "../business/model/business.model";
 import { CreateBranchInput, UpdateBranchInput } from "./dto/branch.input";
 import { BusinessService } from "../business/usecase/business.service";
 import { BranchResponse } from "./model/branch.response";
-import { ProductService } from "../product/product.service";
+import { ProductService } from "../product/usecase/product.service";
 import { CoreServiceMsgBrockerClient } from "../msg_brocker_client/core_service_msg_brocker";
 import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";

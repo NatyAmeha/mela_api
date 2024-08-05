@@ -14,6 +14,7 @@ import { Inventory } from "../../inventory/model/inventory.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { CreateProductInput } from "../dto/product.input";
 import { ProductAddon } from "./product_addon.model";
+import { ProductPrice } from "./product_price.model";
 
 @ObjectType()
 @Directive('@extends')
@@ -88,6 +89,9 @@ export class Product extends BaseModel {
     @Field({ defaultValue: false })
     mainProduct?: boolean
 
+    @Field(types => [ProductPrice])
+    prices?: ProductPrice[]
+
     @Field(types => [Inventory])
     @Type(() => Inventory)
     inventory?: Inventory[]
@@ -113,9 +117,11 @@ export class Product extends BaseModel {
     @Field(types => [String])
     membershipIds?: string[];
 
+
     // stats
     @Field(types => Int, { defaultValue: 0 })
     totalViews: number;
+
 
 
     constructor(partial?: Partial<Product>) {
@@ -129,6 +135,7 @@ export class Product extends BaseModel {
         var product = new Product({
             ...restProductInfo,
             sku: generatedSku,
+            prices: [ProductPrice.createDefaultPrice(productInput.defaultPrice)],
             businessId: businessId, inventory: [
                 await Inventory.fromCreateInventory(productInput.name[0].value, generatedSku, productInput.inventoryInfo)
             ]

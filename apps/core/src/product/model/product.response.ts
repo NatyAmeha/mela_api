@@ -4,6 +4,7 @@ import { Field, ObjectType } from "@nestjs/graphql";
 import { Branch } from "../../branch/model/branch.model";
 import { Business } from "../../business/model/business.model";
 import { Inventory } from "../../inventory/model/inventory.model";
+import { ProductPrice } from "./product_price.model";
 
 @ObjectType()
 export class ProductResponse extends BaseResponse {
@@ -24,6 +25,14 @@ export class ProductResponse extends BaseResponse {
 
     @Field(types => Business)
     business?: Business
+
+    @Field(types => ProductPrice)
+    selectedProductPrice?: ProductPrice
+
+    @Field(types => [ProductPrice])
+    productPrices?: ProductPrice[]
+
+
 
     constructor(data: Partial<ProductResponse>) {
         super()
@@ -83,6 +92,18 @@ export class ProductResponseBuilder extends BaseResponseBuilder {
     withBusiness(business: Business): ProductResponseBuilder {
         this.productResponse.success = true
         this.productResponse.business = business
+        return this
+    }
+
+    withProductPrices(productPrices: ProductPrice[]): ProductResponseBuilder {
+        this.productResponse.success = true
+        this.productResponse.productPrices = productPrices
+        return this
+    }
+
+    withSelectedProductPrice(selectedProductPrice: ProductPrice): ProductResponseBuilder {
+        this.productResponse.success = true
+        this.productResponse.selectedProductPrice = selectedProductPrice
         return this
     }
 

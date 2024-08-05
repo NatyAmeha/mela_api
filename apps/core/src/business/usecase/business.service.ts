@@ -13,12 +13,16 @@ import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
+import { ProductPriceRepository } from "../../product/repo/product_price.repository";
+import { PriceList } from "../../product/model/price_list_.model";
+import { CreatePriceListInput, UpdatePriceListInput } from "../../product/dto/price_list.input";
 
 @Injectable()
 export class BusinessService {
     // try-catch block  must be used on the methods that handles message broker message/event
     constructor(
         @Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository,
+        @Inject(ProductPriceRepository.injectName) private priceRepo: ProductPriceRepository,
         @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator) {
 
     }
@@ -156,6 +160,25 @@ export class BusinessService {
             return businessInfo.paymentOptions;
         }
         return businessInfo.paymentOptions.filter(option => paymentOptionId.includes(option.id));
+    }
+
+    async createBusinessPriceList(businessId: string, priceLists: CreatePriceListInput[]): Promise<BusinessResponse> {
+        await this.inputValidator.validateArrayInput(priceLists, CreatePriceListInput);
+        const priceListInfo = priceLists.map(price => PriceList.fromCreatePriceListInput(price));
+        const result = await this.priceRepo.createPriceList(businessId, priceListInfo);
+        return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
+    }
+
+    async updatePriceList(businessId: string, priceList: UpdatePriceListInput[]): Promise<BusinessResponse> {
+        await this.inputValidator.validateArrayInput(priceList, UpdatePriceListInput);
+        const priceListInfo = priceList.map(price => PriceList.fromCreatePriceListInput(price));
+        const result = await this.priceRepo.updatePriceList(businessId, priceListInfo);
+        return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
+    }
+
+    async deletePriceList(businessId: string, priceListIds: string[]): Promise<BusinessResponse> {
+        const result = await this.priceRepo.deletePriceList(businessId, priceListIds);
+        return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
     }
 
 }  

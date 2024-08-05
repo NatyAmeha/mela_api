@@ -6,7 +6,7 @@ import { CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq
 import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
 import { ChannelWrapper } from "amqp-connection-manager";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
-import { ProductService } from "../product/product.service";
+import { ProductService } from "../product/usecase/product.service";
 
 @Injectable({ scope: Scope.DEFAULT })
 export class CoreServiceMessageProcessor implements IReceivedMessageProcessor {

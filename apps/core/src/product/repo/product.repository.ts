@@ -73,7 +73,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async createProduct(product: Product): Promise<Product> {
         try {
             const createdProduct = await this.$transaction(async (prisma) => {
-                const { businessId, branchIds, inventory, ...productData } = product;
+                const { businessId, branchIds, inventory, prices, ...productData } = product;
                 const result = await prisma.product.create({
                     data: {
                         ...productData,
@@ -125,20 +125,17 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         try {
             const createdProducts = await this.$transaction(async (prisma) => {
                 const productResults = await Promise.all(products?.map(async (product) => {
-                    const { businessId, branchIds, inventory, ...productData } = product;
+                    const { businessId, branchIds, inventory, prices, ...productData } = product;
                     const { inventoryLocation, inventoryLocationId, ...restInventoryInfo } = inventory[0];
-                    return await prisma.product.create({
+                    const productCreateResult = await prisma.product.create({
                         data: {
                             ...productData,
                             business: {
-                                connect: {
-                                    id: product.businessId
-                                },
+                                connect: { id: product.businessId },
                             },
                             branches: {
                                 connect: product.branchIds?.map((id) => ({ id }))
                             },
-
                             inventory: {
                                 create: {
                                     ...restInventoryInfo,
@@ -147,11 +144,12 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                                             id: inventoryLocationId
                                         }
                                     }
-
                                 }
-                            }
+                            },
+                            prices: { create: prices }
                         }
                     });
+                    return productCreateResult;
 
                 }))
 
@@ -179,7 +177,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
     async updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product> {
         try {
-            const { businessId, business, branches, branchIds, inventory, addons, ...productData } = productInfo;
+            const { businessId, business, branches, branchIds, inventory, addons, prices, ...productData } = productInfo;
             const result = await this.product.update({
                 where: { id: productId },
                 data: { ...productData }

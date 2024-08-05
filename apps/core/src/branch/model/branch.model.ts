@@ -7,6 +7,8 @@ import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized
 import { Business } from "../../business/model/business.model";
 import { InventoryLocation } from "../../inventory/model/inventory_location.model";
 import { ProductBundle } from "../../product/model/product_bundle.model";
+import { PriceList } from "../../product/model/price_list_.model";
+import { ProductPrice } from "../../product/model/product_price.model";
 
 @ObjectType()
 export class Branch {
@@ -55,6 +57,13 @@ export class Branch {
     inventoryLocations?: InventoryLocation[];
     @Field(types => [ProductBundle])
     bundles?: ProductBundle[]
+
+    @Field(types => [ProductPrice])
+    productPrices?: ProductPrice[]
+
+    @Field(types => [PriceList])
+    priceLists?: PriceList[]
+
 
 
     constructor(partial?: Partial<Branch>) {

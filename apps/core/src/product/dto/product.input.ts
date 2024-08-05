@@ -7,6 +7,7 @@ import { DeliveryInfoInput } from "../model/delivery.model";
 import { ArrayNotEmpty, IsArray, IsNotEmpty, ValidateIf, ValidateNested, validate } from "class-validator";
 import { CreateInventoryInput } from "./inventory.input";
 import { ProductOptionInput } from "../model/product_options.model";
+import { PriceInput } from "@app/common/model/price.model";
 
 
 @InputType()
@@ -27,6 +28,10 @@ export class CreateProductInput {
     @ValidateIf((obj: CreateProductInput, value) => obj.mainProduct == true)
     @ValidateNested({ each: true })
     description?: LocalizedFieldInput[];
+
+    @Field(types => [PriceInput])
+    @Type(() => PriceInput)
+    defaultPrice: PriceInput[]
 
     @Field(types => GalleryInput)
     @Type(() => GalleryInput)
