@@ -129,6 +129,14 @@ export class Product extends BaseModel {
         Object.assign(this, partial);
     }
 
+    addProductPrices(prices: ProductPrice[]) {
+        this.prices = prices;
+    }
+
+    hasVariant(): boolean {
+        return this.mainProduct && this?.variantsId?.length > 0
+    }
+
     static async fromCreateProductInput(businessId: string, productInput: CreateProductInput): Promise<Product> {
         const generatedSku = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         const { inventoryInfo, ...restProductInfo } = productInput;

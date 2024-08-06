@@ -7,14 +7,22 @@ import { PlatformService } from "apps/subscription/src/model/platform_service.mo
 import { BranchResourceUsageTracker, IBranchResourceUsageTracker } from "../../resource_usage_tracker/branch_resource_usage_tracker";
 import { IResourceUsageTracker } from "../../resource_usage_tracker/base_resource_usage_tracker";
 import { BusinessResponse, BusinessResponseBuilder } from "../../business/model/business.response";
-import { BranchResponseBuilder } from "../model/branch.response";
+import { BranchResponse, BranchResponseBuilder } from "../model/branch.response";
 import { InventoryLocationRepository } from "../../inventory/repo/inventory_location.repository";
 import { InventoryLocationBuilder } from "../../inventory/model/inventory_location.model";
+import { IProductRepository, ProductRepository } from "../../product/repo/product.repository";
+import { IProductPriceRepository, ProductPriceRepository } from "../../product/repo/product_price.repository";
+import { IBundleRepository, ProductBundleRepository } from "../../product/repo/bundle.repository";
+import { BusinessRepository, IBusinessRepository } from "../../business/repo/business.repo";
 
 @Injectable()
 export class BranchService {
     constructor(
         @Inject(BranchRepository.injectName) private branchRepo: IBranchRepository,
+        @Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository,
+        @Inject(ProductPriceRepository.injectName) private priceRepo: IProductPriceRepository,
+        @Inject(ProductBundleRepository.injectName) private bundleRepo: IBundleRepository,
+        @Inject(ProductRepository.injectName) private productRepository: IProductRepository,
         @Inject(BranchResourceUsageTracker.injectName) private branchResourceUsageTracker: IBranchResourceUsageTracker,
         @Inject(InventoryLocationRepository.injectName) private inventoryLocationRepository: InventoryLocationRepository,
         private businessReponseBuilder: BusinessResponseBuilder,
@@ -49,6 +57,23 @@ export class BranchService {
 
     async getBranch(branchId: string): Promise<Branch> {
         return await this.branchRepo.getBranch(branchId);
+    }
+
+    async getBranchDetails(businessId: string, branchId: string): Promise<BranchResponse> {
+        const branchResult = await this.branchRepo.getBranch(branchId);
+        const branchProducts = await this.productRepository.getBranchProducts(branchId);
+        const priceList = await this.priceRepo.getPriceList(businessId, branchId);
+        const branchBundles = await this.bundleRepo.getBundlesAvailableInBranch(branchId);
+        const businessInfo = await this.businessRepo.getBusiness(businessId);
+        return new BranchResponseBuilder().withBranch(branchResult).withBusinesses(businessInfo).withProducts(branchProducts).withBundles(branchBundles).withPriceList(priceList).build();
+    }
+
+    async getBranchDetailsForPOS(businessId: string, branchId: string): Promise<BranchResponse> {
+        const branchResult = await this.branchRepo.getBranch(branchId);
+        const branchProducts = await this.productRepository.getBranchProducts(branchId);
+        const priceList = await this.priceRepo.getPriceList(businessId, branchId);
+        const branchBundles = await this.bundleRepo.getBundlesAvailableInBranch(branchId);
+        return new BranchResponseBuilder().withBranch(branchResult).withProducts(branchProducts).withBundles(branchBundles).withPriceList(priceList).build();
     }
 
     async getBusinessBranches(businessId: string): Promise<Branch[]> {

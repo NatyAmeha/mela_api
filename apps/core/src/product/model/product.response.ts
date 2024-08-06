@@ -26,9 +26,6 @@ export class ProductResponse extends BaseResponse {
     @Field(types => Business)
     business?: Business
 
-    @Field(types => ProductPrice)
-    selectedProductPrice?: ProductPrice
-
     @Field(types => [ProductPrice])
     productPrices?: ProductPrice[]
 
@@ -98,12 +95,6 @@ export class ProductResponseBuilder extends BaseResponseBuilder {
     withProductPrices(productPrices: ProductPrice[]): ProductResponseBuilder {
         this.productResponse.success = true
         this.productResponse.productPrices = productPrices
-        return this
-    }
-
-    withSelectedProductPrice(selectedProductPrice: ProductPrice): ProductResponseBuilder {
-        this.productResponse.success = true
-        this.productResponse.selectedProductPrice = selectedProductPrice
         return this
     }
 

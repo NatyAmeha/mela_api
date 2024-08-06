@@ -11,28 +11,36 @@ import { BundleDiscovery } from "./model/bundle_discover.model";
 import { ProductDiscovery } from "./model/product_discovery";
 import { DiscoveryResponse, DiscoveryResponseBuilder } from "./response/discovery.response";
 import { BusinessDiscovery } from "./model/business_discovery.model";
+import { IProductPriceRepository, ProductPriceRepository } from "../product/repo/product_price.repository";
+import { ProductService } from "../product/usecase/product.service";
 
 @Injectable()
 export class DiscoverService {
     constructor(
         @Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository,
         @Inject(ProductRepository.injectName) private productRepo: ProductRepository,
+        private productService: ProductService,
         @Inject(ProductBundleRepository.injectName) private productBundleRepo: ProductBundleRepository
     ) { }
 
 
     async getForYouData(userFavoriteBusinessIds: string[], limit: number): Promise<ForYouResponse> {
         const topProducts = await this.getTopProductsFromUserFavoriteBusinesses(userFavoriteBusinessIds, limit);
+
         const topBusinessBundles = await this.getTopBusinessBundles(userFavoriteBusinessIds, limit);
         const result = new ForYouResponseBuilder().withTopProductsByBusiness(topProducts).withBundles(topBusinessBundles).build();
         return result;
     }
 
+
+
     async getDiscoverData(): Promise<DiscoveryResponse> {
         const topProducts = await this.productRepo.queryProducts({ query: { mainProduct: true }, orderBy: { totalViews: "desc" }, limit: 5 });
+        // const topProductsWithPrices = await this.productService.addSelectedPricesToProducts(topProducts, {});
         const topProductDiscoveryResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: ProductDiscovery.getTopProductsTitle(), items: topProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.TOP_PRODUCTS, sequence: 0 });
 
         const newProducts = await this.productRepo.queryProducts({ query: { mainProduct: true }, orderBy: { createdAt: "desc" }, limit: 5 });
+        // const newProductsWithPrices = await this.productService.addSelectedPricesToProducts(newProducts, {});
         const newProductDiscoveryResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: ProductDiscovery.getNewProductsTitle(), items: newProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.NEW_PRODUCTS, sequence: 1 });
 
         const topBusinesses = await this.businessRepo.queryBusinesses({ orderBy: { totalViews: "desc" }, limit: 5 });
@@ -54,6 +62,7 @@ export class DiscoverService {
         const topProductResponse = await Promise.all(
             businesses.map(async (business) => {
                 let businessProducts = await this.productRepo.getBusinessTopProducts(business.id, { limit: limit });
+                // const businessProductsWithPrice = await this.productService.addSelectedPricesToProducts(businessProducts, {});
                 let discoverResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: business.name, items: businessProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.TOP_BUSINESS_PRODUCTS, sequence: 0 });
                 return discoverResponse;
             }),
@@ -63,13 +72,13 @@ export class DiscoverService {
 
     async getTopBusinessBundles(businessId: string[], limit: number): Promise<BundleDiscovery[]> {
         let businessIds = await this.businessRepo.findBusinessesById(businessId);
-        let topProductResponse = await Promise.all(
+        let bundleResponse = await Promise.all(
             businessIds.map(async (business) => {
                 const businessBundles = await this.productBundleRepo.getBusinessBundles(business.id, { limit: limit });
                 const discoverResponse = BundleDiscovery.toDiscoverResponse({ lcoalizedField: business.name, items: businessBundles, selectedLanguage: LanguageKey.ENGLISH, sequence: 1, discoverType: DiscoverTypes.TOP_BUSINESS_BUNDLES });
                 return discoverResponse;
             }),
         );
-        return topProductResponse
+        return bundleResponse
     }
 }

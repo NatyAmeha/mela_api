@@ -27,15 +27,27 @@ export class BranchResolver {
     }
 
     @Query(returns => BranchResponse)
-    async getBranchDetails(@Args('branchId') branchId: string): Promise<BranchResponse> {
-        let branch = await this.branchService.getBranch(branchId);
-        let branchProducts = await this.productService.getBranchProducts(branchId);
-        return {
-            success: true,
-            branch: branch,
-            products: branchProducts
-        }
+    async getBranchDetails(@Args("businessId") businessId: string, @Args('branchId') branchId: string): Promise<BranchResponse> {
+        await this.businessService.getBusinessDetails(businessId);
+        const response = await this.branchService.getBranchDetails(businessId, branchId);
+        return response;
     }
+
+    @RequiresPermission({
+        permissions: [
+            { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.READ, resourcTargetName: "branchId" },
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+        ],
+    })
+    @UseGuards(PermissionGuard)
+    @Query(returns => BranchResponse)
+    async getBranchDetailsForPOS(@Args("businessId") businessId: string, @Args('branchId') branchId: string): Promise<BranchResponse> {
+        const response = await this.branchService.getBranchDetailsForPOS(businessId, branchId);
+        return response;
+
+    }
+
+
 
     @RequiresPermission({
         permissions: [

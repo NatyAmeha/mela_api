@@ -2,6 +2,9 @@ import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.respon
 import { Branch } from "./branch.model";
 import { Field, ObjectType } from "@nestjs/graphql";
 import { Product } from "../../product/model/product.model";
+import { Business } from "../../business/model/business.model";
+import { PriceList } from "../../product/model/price_list_.model";
+import { ProductBundle } from "../../product/model/product_bundle.model";
 
 @ObjectType()
 export class BranchResponse extends BaseResponse {
@@ -9,6 +12,15 @@ export class BranchResponse extends BaseResponse {
     branch?: Branch;
     @Field(types => [Product])
     products?: Product[]
+    @Field(types => Business)
+    business?: Business
+    @Field(types => [PriceList])
+    priceList?: PriceList[]
+
+    @Field(types => [ProductBundle])
+    bundles?: ProductBundle[]
+
+
     @Field(types => [Branch])
     branches?: Branch[];
 }
@@ -33,6 +45,23 @@ export class BranchResponseBuilder extends BaseResponseBuilder {
         this.branchResponse.branches = branches;
         return this;
     }
+
+    withBusinesses(business: Business): BranchResponseBuilder {
+        this.branchResponse.business = business;
+        return this;
+    }
+
+    withPriceList(priceList: PriceList[]): BranchResponseBuilder {
+        this.branchResponse.priceList = priceList;
+        return this;
+    }
+
+    withBundles(bundles: ProductBundle[]): BranchResponseBuilder {
+        this.branchResponse.bundles = bundles;
+        return this;
+    }
+
+
 
     build(): BranchResponse {
         return this.branchResponse;

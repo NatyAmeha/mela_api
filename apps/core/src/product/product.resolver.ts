@@ -24,6 +24,7 @@ import { CreateBundleInput, UpdateBundleInput } from "./dto/product_bundle.input
 import { BundleResponse } from "./dto/bundle_response";
 import { BundleService } from "./usecase/bundle.service";
 import { CreateProductPriceInput, UpdateProductPriceInput } from "./dto/product_price.input";
+import { ProductPrice } from "./model/product_price.model";
 
 @Resolver(of => Product)
 export class ProductResolver {
@@ -63,6 +64,7 @@ export class ProductResolver {
         @Args({ name: "priceListId", nullable: true }) priceListId?: string,
     ): Promise<ProductResponse> {
         let branchInfo: Branch
+        console.log("product detail args", productId, branchId, priceListId)
         if (branchId) {
             branchInfo = await this.branchService.getBranch(branchId);
         }
@@ -340,6 +342,17 @@ export class ProductResolver {
     @ResolveField('business', returns => Business)
     async getBusinessForProduct(@Parent() product: Product): Promise<Business> {
         return await this.businessService.getProductBusiness(product.id);
+    }
+
+    @ResolveField('prices', returns => [ProductPrice])
+    async getProductPrices(
+        @Parent() product: Product,
+        @Args({ name: 'branchId', type: () => String, nullable: true }) branchId?: string,
+        @Args({ name: 'priceListId', type: () => String, nullable: true }) priceListId?: string
+    ): Promise<ProductPrice[]> {
+        console.log("product price field resolve", product.id, branchId, priceListId)
+        const defaultPrice = await this.productService.getProductPrice(product.id, branchId, priceListId);
+        return [defaultPrice]
     }
 
     // responsd for nested query of branches for product  from product type

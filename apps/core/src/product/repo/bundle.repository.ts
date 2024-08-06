@@ -63,15 +63,12 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
             if (!bundleResult) {
                 throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUNDLE_NOT_FOUND, statusCode: 400 })
             }
-            const productsResult = await this.product.findMany({
-                where: { id: { in: bundleResult.productIds } }
-            });
+
             const { business, branches, ...restBundleInfo } = bundleResult;
             return new ProductBundle({
                 ...restBundleInfo,
                 business: new Business({ ...business }),
                 branches: branches.map(branch => new Branch({ ...branch })),
-                products: productsResult.map(product => new Product({ ...product })),
             });
         } catch (ex) {
             console.log(ex)

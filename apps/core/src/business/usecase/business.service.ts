@@ -30,6 +30,10 @@ export class BusinessService {
         return await this.businessRepo.createBusiness(data);
     }
 
+    async getMinimalBusinessInfo(businessId: string): Promise<Business> {
+        return await this.businessRepo.getBusiness(businessId);
+    }
+
     async getBusinessDetails(id: string) {
         const businessResult = await this.businessRepo.getBusiness(id);
         await this.businessRepo.updateBusinessStats(businessResult.id, { totalViews: businessResult.totalViews + 1 })

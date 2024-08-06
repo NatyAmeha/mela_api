@@ -5,10 +5,15 @@ import { ProductBundle } from "../model/product_bundle.model";
 import { CreateBundleInput, UpdateBundleInput } from "../dto/product_bundle.input";
 import { plainToClass } from "class-transformer";
 import { validate } from "class-validator";
+import { ProductService } from "./product.service";
+import { IProductRepository, ProductRepository } from "../repo/product.repository";
 
 @Injectable()
 export class BundleService {
-    constructor(@Inject(ProductBundleRepository.injectName) private bundleRepository: IBundleRepository) { }
+    constructor(
+        @Inject(ProductBundleRepository.injectName) private bundleRepository: IBundleRepository,
+        @Inject(ProductRepository.injectName) private productRepo: IProductRepository
+    ) { }
 
     async createProductBundle(businessId: string, branchIds: string[], bundleInputData: CreateBundleInput): Promise<BundleResponse> {
         const bundleInfo = ProductBundle.fromCreateBundleInput({ businessId, branchIds, input: bundleInputData })
@@ -23,8 +28,10 @@ export class BundleService {
     }
 
     async getBundleDetails(bundleId: string): Promise<BundleResponse> {
-        const result = await this.bundleRepository.getBundleDetails(bundleId)
-        return new BundleResponseBuilder().withBundle(result).build()
+        let bundleReesult = await this.bundleRepository.getBundleDetails(bundleId)
+        const products = await this.productRepo.getProductsById(bundleReesult.productIds)
+        // products = await this.productService.addSelectedPricesToProducts(products, {})
+        return new BundleResponseBuilder().withBundle(bundleReesult).withProducts(products).build()
     }
 
     async addProductToBundle(bundleId: string, productIds: string[]): Promise<BundleResponse> {

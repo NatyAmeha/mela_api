@@ -20,6 +20,8 @@ import { ClassDecoratorValidator } from "@app/common/validation_utils/class_deco
 import { ProductPriceRepository } from "../repo/product_price.repository";
 import { CreateProductPriceInput, UpdateProductPriceInput } from "../dto/product_price.input";
 import { ProductPrice } from "../model/product_price.model";
+import { BranchResponse } from "../../branch/model/branch.response";
+import { ProductBundle } from "../model/product_bundle.model";
 
 @Injectable()
 export class ProductService {
@@ -46,6 +48,20 @@ export class ProductService {
         return new ProductResponseBuilder().withProducts(createdProducts).build();
     }
 
+    async getProductPrice(productId: string, branchId?: string, priceListId?: string): Promise<ProductPrice> {
+        const selectedProductPrice = await this.productPriceRepo.getProductPrice(productId, { branchId, pricelistId: priceListId });
+        return selectedProductPrice;
+
+    }
+
+    // async addSelectedPricesToProducts(products: Product[], { branchId, priceListId }: { branchId?: string, priceListId?: string } | null): Promise<Product[]> {
+    //     for await (const product of products) {
+    //         const selectedProductPrice = await this.getProductPrice(product.id, branchId, priceListId);
+    //         product.prices = [selectedProductPrice];
+    //     }
+    //     return products;
+    // }
+
     async getProductDetailsWithInventory(productId: string, locationId?: string, branchInfo?: Branch, priceListId?: string): Promise<ProductResponse> {
         const productInfo = await this.productRepository.getProductById(productId);
         if (!productInfo) {
@@ -54,9 +70,8 @@ export class ProductService {
         // const inventoryLocationIds = branchInfo?.getInventoryLocationIds()
         // will be refactored to get accurate product inventory info
         const productInventories = await this.inventoryRepo.getProductInventories(productId, locationId);
-        const selectedProductPrice = await this.productPriceRepo.getProductPrice(productId, { branchId: branchInfo?.id, pricelistId: priceListId });
-        let response = new ProductResponseBuilder().withProduct(productInfo).withinventories(productInventories).withSelectedProductPrice(selectedProductPrice);
-        if (productInfo.mainProduct && productInfo?.variantsId?.length > 0) {
+        let response = new ProductResponseBuilder().withProduct(productInfo).withinventories(productInventories);
+        if (productInfo.hasVariant()) {
             const productVariants = await this.productRepository.getProductsById(productInfo.variantsId);
             response.withProductVariants(productVariants, branchInfo);
         }
@@ -104,6 +119,8 @@ export class ProductService {
     async removeProductFromBranch(productId: string[], branchId: string[]): Promise<Product[]> {
         return await this.productRepository.removeProductFromBranch(productId, branchId);
     }
+
+
 
     async getBranchProducts(branchId: string): Promise<Product[]> {
         return await this.productRepository.getBranchProducts(branchId);

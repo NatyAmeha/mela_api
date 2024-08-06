@@ -13,7 +13,7 @@ export interface IProductPriceRepository {
     updatePriceList(businessId: string, priceList: PriceList[]): Promise<boolean>;
 
     getProductPrice(productId: string, { branchId, pricelistId }: { branchId?: string, pricelistId?: string }): Promise<ProductPrice>;
-
+    getPriceList(businessId: string, branchId?: string): Promise<PriceList[]>;
     deleteProductPrice(priceId: string[]): Promise<boolean>;
     deletePriceList(businessId: string, priceListId: string[]): Promise<boolean>;
 
@@ -82,6 +82,8 @@ export class ProductPriceRepository extends PrismaClient implements OnModuleInit
         }
     }
 
+
+
     async createPriceList(businessId: string, priceList: PriceList[]): Promise<boolean> {
         try {
             const result = await this.$transaction(async (prisma) => {
@@ -102,6 +104,29 @@ export class ProductPriceRepository extends PrismaClient implements OnModuleInit
             })
             return result;
 
+        } catch (ex) {
+            if (ex instanceof RequestValidationException) {
+                throw ex;
+            }
+            console.log(ex);
+            throw new PrismaException({ message: ex.message, meta: { modelName: "PriceList" } });
+        }
+    }
+
+    async getPriceList(businessId: string, branchId?: string): Promise<PriceList[]> {
+        try {
+            const result = await this.$transaction(async (prisma) => {
+                const businessResult = await prisma.business.findUnique({ where: { id: businessId } });
+                if (!businessResult) {
+                    throw new RequestValidationException({ message: "Business not found" });
+                }
+                const priceList = businessResult.priceLists;
+                if (branchId) {
+                    return priceList.filter((priceList) => priceList.branchIds.includes(branchId));
+                }
+                return priceList;
+            })
+            return result;
         } catch (ex) {
             if (ex instanceof RequestValidationException) {
                 throw ex;
