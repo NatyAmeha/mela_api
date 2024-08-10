@@ -9,6 +9,11 @@ export enum PaymentOptionType {
     PAY_LATER = 'PAY_LATER'
 }
 
+export enum PaymentOptionUpfrontPaymentType {
+    PERCENTAGE = 'PERCENTAGE',
+    AMOUNT = 'AMOUNT'
+}
+
 @ObjectType()
 export class PaymentOption {
     @Field(type => String)
@@ -23,8 +28,14 @@ export class PaymentOption {
     @Field(types => Float)
     upfrontPayment?: number
 
+    @Field(type => PaymentOptionUpfrontPaymentType, { defaultValue: PaymentOptionUpfrontPaymentType.PERCENTAGE })
+    upfrontPaymentType?: string
+
     @Field()
     dueDate?: Date
+
+    @Field()
+    dueAfterDays?: number
 
     @Field()
     createdAt?: Date;
@@ -45,3 +56,7 @@ export class PaymentOption {
 registerEnumType(PaymentOptionType, {
     name: 'PaymentOptionType'
 })
+
+registerEnumType(PaymentOptionUpfrontPaymentType, {
+    name: 'PaymentOptionUpfrontPaymentType'
+});

@@ -22,7 +22,7 @@ model Cart {
 model Order {
     id              String              @id @default(auto()) @map("_id") @db.ObjectId
     orderNumber     Int?
-    orderType       String
+    // orderType       String
     status          String
     items           OrderItem[]
     userId          String              @db.ObjectId
@@ -54,6 +54,17 @@ type OrderItem {
     discount  OrderItemDiscount[]
     createdAt DateTime            @default(now())
     updatedAt DateTime?
+    config    OrderConfig[]
+}
+
+type OrderConfig {
+    name            LocalizedField[]
+    type            String
+    singleValue     String?
+    multipleValue   String[]
+    productIds      String[]
+    additionalPrice Float            @default(0)
+    addonId         String?
 }
 
 type OrderPaymentMethod {

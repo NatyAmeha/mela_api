@@ -40,6 +40,8 @@ export class ProductAddon extends BaseModel {
     isRequired: boolean
     @Field({ defaultValue: false })
     isProduct: boolean
+    @Field()
+    isDateRange?: boolean
     @Field(types => [String])
     productIds?: string[]
     @Field(types => [Price], { defaultValue: [] })

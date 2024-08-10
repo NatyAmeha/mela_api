@@ -33,10 +33,14 @@ export class CreateProductAddonInput {
     @Field()
     checkCalendar?: boolean;
 
+    @Field()
     isProduct?: boolean;
 
     @Field()
     isRequired?: boolean;
+
+    @Field()
+    isDateRange?: boolean
 
     tag?: string[];
 

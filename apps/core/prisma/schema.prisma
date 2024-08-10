@@ -236,6 +236,7 @@ type ProductAddon {
     options         ProductAddonOption[]
     checkCalendar   Boolean?
     isProduct       Boolean              @default(false)
+    isDateRange     Boolean              @default(false)
     productIds      String[]             @default([])
     tag             String[]             @default([])
     isActive        Boolean              @default(true)
@@ -252,13 +253,15 @@ type ProductAddonOption {
 }
 
 type PaymentOption {
-    id             String          @default(uuid())
-    name           LocalizedData[]
-    type           String
-    upfrontPayment Float?          @default(0)
-    dueDate        DateTime?
-    createdAt      DateTime?       @default(now())
-    updatedAt      DateTime?
+    id                 String          @default(uuid())
+    name               LocalizedData[]
+    type               String
+    upfrontPayment     Float?          @default(0)
+    upfrontPaymentType String?
+    dueAfterDays       Int?
+    dueDate            DateTime?
+    createdAt          DateTime?       @default(now())
+    updatedAt          DateTime?
 }
 
 type PaymentMethod {
