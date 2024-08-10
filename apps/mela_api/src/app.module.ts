@@ -55,7 +55,8 @@ import { Configuration } from 'apps/mela_api/configuration';
               subgraphs: [
                 { name: "subscription_service", url: "http://localhost:3001/graphql" },
                 { name: "auth_service", url: "http://localhost:3002/graphql" },
-                { name: "core_service", url: "http://localhost:3003/graphql" }
+                { name: "core_service", url: "http://localhost:3003/graphql" },
+                { name: "order_service", url: "http://localhost:3004/graphql" },
               ]
             }),
 

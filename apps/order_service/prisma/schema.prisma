@@ -1,0 +1,76 @@
+generator client {
+    provider      = "prisma-client-js"
+    output        = "./generated/prisma_order_client"
+    binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("ORDER_SERVICE_DB_URL")
+}
+
+model Cart {
+    id         String           @id @default(auto()) @map("_id") @db.ObjectId
+    name       LocalizedField[]
+    businessId String           @db.ObjectId
+    userId     String           @db.ObjectId
+    items      OrderItem[]
+    createdAt  DateTime         @default(now())
+    updatedAt  DateTime         @updatedAt
+}
+
+model Order {
+    id              String              @id @default(auto()) @map("_id") @db.ObjectId
+    orderNumber     Int?
+    orderType       String
+    status          String
+    items           OrderItem[]
+    userId          String              @db.ObjectId
+    paymentType     String
+    remainingAmount Float?
+    subTotal        Float
+    discount        OrderItemDiscount[]
+    totalAmount     Float?
+
+    paymentMethods OrderPaymentMethod[]
+
+    isOnlineOrder Boolean  @default(false)
+    note          String?
+    businessId    String[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+type OrderItem {
+    id        String              @default(uuid())
+    name      LocalizedField[]
+    quantity  Float
+    branchId  String?             @db.ObjectId
+    image     String
+    productId String              @db.ObjectId
+    subTotal  Float
+    tax       Float?
+    discount  OrderItemDiscount[]
+    createdAt DateTime            @default(now())
+    updatedAt DateTime?
+}
+
+type OrderPaymentMethod {
+    id        String           @default(uuid())
+    name      LocalizedField[]
+    amount    Float
+    createdAt DateTime         @default(now())
+    updatedAt DateTime?
+}
+
+type OrderItemDiscount {
+    id     String           @default(uuid())
+    name   LocalizedField[]
+    amount Float
+}
+
+type LocalizedField {
+    key   String
+    value String
+}
