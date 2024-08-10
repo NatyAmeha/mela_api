@@ -3,6 +3,7 @@ import { User } from "apps/auth/src/auth/model/user.model";
 import { OrderItem, OrderItemDiscount } from "./order_item.model";
 import { LocalizedField } from "@app/common/model/localized_model";
 import { OrderItemDiscountInput } from "../dto/order_item.input";
+import { CreateOrderInput } from "../dto/order.input";
 
 export enum OrderType {
     BOOKING = "BOOKING",
@@ -64,8 +65,85 @@ export class Order {
     createdAt?: Date;
     @Field()
     updatedAt?: Date;
-    constructor(partial) {
+    constructor(partial?: Partial<Order>) {
         Object.assign(this, partial);
+    }
+
+    getProductIds() {
+        return this.items.map(item => item.productId);
+    }
+
+    static createOrderInfo(userId: string, orderInfo: CreateOrderInput) {
+        return new Order({
+            userId,
+            orderType: orderInfo.orderType,
+            status: OrderStatus.PENDING.toString(),
+            items: orderInfo.items.map(item => new OrderItem({
+                name: item.name,
+                quantity: item.quantity,
+                branchId: item.branchId,
+                image: item.image,
+                productId: item.productId,
+                subTotal: item.subTotal,
+                discount: item.discount?.map(discount => new OrderItemDiscount(discount))
+            })),
+            paymentType: orderInfo.paymentType,
+            remainingAmount: orderInfo.remainingAmount,
+            subTotal: orderInfo.subTotal,
+            discount: orderInfo.discount?.map(discount => new OrderItemDiscount(discount)),
+            totalAmount: orderInfo.totalAmount,
+            paymentMethods: orderInfo.paymentMethods?.map(paymentMethod => new OrderPaymentMethod(paymentMethod)),
+            isOnlineOrder: orderInfo.isOnlineOrder,
+            note: orderInfo.note,
+            branchId: orderInfo.branchId,
+            updatedAt: new Date(Date.now()),
+        });
+    }
+}
+
+export class OrderBuilder {
+    private order: Order;
+    constructor() {
+        this.order = new Order();
+    }
+
+    withOrderNumber(orderNumber: number) {
+        this.order.orderNumber = orderNumber;
+        return this;
+    }
+
+    forUser(userId: string) {
+        this.order.userId = userId;
+        return this;
+    }
+
+    createPurchaseOrder(items: OrderItem[]) {
+        // to do
+        this.order.items = items;
+        return this;
+    }
+
+    createBookingOrder(items: OrderItem[]) {
+        // to do
+        this.order.items = items;
+        return this;
+    }
+
+    createRentalOrder(items: OrderItem[]) {
+        // to do
+        this.order.items = items;
+        return this;
+    }
+
+    withPaymentInfo(paymentType: string) {
+        // to do
+        this.order.paymentType = paymentType;
+        return this;
+    }
+
+
+    build() {
+        return this.order;
     }
 }
 

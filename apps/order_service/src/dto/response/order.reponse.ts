@@ -2,6 +2,7 @@ import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.respon
 import { Field, ObjectType } from "@nestjs/graphql";
 import { Cart } from "../../model/cart.model";
 import { Order } from "../../model/order.model";
+import { types } from "joi";
 
 @ObjectType()
 export class OrderResponse extends BaseResponse {
@@ -11,7 +12,7 @@ export class OrderResponse extends BaseResponse {
     @Field(types => [Cart])
     carts?: Cart[]
 
-    @Field()
+    @Field(types => Order)
     order?: Order
     @Field(types => [Order])
     orders?: Order[]

@@ -7,6 +7,8 @@ import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { CreateCartInput } from "../dto/cart.input";
 import { Cart } from "../model/cart.model";
 import { OrderResponse, OrderResponseBuilder } from "../dto/response/order.reponse";
+import { CreateOrderInput } from "../dto/order.input";
+import { Order } from "../model/order.model";
 
 @Injectable()
 export class OrderService {
@@ -33,5 +35,23 @@ export class OrderService {
         const result = await this.cartRepo.removeItemsFromCart(cartId, userId, productIds);
         return new OrderResponseBuilder().withCart(result).build();
     }
+
+    async placeOrder(userId: string, orderInput: CreateOrderInput, { cartId }: { cartId?: string, }): Promise<OrderResponse> {
+        await this.inputValidator.validateArrayInput(orderInput.items, CreateOrderItemInput);
+        const orderInfo = Order.createOrderInfo(userId, orderInput);
+        const orderCreateResult = await this.orderRepo.createOrderInfo(orderInfo);
+        if (cartId) {
+            const productIds = orderCreateResult.getProductIds();
+            try {
+                await this.cartRepo.removeItemsFromCart(cartId, userId, productIds);
+            } catch (error) {
+                // intentionally left blank, non critical exception
+            }
+        }
+        return new OrderResponseBuilder().withOrder(orderCreateResult).build();
+    }
+
+
+
 
 }

@@ -1,5 +1,6 @@
 import { LocalizedField } from "@app/common/model/localized_model"
 import { Directive, Field, Float, ID, Int, ObjectType } from "@nestjs/graphql"
+import { OrderItemDiscountInput } from "../dto/order_item.input"
 
 @ObjectType()
 @Directive('@shareable')
@@ -43,5 +44,12 @@ export class OrderItemDiscount {
     amount: number
     constructor(partial?: Partial<OrderItemDiscount>) {
         Object.assign(this, partial)
+    }
+
+    static fromCreateOrderItemDiscount(orderItemDiscount: OrderItemDiscountInput) {
+        return new OrderItemDiscount({
+            ...orderItemDiscount,
+            name: orderItemDiscount.name?.map(name => new LocalizedField(name)),
+        })
     }
 }

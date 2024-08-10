@@ -7,6 +7,7 @@ import { User } from "apps/auth/src/auth/model/user.model";
 import { CreateCartInput } from "../dto/cart.input";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { UseGuards } from "@nestjs/common";
+import { CreateOrderInput } from "../dto/order.input";
 
 
 @Resolver(of => Order)
@@ -31,6 +32,13 @@ export class OrderResolver {
     @Query(returns => OrderResponse)
     async getUserCarts(@CurrentUser() user: User): Promise<OrderResponse> {
         const result = await this.orderService.getUserCarts(user.id);
+        return result;
+    }
+
+    @UseGuards(AuthzGuard)
+    @Mutation(returns => OrderResponse)
+    async placeOrder(@CurrentUser() user: User, @Args("orderInput") orderInput: CreateOrderInput, @Args({ name: "cartId", nullable: true }) cartId?: string): Promise<OrderResponse> {
+        const result = await this.orderService.placeOrder(user.id, orderInput, { cartId });
         return result;
     }
 }

@@ -44,6 +44,7 @@ export class OrderItemDiscountInput {
     }
 }
 
+@InputType()
 export class OrderPaymentMethodInput {
     @Field(types => [LocalizedFieldInput])
     name: LocalizedFieldInput[]
