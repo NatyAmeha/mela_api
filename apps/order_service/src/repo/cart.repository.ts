@@ -6,7 +6,9 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 import { includes, remove, uniqBy, uniqWith } from "lodash";
 
 export interface ICartRepository {
-    addToCart(cartInfo: Cart): Promise<Cart>
+    addOrUpdateProductToCart(cartInfo: Cart): Promise<Cart>
+    removeItemsFromCart(cartId: string, userId: string, productIds: string[]): Promise<Cart>
+    getUserCarts(userId: string): Promise<Cart[]>
 
 }
 
@@ -18,7 +20,7 @@ export class CartRepository extends PrismaClient implements OnModuleInit, OnModu
         await this.$connect()
     }
 
-    async addToCart(cartInfo: Cart): Promise<Cart> {
+    async addOrUpdateProductToCart(cartInfo: Cart): Promise<Cart> {
         try {
             const existingCart = await this.cart.findFirst({ where: { businessId: cartInfo.businessId, userId: cartInfo.userId } })
 
@@ -36,6 +38,31 @@ export class CartRepository extends PrismaClient implements OnModuleInit, OnModu
             throw new PrismaException({ message: ex.message, code: ex.code, meta: ex.meta })
         }
         return new Cart()
+    }
+
+    async removeItemsFromCart(cartId: string, userId: string, productIds: string[]): Promise<Cart> {
+        try {
+            const existingCart = await this.cart.findFirst({ where: { id: cartId } })
+            if (!existingCart || existingCart.userId !== userId) {
+                throw new RequestValidationException({ message: "Cart not found" })
+            }
+            const newItems = remove(existingCart.items, (item) => !includes(productIds, item.productId))
+            const updateResult = await this.cart.update({ where: { id: cartId }, data: { items: { set: newItems } } })
+            return new Cart({ ...updateResult })
+        } catch (ex) {
+            console.log(ex)
+            throw new PrismaException({ message: ex.message, code: ex.code, meta: ex.meta })
+        }
+    }
+
+    async getUserCarts(userId: string): Promise<Cart[]> {
+        try {
+            const carts = await this.cart.findMany({ where: { userId: userId, items: { isEmpty: false } } })
+            return carts.map(cart => new Cart({ ...cart }))
+        } catch (ex) {
+            console.log(ex)
+            throw new PrismaException({ message: ex.message, code: ex.code, meta: ex.meta })
+        }
     }
 
     async onModuleDestroy() {

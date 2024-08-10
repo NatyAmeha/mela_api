@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { OrderService } from "../usecase/order.usecase";
 import { Order } from "../model/order.model";
 import { OrderResponse } from "../dto/response/order.reponse";
@@ -20,5 +20,17 @@ export class OrderResolver {
         return result;
     }
 
+    @UseGuards(AuthzGuard)
+    @Mutation(returns => OrderResponse)
+    async removeItemsFromCart(@Args("cartId") cartId: string, @CurrentUser() user: User, @Args("productIds", { type: () => [String] }) productIds: string[]): Promise<OrderResponse> {
+        const result = await this.orderService.removeItemsFromCart(cartId, user.id, productIds);
+        return result;
+    }
 
+    @UseGuards(AuthzGuard)
+    @Query(returns => OrderResponse)
+    async getUserCarts(@CurrentUser() user: User): Promise<OrderResponse> {
+        const result = await this.orderService.getUserCarts(user.id);
+        return result;
+    }
 }

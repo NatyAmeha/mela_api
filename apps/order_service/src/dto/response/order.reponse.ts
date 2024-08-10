@@ -7,6 +7,10 @@ import { Order } from "../../model/order.model";
 export class OrderResponse extends BaseResponse {
     @Field(types => Cart)
     cart?: Cart
+
+    @Field(types => [Cart])
+    carts?: Cart[]
+
     @Field()
     order?: Order
     @Field(types => [Order])
@@ -44,6 +48,12 @@ export class OrderResponseBuilder extends BaseResponseBuilder {
     withCart(cart: Cart): OrderResponseBuilder {
         this.orderResponse.success = true
         this.orderResponse.cart = cart
+        return this
+    }
+
+    withCarts(carts: Cart[]): OrderResponseBuilder {
+        this.orderResponse.success = true
+        this.orderResponse.carts = carts
         return this
     }
 
