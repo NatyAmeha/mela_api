@@ -13,6 +13,7 @@ export enum AddonInputType {
     DATE_INPUT = "DATE_INPUT",
     TIME_INPUT = "TIME_INPUT",
     DATE_TIME_INPUT = "DATE_TIME_INPUT",
+    NO_INPUT_REQUIRED = "NO_INPUT_REQUIRED"
 }
 
 @ObjectType()

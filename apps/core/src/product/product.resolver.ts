@@ -361,5 +361,13 @@ export class ProductResolver {
         return await this.branchService.getProductBranchs(product.id);
     }
 
+    @ResolveField("variants", returns => [Product])
+    async getVariants(@Parent() product: Product): Promise<Product[]> {
+        if (!product.hasVariant()) {
+            return []
+        }
+        return await this.productService.getProductsById(product.variantsId);
+    }
+
 
 }

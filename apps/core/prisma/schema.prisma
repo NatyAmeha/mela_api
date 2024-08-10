@@ -2,6 +2,7 @@ generator client {
     provider      = "prisma-client-js"
     output        = "./generated/prisma_auth_client"
     binaryTargets = ["native", "linux-musl"]
+    timeout       = 30000
 }
 
 datasource db {

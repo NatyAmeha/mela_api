@@ -53,7 +53,7 @@ export class Branch {
     @Field()
     isActive?: boolean;
 
-    @Field(types => [String], { defaultValue: [] })
+    @Field(types => [InventoryLocation], { defaultValue: [] })
     inventoryLocations?: InventoryLocation[];
     @Field(types => [ProductBundle])
     bundles?: ProductBundle[]
