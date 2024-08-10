@@ -9,8 +9,7 @@ import { LocalizedField } from "@app/common/model/localized_model";
 
 
 @ObjectType()
-@Directive('@extends')
-@Directive('@key(fields: "id name{key,value} resourceId role permissions{action,resourceType,resourceTarget,effect,groups{id,key,name{key,value}}} owner ownerType dateCreated dateUpdated permissionType")')
+@Directive('@shareable')
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -48,8 +47,7 @@ export class Access extends BaseModel {
 }
 
 @ObjectType()
-@Directive('@extends')
-@Directive('@key(fields: "id name{key,value} action resourceType resourceTarget effect groups{id,key,name{key,value}} userGenerated resourcTargetName")')
+@Directive('@shareable')
 export class Permission {
     @Field(types => ID)
     id?: string
@@ -82,6 +80,7 @@ export class Permission {
 
 
 @ObjectType()
+@Directive('@shareable')
 export class PermissionGroup {
     @Field()
     id: string

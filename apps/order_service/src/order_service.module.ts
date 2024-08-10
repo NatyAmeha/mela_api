@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { OrderServiceController } from './order_service.controller';
 
 import { ConfigModule } from '@nestjs/config';
 import { RmqModule } from 'libs/rmq/rmq_module';
@@ -38,7 +37,7 @@ import { CartRepository } from './repo/cart.repository';
       }
     }),
   ],
-  controllers: [OrderServiceController],
+  controllers: [],
   providers: [
     { provide: OrderRepository.injectName, useClass: OrderRepository },
     { provide: CartRepository.injectName, useClass: CartRepository },
