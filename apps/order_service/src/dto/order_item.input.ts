@@ -1,12 +1,13 @@
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Field, Float, InputType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
-import { IsNumber } from "class-validator";
+import { ArrayNotEmpty, IsNotEmpty, IsNumber } from "class-validator";
 
 @InputType()
 export class CreateOrderItemInput {
     @Field(types => [LocalizedFieldInput])
     @Type(() => LocalizedFieldInput)
+    @ArrayNotEmpty({ message: 'Order item name is required' })
     name: LocalizedFieldInput[]
 
     @Field(types => Float)
@@ -17,9 +18,11 @@ export class CreateOrderItemInput {
     branchId?: string
 
     @Field()
+    @IsNotEmpty()
     image: string
 
     @Field()
+    @IsNotEmpty()
     productId: string
 
     @Field()

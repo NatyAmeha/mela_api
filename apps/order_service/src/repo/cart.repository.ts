@@ -3,6 +3,7 @@ import { Cart } from "../model/cart.model";
 import { PrismaClient } from "apps/order_service/prisma/generated/prisma_order_client";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
+import { includes, remove, uniqBy, uniqWith } from "lodash";
 
 export interface ICartRepository {
     addToCart(cartInfo: Cart): Promise<Cart>
@@ -20,10 +21,13 @@ export class CartRepository extends PrismaClient implements OnModuleInit, OnModu
     async addToCart(cartInfo: Cart): Promise<Cart> {
         try {
             const existingCart = await this.cart.findFirst({ where: { businessId: cartInfo.businessId, userId: cartInfo.userId } })
-            const { items, ...restCartInfo } = cartInfo
+
             if (existingCart?.id) {
-                const updateResult = await this.cart.update({ where: { id: existingCart.id }, data: { items: { push: items } } })
-                return new Cart({ ...existingCart })
+                const newItemsProductId = cartInfo.items.map((item) => item.productId)
+                const existingItemsbyProductId = remove(existingCart.items, (item) => !includes(newItemsProductId, item.productId))
+
+                const updateResult = await this.cart.update({ where: { id: existingCart.id }, data: { items: { set: [...existingItemsbyProductId, ...cartInfo.items] } } })
+                return new Cart({ ...updateResult })
             }
             const cartCreateResult = await this.cart.create({ data: { ...cartInfo } })
             return new Cart({ ...cartCreateResult })
