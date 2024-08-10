@@ -6,9 +6,9 @@ import { ClassDecoratorValidator } from "@app/common/validation_utils/class_deco
 import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { CreateCartInput } from "../dto/cart.input";
 import { Cart } from "../model/cart.model";
-import { OrderResponse, OrderResponseBuilder } from "../dto/response/order.reponse";
+import { OrderResponse, OrderResponseBuilder } from "../model/response/order.reponse";
 import { CreateOrderInput } from "../dto/order.input";
-import { Order } from "../model/order.model";
+import { Order, OrderBuilder } from "../model/order.model";
 
 @Injectable()
 export class OrderService {
@@ -38,7 +38,12 @@ export class OrderService {
 
     async placeOrder(userId: string, orderInput: CreateOrderInput, { cartId }: { cartId?: string, }): Promise<OrderResponse> {
         await this.inputValidator.validateArrayInput(orderInput.items, CreateOrderItemInput);
-        const orderInfo = Order.createOrderInfo(userId, orderInput);
+        const orderInfo = new OrderBuilder()
+            .createOrderFromOnlineStore(userId)
+            .withItems(orderInput.items)
+            .withPaymentInfo(orderInput.paymentType, { remainingAmount: orderInput.remainingAmount, subtotal: orderInput.subTotal, totalAmount: orderInput.totalAmount, paymentMethods: orderInput.paymentMethods })
+            .withAdditionalInfo({ note: orderInput.note }).build();
+
         const orderCreateResult = await this.orderRepo.createOrderInfo(orderInfo);
         if (cartId) {
             const productIds = orderCreateResult.getProductIds();
@@ -49,6 +54,16 @@ export class OrderService {
             }
         }
         return new OrderResponseBuilder().withOrder(orderCreateResult).build();
+    }
+
+    async getUserOrders(userId: string): Promise<OrderResponse> {
+        const result = await this.orderRepo.getUserOrders(userId);
+        return new OrderResponseBuilder().withOrders(result).build();
+    }
+
+    async getOrderDetails(orderId: string): Promise<OrderResponse> {
+        const result = await this.orderRepo.getOrderById(orderId);
+        return new OrderResponseBuilder().withOrder(result).build();
     }
 
 

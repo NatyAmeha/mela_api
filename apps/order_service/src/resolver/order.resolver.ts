@@ -1,7 +1,7 @@
 import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { OrderService } from "../usecase/order.usecase";
 import { Order } from "../model/order.model";
-import { OrderResponse } from "../dto/response/order.reponse";
+import { OrderResponse } from "../model/response/order.reponse";
 import { CurrentUser } from "libs/common/get_user_decorator";
 import { User } from "apps/auth/src/auth/model/user.model";
 import { CreateCartInput } from "../dto/cart.input";
@@ -37,8 +37,22 @@ export class OrderResolver {
 
     @UseGuards(AuthzGuard)
     @Mutation(returns => OrderResponse)
-    async placeOrder(@CurrentUser() user: User, @Args("orderInput") orderInput: CreateOrderInput, @Args({ name: "cartId", nullable: true }) cartId?: string): Promise<OrderResponse> {
+    async placeOrderFromOnlineStore(@CurrentUser() user: User, @Args("orderInput") orderInput: CreateOrderInput, @Args({ name: "cartId", nullable: true }) cartId?: string): Promise<OrderResponse> {
         const result = await this.orderService.placeOrder(user.id, orderInput, { cartId });
+        return result;
+    }
+
+    @UseGuards(AuthzGuard)
+    @Query(returns => OrderResponse)
+    async getUserOrders(@CurrentUser() user: User): Promise<OrderResponse> {
+        const result = await this.orderService.getUserOrders(user.id);
+        return result;
+    }
+
+    @UseGuards(AuthzGuard)
+    @Query(returns => OrderResponse)
+    async getOrderDetails(@Args("orderId") orderId: string): Promise<OrderResponse> {
+        const result = await this.orderService.getOrderDetails(orderId);
         return result;
     }
 }

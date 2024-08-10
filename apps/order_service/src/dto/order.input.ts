@@ -7,8 +7,8 @@ import { PaymentOptionType } from "apps/core/src/business/model/payment_option.m
 
 @InputType()
 export class CreateOrderInput {
-    @Field(types => OrderType)
-    orderType: string
+    // @Field(types => OrderType)
+    // orderType: string
 
     @Field(types => [CreateOrderItemInput])
     @Type(() => CreateOrderItemInput)

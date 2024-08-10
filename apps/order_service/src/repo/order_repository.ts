@@ -5,6 +5,8 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 
 export interface IOrderRepository {
     createOrderInfo(orderIInfo: Order): Promise<Order>
+    getUserOrders(userId: string): Promise<Order[]>
+    getOrderById(orderId: string): Promise<Order>
 
 }
 
@@ -23,6 +25,25 @@ export class OrderRepository extends PrismaClient implements OnModuleInit, OnMod
         } catch (ex) {
             console.log(ex)
             throw new PrismaException({ message: ex.message, code: ex.code, meta: ex.meta })
+        }
+    }
+
+
+    async getUserOrders(userId: string): Promise<Order[]> {
+        try {
+            const orders = await this.order.findMany({ where: { userId: userId } })
+            return orders.map(order => new Order({ ...order }))
+        } catch (error) {
+            throw new PrismaException({ message: error.message, code: error.code, meta: error.meta })
+        }
+    }
+
+    async getOrderById(orderId: string): Promise<Order> {
+        try {
+            const order = await this.order.findUnique({ where: { id: orderId } })
+            return new Order({ ...order })
+        } catch (error) {
+            throw new PrismaException({ message: error.message, code: error.code, meta: error.meta })
         }
     }
 

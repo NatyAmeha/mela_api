@@ -1,7 +1,7 @@
 import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.response";
 import { Field, ObjectType } from "@nestjs/graphql";
-import { Cart } from "../../model/cart.model";
-import { Order } from "../../model/order.model";
+import { Cart } from "../cart.model";
+import { Order } from "../order.model";
 import { types } from "joi";
 
 @ObjectType()

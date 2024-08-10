@@ -1,6 +1,7 @@
 import { LocalizedField } from "@app/common/model/localized_model"
 import { Directive, Field, Float, ID, Int, ObjectType } from "@nestjs/graphql"
 import { OrderItemDiscountInput } from "../dto/order_item.input"
+import { OrderConfig } from "./order.config.model"
 
 @ObjectType()
 @Directive('@shareable')
@@ -23,6 +24,8 @@ export class OrderItem {
     tax?: number
     @Field(types => [OrderItemDiscount])
     discount?: OrderItemDiscount[]
+    @Field(type => [OrderConfig])
+    config?: OrderConfig[]
 
     @Field()
     createdAt?: Date

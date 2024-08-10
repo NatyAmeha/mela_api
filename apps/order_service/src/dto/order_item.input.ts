@@ -1,7 +1,8 @@
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Field, Float, InputType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
-import { ArrayNotEmpty, IsNotEmpty, IsNumber } from "class-validator";
+import { ArrayNotEmpty, IsNotEmpty, IsNumber, ValidateNested } from "class-validator";
+import { CreateOrderConfigInput } from "./order_config.input";
 
 @InputType()
 export class CreateOrderItemInput {
@@ -30,6 +31,11 @@ export class CreateOrderItemInput {
 
     @Field(types => [OrderItemDiscountInput])
     discount?: OrderItemDiscountInput[]
+
+    @Field(type => [CreateOrderConfigInput])
+    @Type(() => CreateOrderConfigInput)
+    @ValidateNested()
+    config?: CreateOrderConfigInput[]
 }
 
 @InputType()

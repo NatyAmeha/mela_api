@@ -2,8 +2,10 @@ import { Directive, Field, Float, ID, ObjectType, registerEnumType } from "@nest
 import { User } from "apps/auth/src/auth/model/user.model";
 import { OrderItem, OrderItemDiscount } from "./order_item.model";
 import { LocalizedField } from "@app/common/model/localized_model";
-import { OrderItemDiscountInput } from "../dto/order_item.input";
+import { CreateOrderItemInput, OrderItemDiscountInput, OrderPaymentMethodInput } from "../dto/order_item.input";
 import { CreateOrderInput } from "../dto/order.input";
+import { OrderConfig } from "./order.config.model";
+import { PaymentOptionType } from "apps/core/src/business/model/payment_option.model";
 
 export enum OrderType {
     BOOKING = "BOOKING",
@@ -28,8 +30,8 @@ export class Order {
     id: string;
     @Field()
     orderNumber?: number
-    @Field(types => OrderType)
-    orderType: string
+    // @Field(types => OrderType)
+    // orderType: string
     @Field(types => OrderStatus, { defaultValue: OrderStatus.PENDING.toString() })
     status: string
     @Field(types => [OrderItem])
@@ -73,32 +75,33 @@ export class Order {
         return this.items.map(item => item.productId);
     }
 
-    static createOrderInfo(userId: string, orderInfo: CreateOrderInput) {
-        return new Order({
-            userId,
-            orderType: orderInfo.orderType,
-            status: OrderStatus.PENDING.toString(),
-            items: orderInfo.items.map(item => new OrderItem({
-                name: item.name,
-                quantity: item.quantity,
-                branchId: item.branchId,
-                image: item.image,
-                productId: item.productId,
-                subTotal: item.subTotal,
-                discount: item.discount?.map(discount => new OrderItemDiscount(discount))
-            })),
-            paymentType: orderInfo.paymentType,
-            remainingAmount: orderInfo.remainingAmount,
-            subTotal: orderInfo.subTotal,
-            discount: orderInfo.discount?.map(discount => new OrderItemDiscount(discount)),
-            totalAmount: orderInfo.totalAmount,
-            paymentMethods: orderInfo.paymentMethods?.map(paymentMethod => new OrderPaymentMethod(paymentMethod)),
-            isOnlineOrder: orderInfo.isOnlineOrder,
-            note: orderInfo.note,
-            branchId: orderInfo.branchId,
-            updatedAt: new Date(Date.now()),
-        });
-    }
+    // static createOrderInfo(userId: string, orderInfo: CreateOrderInput) {
+    //     return new Order({
+    //         // userId,
+    //         // orderType: orderInfo.orderType,
+    //         // status: OrderStatus.PENDING.toString(),
+    //         items: orderInfo.items.map(item => new OrderItem({
+    //             name: item.name,
+    //             quantity: item.quantity,
+    //             branchId: item.branchId,
+    //             image: item.image,
+    //             productId: item.productId,
+    //             subTotal: item.subTotal,
+    //             discount: item.discount?.map(discount => new OrderItemDiscount(discount)),
+    //             config: item.config?.map(config => new OrderConfig(config)),
+    //         })),
+    //         // paymentType: orderInfo.paymentType,
+    //         // remainingAmount: orderInfo.remainingAmount,
+    //         // subTotal: orderInfo.subTotal,
+    //         // discount: orderInfo.discount?.map(discount => new OrderItemDiscount(discount)),
+    //         // totalAmount: orderInfo.totalAmount,
+    //         // paymentMethods: orderInfo.paymentMethods?.map(paymentMethod => new OrderPaymentMethod(paymentMethod)),
+    //         // isOnlineOrder: orderInfo.isOnlineOrder,
+    //         // note: orderInfo.note,
+    //         branchId: orderInfo.branchId,
+    //         // updatedAt: new Date(Date.now()),
+    //     });
+    // }
 }
 
 export class OrderBuilder {
@@ -107,37 +110,48 @@ export class OrderBuilder {
         this.order = new Order();
     }
 
-    withOrderNumber(orderNumber: number) {
-        this.order.orderNumber = orderNumber;
-        return this;
-    }
-
-    forUser(userId: string) {
+    createOrderFromOnlineStore(userId: string) {
+        // to do
         this.order.userId = userId;
+        this.order.isOnlineOrder = true;
+        this.order.status = OrderStatus.PENDING;
         return this;
     }
 
-    createPurchaseOrder(items: OrderItem[]) {
-        // to do
-        this.order.items = items;
+    withItems(items: CreateOrderItemInput[]) {
+        this.order.items = items.map(item => new OrderItem({
+            name: item.name,
+            quantity: item.quantity,
+            branchId: item.branchId,
+            image: item.image,
+            productId: item.productId,
+            subTotal: item.subTotal,
+            discount: item.discount?.map(discount => new OrderItemDiscount(discount)),
+            config: item.config?.map(config => new OrderConfig(config)),
+        }));
         return this;
     }
 
-    createBookingOrder(items: OrderItem[]) {
-        // to do
-        this.order.items = items;
-        return this;
-    }
-
-    createRentalOrder(items: OrderItem[]) {
-        // to do
-        this.order.items = items;
-        return this;
-    }
-
-    withPaymentInfo(paymentType: string) {
-        // to do
+    withPaymentInfo(paymentType: string, { remainingAmount, totalAmount, subtotal, paymentMethods, }: { remainingAmount?: number, totalAmount?: number, subtotal?: number, paymentMethods?: OrderPaymentMethodInput[] }) {
         this.order.paymentType = paymentType;
+        this.order.paymentMethods = paymentMethods?.map(paymentMethod => new OrderPaymentMethod(paymentMethod));
+        this.order.subTotal = subtotal;
+        this.order.totalAmount = totalAmount;
+        if (paymentType == PaymentOptionType.PAY_LATER) {
+            this.order.remainingAmount = remainingAmount
+        }
+        return this;
+    }
+    withDiscount(discount?: OrderItemDiscountInput[]) {
+        if (discount) {
+            this.order.discount = discount?.map(discount => new OrderItemDiscount(discount));
+        }
+        return this;
+    }
+
+    withAdditionalInfo({ orderNumber, note }: { orderNumber?: number, note?: string }) {
+        this.order.orderNumber = orderNumber;
+        this.order.note = note;
         return this;
     }
 
