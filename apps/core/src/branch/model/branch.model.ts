@@ -7,6 +7,9 @@ import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized
 import { Business } from "../../business/model/business.model";
 import { InventoryLocation } from "../../inventory/model/inventory_location.model";
 import { ProductBundle } from "../../product/model/product_bundle.model";
+import { PriceList } from "../../product/model/price_list_.model";
+import { ProductPrice } from "../../product/model/product_price.model";
+import { PaymentOption } from "../../business/model/payment_option.model";
 
 @ObjectType()
 export class Branch {
@@ -51,10 +54,20 @@ export class Branch {
     @Field()
     isActive?: boolean;
 
-    @Field(types => [String], { defaultValue: [] })
+    @Field(types => [InventoryLocation], { defaultValue: [] })
     inventoryLocations?: InventoryLocation[];
     @Field(types => [ProductBundle])
     bundles?: ProductBundle[]
+
+    @Field(types => [ProductPrice])
+    productPrices?: ProductPrice[]
+
+    @Field(types => [PriceList])
+    priceLists?: PriceList[]
+    
+    @Field(type => [PaymentOption])
+    paymentOptions?: PaymentOption[]
+
 
 
     constructor(partial?: Partial<Branch>) {

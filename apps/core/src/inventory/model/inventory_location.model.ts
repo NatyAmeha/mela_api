@@ -4,7 +4,7 @@ import { Branch } from "../../branch/model/branch.model";
 import { Business } from "../../business/model/business.model";
 import { CreateInventoryLocationInput } from "../dto/inventory_location.input";
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class InventoryLocation extends BaseModel {
     @Field(types => ID)
     id: string;

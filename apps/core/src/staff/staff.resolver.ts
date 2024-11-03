@@ -7,6 +7,8 @@ import { BusinessService } from "../business/usecase/business.service";
 import { Business } from "../business/model/business.model";
 import { BranchService } from "../branch/usecase/branch.service";
 import { Branch } from "../branch/model/branch.model";
+import { CoreServiceMsgBrockerClient } from "../msg_brocker_client/core_service_msg_brocker";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 
 @Resolver(of => Staff)
 export class StaffResolver {
@@ -14,18 +16,30 @@ export class StaffResolver {
     constructor(
         private staffService: StaffService,
         private businessService: BusinessService,
-        private branchService: BranchService
+        private branchService: BranchService,
+        private coreServiceMsgBrocker: CoreServiceMsgBrockerClient,
+
     ) {
     }
 
 
     @Mutation(returns => StaffResponse)
-    async createStaff(@Args('staffInput') staffInfo: CreateStaffInput): Promise<StaffResponse> {
-        const staff = await this.staffService.createStaff(staffInfo);
-        return {
-            success: true,
-            staff: staff
+    async createStaff(@Args('staffInput') staffInput: CreateStaffInput): Promise<StaffResponse> {
+        let staffInfo = CreateStaffInput.toStaff(staffInput);
+        if (staffInfo.requireBranchAssignment()) {
+            let staffUserAndAccessCreateResult = await this.coreServiceMsgBrocker.sendCreateStaffUserAndAccessMessage(staffInput);
+            if (!staffUserAndAccessCreateResult.success) {
+                throw new RequestValidationException({ message: staffUserAndAccessCreateResult.message })
+            }
+            const staffResponse = await this.staffService.createStaff(staffInfo);
+            return staffResponse;
         }
+    }
+
+    @Mutation(returns => StaffResponse)
+    async authenticateStaff(@Args('phoneNumber') phoneNumber: string, @Args('pin') pin: number, @Args('branchId') branchId: string, @Args('businessId') businessId: string): Promise<StaffResponse> {
+        const staffResponse = await this.staffService.authenticateStaff(phoneNumber, pin, branchId, businessId);
+        return staffResponse;
     }
 
     @Query(returns => StaffResponse)

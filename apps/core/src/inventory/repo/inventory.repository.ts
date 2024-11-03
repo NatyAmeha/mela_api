@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { UpdateInventoryInput } from "../../product/dto/inventory.input";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { Inventory } from "../model/inventory.model";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 
@@ -8,6 +8,7 @@ export interface IInventoryRepository {
     updateInventoriesInformation(inventories: UpdateInventoryInput[]): Promise<Inventory[]>;
     addInventoriesOnProduct(productId: string, inventory: Inventory): Promise<Inventory>
     getProductInventories(productId: string, locationId?: string): Promise<Inventory[]>
+    getBatchProductInventories(productIds: string[], locationIds?: string[]): Promise<Inventory[]>
     getInventoriesInInventoryLocation(locationId: string): Promise<Inventory[]>;
 }
 
@@ -25,7 +26,7 @@ export class InventoryRepository extends PrismaClient implements OnModuleInit, O
     async addInventoriesOnProduct(productId: string, inventory: Inventory): Promise<Inventory> {
         try {
             const result = await this.$transaction(async (prisma) => {
-                const { inventoryLocation, inventoryLocationId, ...restInventoryInfo } = inventory;
+                const { inventoryLocation, inventoryLocationId, productId, ...restInventoryInfo } = inventory;
                 const inventoryCreateResult = await prisma.inventory.create({
                     data: {
                         ...restInventoryInfo,
@@ -82,6 +83,20 @@ export class InventoryRepository extends PrismaClient implements OnModuleInit, O
         } catch (error) {
             console.log(error)
             throw new PrismaException({ source: "Get product inventory by location id", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getBatchProductInventories(productIds: string[], locationIds?: string[]): Promise<Inventory[]> {
+        try {
+            const inventoryResults = await this.inventory.findMany({
+                where: { productId: { in: productIds }, inventoryLocationId: locationIds.length > 0 ? { in: locationIds } : undefined }
+            });
+
+            return inventoryResults.map((inventory) => new Inventory({ ...inventory }));
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({ source: "Get batch product inventories", statusCode: 400, code: error.code, meta: error.meta });
+
         }
     }
 

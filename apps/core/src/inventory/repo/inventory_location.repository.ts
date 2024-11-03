@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { InventoryLocation } from "../model/inventory_location.model";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";

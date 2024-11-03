@@ -6,7 +6,7 @@ type Access {
   dateCreated: DateTime
   dateUpdated: DateTime
   id: ID
-  name: [LocalizedData!]
+  name: [LocalizedField!]
   owner: String!
   ownerType: AccessOwnerType!
   permissionType: PermissionType!
@@ -21,14 +21,44 @@ enum AccessOwnerType {
   USER
 }
 
+"""The account type"""
+enum AccountType {
+  ADMIN
+  SUPERADMIN
+  USER
+}
+
+type Benefit {
+  discounts: [Discount!]
+  id: ID!
+  name: [LocalizedField!]!
+  perkType: String
+}
+
 type BenefitInfo {
-  descriptions: [LocalizedData!]!
+  descriptions: [LocalizedField!]!
   tags: [String!]
 }
 
 input BenefitInfoInput {
   descriptions: [LocalizedFieldInput!]!
   tags: [String!]
+}
+
+input BenefitInput {
+  name: [LocalizedFieldInput!]!
+  perkType: MembershipPerkType
+}
+
+input CreateMembershipInput {
+  benefits: [BenefitInput!]!
+  category: [String!]
+  description: [LocalizedFieldInput!]
+  duration: Int!
+  isActive: Boolean = true
+  name: [LocalizedFieldInput!]!
+  price: [PriceInput!]!
+  type: MembershipType!
 }
 
 input CreatePlatformServiceInput {
@@ -38,6 +68,7 @@ input CreatePlatformServiceInput {
   features: [LocalizedFieldInput!]
   name: [LocalizedFieldInput!]!
   subscriptionRenewalInfo: [SubscriptionRenewalInfoInput!]!
+  type: PlatformServiceType!
 }
 
 input CreatePlatformSubscriptionInput {
@@ -59,20 +90,25 @@ input CreateSubscriptionPlanInput {
   type: SubscriptionType!
 }
 
+enum CurrencyKey {
+  ETB
+  USD
+}
+
 type Customization {
   actionIdentifier: String!
   additionalPrice: Float
   default: Boolean
   id: ID
-  name: [LocalizedData!]!
+  name: [LocalizedField!]!
   value: String!
 }
 
 type CustomizationCategory {
   customizations: [Customization!]!
-  description: [LocalizedData!]
+  description: [LocalizedField!]
   id: ID
-  name: [LocalizedData!]!
+  name: [LocalizedField!]!
   selectionRequired: Boolean
   selectionType: SelectionType
 }
@@ -109,13 +145,75 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type Discount {
+  condition: String!
+  conditionValue: Float
+  endDate: DateTime
+  id: String
+  name: [LocalizedField!]
+  startDate: DateTime
+  type: DiscountType!
+  value: Float!
+}
+
+enum DiscountType {
+  AMOUNT
+  PERCENTAGE
+}
+
+type FavoriteBusinessInfo {
+  businessId: String!
+  businessName: [LocalizedField!]!
+  id: ID!
+  image: String
+}
+
+type Gallery {
+  """The cover image of the gallery"""
+  coverImage: String
+  id: ID
+
+  """The images in the gallery"""
+  images: [GalleryData!]
+
+  """The logo image of the gallery"""
+  logoImage: String
+
+  """The videos in the gallery"""
+  videos: [GalleryData!]
+}
+
+type GalleryData {
+  featured: Boolean
+  url: ID!
+}
+
+type Group {
+  default: Boolean!
+  id: ID!
+  members: [GroupMember!]!
+  membership: Membership
+  membershipId: String
+  name: [LocalizedField!]!
+}
+
+type GroupMember {
+  activeSubscription: Subscription
+  activeSubscriptionId: String
+  dateJoined: DateTime!
+  memberStatus: String!
+  paymentMethod: PaymentMethod
+  user: User!
+  userId: String!
+}
+
 enum LanguageKey {
   AMHARIC
   ENGLISH
   OROMIC
 }
 
-type LocalizedData {
+type LocalizedField {
   """the name of the language, ex. english, amharic"""
   key: LanguageKey!
   value: String!
@@ -127,19 +225,99 @@ input LocalizedFieldInput {
   value: String!
 }
 
+type Membership {
+  activeSubscription: Subscription!
+  allMembers: [GroupMember!]!
+  benefits: [Benefit!]!
+  category: [String!]
+  createdAt: DateTime
+  currentUserSubscription: Subscription
+  description: [LocalizedField!]
+  duration: Int!
+  groups: [Group!]
+  groupsId: [String!]!
+  id: ID!
+  isActive: Boolean!
+  membersProductIds: [String!]
+  name: [LocalizedField!]!
+  owner: String!
+  price: [Price!]!
+  subscriptions: [Subscription!]
+  subscriptionsId: [String!]
+  trialPeriod: Int
+  type: String!
+  updatedAt: DateTime
+}
+
+enum MembershipPerkType {
+  DISCOUNT
+  DISCOUNT_ON_MEMBERS_PRODUCT
+  FREE_DELIVERY
+  POINTS
+}
+
+type MembershipProduct {
+  branchIds: [String!]
+  businessId: String!
+  callToAction: String
+  canOrderOnline: Boolean!
+  category: [String!]!
+  gallery: Gallery!
+  id: String!
+  isActive: Boolean!
+  loyaltyPoint: Int!
+  mainProduct: Boolean
+  name: [LocalizedField!]!
+  reviewTopics: [String!]
+  tag: [String!]
+  type: String!
+  variantsId: [String!]
+}
+
+type MembershipResponse {
+  code: Int
+  currentUserSubscription: Subscription
+  membership: Membership
+  memberships: [Membership!]
+  message: String
+  products: [MembershipProduct!]
+  success: Boolean!
+}
+
+enum MembershipType {
+  BUSINESS
+}
+
 type Mutation {
+  approveMembershipRequest(businessId: String!, membersId: [String!]!, membershipId: String!): MembershipResponse!
+  assignProductsToMembershipPlan(businessId: String!, membershipId: String!, productIds: [String!]!): MembershipResponse!
   changeSubscriptionStatus(status: Boolean!, subscription: String!): Boolean!
   createBusinessSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
+  createMembershipPlan(businessId: String!, input: CreateMembershipInput!): MembershipResponse!
   createPlatformService(serviceInfo: CreatePlatformServiceInput!): PlatformServiceResponse!
   createPlatformSubscriptionPlan(plan: CreateSubscriptionPlanInput!): SubscriptionPlan!
   deleteSubscriptionPlan(id: String!): SubscriptionResponse!
+  joinMemership(membershipId: String!, paymentMethod: PaymentMethodInput!): MembershipResponse!
   renewBusienssPlatformSubscription(id: String!, subscriptionUpdateInfo: SubscriptionUpgradeInput!): SubscriptionResponse!
   subscribeBusinessToPlatformServices(
     """id of the business"""
-    id: String!
+    businessId: String!
     input: CreatePlatformSubscriptionInput!
   ): SubscriptionResponse!
+  updateMembershipInfo(businessId: String!, input: UpdateMembershipInput!, membershipId: String!): MembershipResponse!
   updateSubscriptionPlan(data: UpdateSubscriptionPlanInput!, id: String!): SubscriptionResponse!
+}
+
+type PaymentMethod {
+  amount: Price!
+  name: [LocalizedField!]!
+  receiptImages: [String!]!
+}
+
+input PaymentMethodInput {
+  amount: PriceInput!
+  name: [LocalizedFieldInput!]!
+  receiptImages: [String!]!
 }
 
 type Permission {
@@ -147,7 +325,8 @@ type Permission {
   effect: String!
   groups: [PermissionGroup!]
   id: ID
-  name: [LocalizedData!]
+  name: [LocalizedField!]
+  resourcTargetName: String
   resourceTarget: String!
   resourceType: String!
   userGenerated: Boolean
@@ -156,7 +335,7 @@ type Permission {
 type PermissionGroup {
   id: String!
   key: String!
-  name: [LocalizedData!]!
+  name: [LocalizedField!]!
 }
 
 enum PermissionType {
@@ -168,11 +347,11 @@ enum PermissionType {
 type PlatformService {
   basePrice: Float!
   customizationCategories: [CustomizationCategory!]
-  description: [LocalizedData!]
-  features: [LocalizedData!]
+  description: [LocalizedField!]
+  features: [LocalizedField!]
   id: ID
   image: String
-  name: [LocalizedData!]!
+  name: [LocalizedField!]!
   relatedServices: [PlatformService!]
   relatedServicesId: [String!]
   subscriptionRenewalInfo: [SubscriptionRenewalInfo!]!
@@ -182,14 +361,17 @@ type PlatformService {
 type PlatformServiceResponse {
   code: Int
   message: String
+  platformServices: [PlatformService!]!
   service: PlatformService!
   success: Boolean!
 }
 
 enum PlatformServiceType {
   INVENTORY
+  MEMBERSHIP
   ONLINE_STORE
   POINT_OF_SALE
+  SUBSCRIPTION
 }
 
 type PlatfromServiceSubscription {
@@ -204,15 +386,29 @@ type PlatfromServiceSubscription {
   updatedAt: DateTime!
 }
 
+type Price {
+  amount: Float!
+  currency: String!
+  id: ID
+}
+
+input PriceInput {
+  amount: Float!
+  currency: CurrencyKey! = ETB
+}
+
 type Query {
   getBusienssSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
-  getPlatformServices: [PlatformService!]!
+  getBusinessMembershipPlans(businessId: String!): MembershipResponse!
+  getMembershipDetails(membershipId: String!): MembershipResponse!
+  getPlatformServices: PlatformServiceResponse!
   getPriceInfoToUpgradeSubscription(
     """Subscritpion id"""
     id: String!
     subscriptionUpdateInfo: SubscriptionUpgradeInput!
   ): SubscriptionUpgradeResponse!
   getSubscriptionPlans(owner: String, type: SubscriptionType): [SubscriptionPlan!]!
+  getUserMemberships: MembershipResponse!
 }
 
 input SelectedPlatformServiceForSubscription {
@@ -242,6 +438,7 @@ type Subscription {
   plan: SubscriptionPlan
   platformServices: [PlatfromServiceSubscription!]
   startDate: DateTime!
+  subscribedTo: String
   subscriptioinPlanId: String
   type: SubscriptionType!
   updatedAt: DateTime!
@@ -251,11 +448,11 @@ type SubscriptionPlan {
   benefits: [BenefitInfo!]
   category: [String!]
   createdAt: DateTime
-  description: [LocalizedData!]
+  description: [LocalizedField!]
   duration: Int
   id: ID
   isActive: Boolean
-  name: [LocalizedData!]
+  name: [LocalizedField!]
   owner: String
   price: Float
   subscriptions: [Subscription!]
@@ -270,7 +467,7 @@ type SubscriptionRenewalInfo {
   discountAmount: Int!
   duration: Int!
   id: ID
-  name: [LocalizedData!]!
+  name: [LocalizedField!]!
   trialPeriod: Int!
 }
 
@@ -306,6 +503,7 @@ type SubscriptionResponse {
 
 enum SubscriptionType {
   BUSINESS
+  MEMBERSHIP
   PLATFORM
   PRODUCT
 }
@@ -326,6 +524,16 @@ type SubscriptionUpgradeResponse {
   success: Boolean!
 }
 
+input UpdateMembershipInput {
+  benefits: [BenefitInput!]
+  category: [String!]
+  description: [LocalizedFieldInput!]
+  duration: Int
+  isActive: Boolean = true
+  name: [LocalizedFieldInput!]
+  price: [PriceInput!]
+}
+
 input UpdatePlatformSubscriptionInput {
   selectedCustomizationInfo: [CustomizationInfoInput!]
   serviceId: String!
@@ -343,4 +551,25 @@ input UpdateSubscriptionPlanInput {
 
   """PLATFORM, BUSEINSS, PRODUCT, SERVICE"""
   type: SubscriptionType
+}
+
+type User {
+  accessIds: [String!]
+  accesses: [Access!]
+  accountStatus: String
+  accountType: AccountType!
+  email: String
+  emailVerified: Boolean
+  favoriteBusinesses: [FavoriteBusinessInfo!]
+  firstName: String
+  id: ID
+  isEmailPlaceholder: Boolean
+  isUsernamePlaceholder: Boolean
+  lastName: String
+  password: String
+  phoneNumber: String
+  phoneVerified: Boolean
+  profileImageUrl: String
+  refreshToken: String
+  username: String
 }

@@ -13,7 +13,7 @@ export enum ProductUnitType {
     Litre = "Litre",
 }
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class Inventory extends BaseModel {
     @Field(types => ID)
     id: string;
@@ -28,6 +28,9 @@ export class Inventory extends BaseModel {
 
     @Field(types => ProductUnitType, { defaultValue: ProductUnitType.Unit })
     unit?: string;
+
+    @Field()
+    productId?: string;
 
     @Field(types => Int, { defaultValue: 1 })
     minOrderQty?: number
@@ -53,9 +56,10 @@ export class Inventory extends BaseModel {
 
     static async fromCreateInventory(productdName: string, productSku: string, inventoryInput: CreateInventoryInput) {
         const inventoryName = `${productdName} - ${productSku}`;
+        const inventorySku = `${productSku}-${inventoryInput.inventoryLocationId}`;
         return new Inventory({
             ...inventoryInput,
-            sku: productSku,
+            sku: inventorySku,
             name: inventoryName,
         });
     }

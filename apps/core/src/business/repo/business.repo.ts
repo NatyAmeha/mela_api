@@ -1,5 +1,5 @@
 import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
@@ -12,6 +12,7 @@ import { Stat } from "../../product/model/product_stat.model";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
+    getBusinessByWorkspaceUrl(workspaceUrl: string): Promise<Business>;
     getBusiness(businessId: string): Promise<Business>;
     findBusinesses(query: QueryHelper<Business>): Promise<Business[]>;
     findBusinessesById(businessIds: string[]): Promise<Business[]>;
@@ -23,6 +24,7 @@ export interface IBusinessRepository {
     getBusinessInfoForStaff(staffId: string): Promise<Business>;
     getUserOwnedBusinesses(userId: string): Promise<BusinessResponse>;
 
+
     createBusinessSection(businessId: string, sections: BusinessSection[]): Promise<BusinessResponse>
     removeBusinessSection(businessId: string, sectionIds: string[]): Promise<BusinessResponse>
 
@@ -31,6 +33,8 @@ export interface IBusinessRepository {
     updatePaymentOption(businessId: string, paymentOption: PaymentOption): Promise<boolean>
 
     updateBusinessStats(businessId: string, stats: Partial<Stat>): Promise<boolean>
+
+    queryBusinesses(queryHelper: QueryHelper<Business>): Promise<Business[]>
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -50,9 +54,17 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     }
 
     async createBusiness(data: Business): Promise<Business> {
-        const { customers, branches, staffs, products, bundles, ...businessData } = data;
+        const { branches, staffs, products, bundles, ...businessData } = data;
         var result = await this.business.create({ data: { ...businessData } });
         return new Business({ ...result })
+    }
+
+    async getBusinessByWorkspaceUrl(workspaceUrl: string): Promise<Business> {
+        const business = await this.business.findUnique({ where: { workspaceUrl: workspaceUrl } });
+        if (!business) {
+            throw new RequestValidationException({ message: "Business not found" });
+        }
+        return new Business({ ...business });
     }
 
     async createBusinessSection(businessId: string, newSections: BusinessSection[]): Promise<BusinessResponse> {
@@ -67,7 +79,6 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
                 var rsult = alreadyExistingSections.some((existingSection) => {
                     let existingSectionName = existingSection.name.map((name) => name.value).join(" ");
                     let result = isEqual(existingSectionName, name);
-                    console.log("is exist ", result, existingSectionName, name)
                     return result;
                 });
                 return !rsult;
@@ -76,7 +87,8 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
                 where: { id: businessId },
                 data: { sections: { push: filteredNewSections } }
             });
-            return new BusinessResponseBuilder().withBusiness(new Business({ ...businessUpdateResult })).build();
+            let allSections = businessUpdateResult.sections.filter((section) => section.id);
+            return new BusinessResponseBuilder().withBusiness(new Business({ ...businessUpdateResult })).withSections(allSections).build();
 
         } catch (error) {
             throw new PrismaException({ source: "Create business section", statusCode: 400, code: error.code, meta: error.meta });
@@ -140,7 +152,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            const { customers, branches, products, staffs, bundles, ...businessData } = updatedBusinessData;
+            const { branches, products, staffs, bundles, ...businessData } = updatedBusinessData;
             var result = await this.business.update({ where: { id: businessId }, data: { ...businessData } });
             if (!result.id) {
                 throw new RequestValidationException({ message: "Business not updated" });
@@ -200,6 +212,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             }
             return new Business({ ...business });
         } catch (error) {
+            console.log('product exception', error)
             throw new PrismaException({ source: "Get product business", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
@@ -306,6 +319,21 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
                 throw error;
             }
             throw new PrismaException({ source: "Update payment option", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async queryBusinesses(queryHelper: QueryHelper<Business>): Promise<Business[]> {
+        try {
+            const businesses = await this.business.findMany({
+                where: { ...queryHelper.query as any },
+                orderBy: { ...queryHelper.orderBy as any },
+                skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
+                take: queryHelper?.limit,
+
+            });
+            return businesses.map(business => new Business({ ...business }));
+        } catch (ex) {
+            throw new PrismaException({ source: "Find businesses", statusCode: 400, code: ex.code, meta: ex.meta });
         }
     }
 

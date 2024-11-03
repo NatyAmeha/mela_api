@@ -9,11 +9,11 @@ import { CreatePlatformSubscriptionInput } from "../dto/platform_service_subscri
 import { AppResourceAction } from "apps/mela_api/src/const/app_resource.constant";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { Business } from "apps/core/src/business/model/business.model";
+import { PaymentMethod } from "apps/core/src/business/model/payment_method.model";
 
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id")')
+@ObjectType()
+@Directive('@shareable')
 export class Subscription extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -29,6 +29,8 @@ export class Subscription extends BaseModel {
     isTrialPeriod: boolean
     @Field(type => SubscriptionType)
     type: string
+    @Field()
+    subscribedTo?: string
     @Field({ description: "owner of the subscription. it will be a business id for platform service subscription and user id for business subscription" })
     owner?: string
     @Field(type => Date)
@@ -41,6 +43,7 @@ export class Subscription extends BaseModel {
 
     @Field()
     isActive?: boolean
+
 
     @Field(type => [PlatfromServiceSubscription])
     platformServices?: PlatfromServiceSubscription[]
@@ -98,9 +101,8 @@ export class Subscription extends BaseModel {
     }
 }
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id")')
+@ObjectType()
+@Directive('@shareable')
 export class PlatfromServiceSubscription {
     @Field(type => ID)
     id?: string
@@ -125,9 +127,8 @@ export class PlatfromServiceSubscription {
 @InputType()
 export class PlatfromServiceSubscriptionInput extends PlatfromServiceSubscription { }
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id")')
+@ObjectType()
+@Directive('@shareable')
 export class CustomizationInfo {
     @Field(type => ID)
     id?: string

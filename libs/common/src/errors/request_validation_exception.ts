@@ -20,13 +20,15 @@ export class RequestValidationException implements AppException {
         var validationErrorMsg = []
         this.validationErrors?.forEach(e => {
             var mainError = values(e.constraints)
-            if (mainError.length > 0) validationErrorMsg.push(...mainError)
-            var errors = e.children?.forEach(c => {
-                var errors = values(c.constraints)
-                validationErrorMsg.push(...errors)
+            if (mainError.length > 0) {
+                validationErrorMsg.push(...mainError)
+            }
+            e.children?.forEach(c => {
+                validationErrorMsg.push(...values(c.constraints))
+                validationErrorMsg.push(c.toString())
             })
+            validationErrorMsg.push(e.toString())
         })
-        console.log(this.validationErrors)
         var finalMessage = validationErrorMsg.length > 0 ? `${validationErrorMsg.join(", ")}` : this?.message;
         return new ErrorResponse([<AppException>{ message: finalMessage }])
     }

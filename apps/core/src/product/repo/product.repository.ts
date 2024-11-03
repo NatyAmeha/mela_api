@@ -1,12 +1,13 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { Product } from "../model/product.model";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { result, uniq } from "lodash";
 import { ProductAddon } from "../model/product_addon.model";
 import { CommonBusinessErrorMessages, CommonProductErrorMessages } from "../../utils/const/error_constants";
 import { Stat } from "../model/product_stat.model";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 
 export interface IProductRepository {
     createProduct(product: Product): Promise<Product>;
@@ -17,21 +18,31 @@ export interface IProductRepository {
     addProductToBranch(productId: string[], branchId: string[]): Promise<Product[]>;
     removeProductFromBranch(productId: string[], branchId: string[]): Promise<Product[]>;
 
-    getBranchProducts(branchId: string): Promise<Product[]>;
+    getBranchProducts(branchId: string, query?: QueryHelper<Product>): Promise<Product[]>;
+    getBusinessSectionProducts(businessId: string, sectionId: string[], branchId?: string, query?: QueryHelper<Product>): Promise<Product[]>;
     getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
     createProductsWithVariants(products: Product[]): Promise<Product[]>;
 
+    // Productd addon
     createProductAddon(productId: string, productAddon: ProductAddon[]): Promise<boolean>;
     getProductAddons(productId: string): Promise<ProductAddon[]>;
     updateProductAddon(productId: string, productAddonInfo: ProductAddon[]): Promise<boolean>;
     deleteAllProductAddon(productId: string): Promise<boolean>;
     deleteProductAddon(productId: string, productAddonId: string): Promise<boolean>;
 
+    // Payment option
     assignPaymentOptionToProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
     removePaymentOptionFromProduct(productId: string, paymentOptionId: string[]): Promise<boolean>;
 
     updateProductStats(productId: string, stats: Partial<Stat>): Promise<boolean>;
 
+
+    addMembershipIdToProducts(productIds: string[], membershipId: string): Promise<boolean>;
+    removeMembershipIdFromProducts(productIds: string[], membershipId: string): Promise<boolean>;
+    getMembershipProducts(membershipId: string): Promise<Product[]>;
+
+    //discovery
+    queryProducts(queryHelper: QueryHelper<Product>): Promise<Product[]>
     getBusinessTopProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
 
 
@@ -63,7 +74,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async createProduct(product: Product): Promise<Product> {
         try {
             const createdProduct = await this.$transaction(async (prisma) => {
-                const { businessId, branchIds, inventory, ...productData } = product;
+                const { businessId, branchIds, inventory, prices, ...productData } = product;
                 const result = await prisma.product.create({
                     data: {
                         ...productData,
@@ -115,20 +126,17 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         try {
             const createdProducts = await this.$transaction(async (prisma) => {
                 const productResults = await Promise.all(products?.map(async (product) => {
-                    const { businessId, branchIds, inventory, ...productData } = product;
+                    const { businessId, branchIds, inventory, prices, ...productData } = product;
                     const { inventoryLocation, inventoryLocationId, ...restInventoryInfo } = inventory[0];
-                    return await prisma.product.create({
+                    const productCreateResult = await prisma.product.create({
                         data: {
                             ...productData,
                             business: {
-                                connect: {
-                                    id: product.businessId
-                                },
+                                connect: { id: product.businessId },
                             },
                             branches: {
                                 connect: product.branchIds?.map((id) => ({ id }))
                             },
-
                             inventory: {
                                 create: {
                                     ...restInventoryInfo,
@@ -137,11 +145,12 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                                             id: inventoryLocationId
                                         }
                                     }
-
                                 }
-                            }
+                            },
+                            prices: { create: prices }
                         }
                     });
+                    return productCreateResult;
 
                 }))
 
@@ -169,7 +178,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
     async updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product> {
         try {
-            const { businessId, business, branches, branchIds, inventory, addons, ...productData } = productInfo;
+            const { businessId, business, branches, branchIds, inventory, addons, prices, ...productData } = productInfo;
             const result = await this.product.update({
                 where: { id: productId },
                 data: { ...productData }
@@ -217,7 +226,24 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async getBranchProducts(branchId: string): Promise<Product[]> {
+    async getBusinessSectionProducts(businessId: string, sectionId: string[], branchId?: string, query?: QueryHelper<Product>): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: {
+                    businessId: businessId,
+                    branchIds: branchId ? { has: branchId } : undefined,
+                    sectionId: { hasSome: sectionId }
+                },
+                skip: query?.page ? ((query.page - 1) * query.limit) : 0,
+                take: query?.limit,
+            });
+            return products?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get business section products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getBranchProducts(branchId: string, query?: QueryHelper<Product>): Promise<Product[]> {
         try {
             const products = await this.product.findMany({
                 where: {
@@ -225,8 +251,13 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                         some: {
                             id: branchId
                         }
-                    }
-                }
+                    },
+                    ...(query?.query ? query.query as any : {})
+                },
+
+                skip: query?.page ? ((query.page - 1) * query.limit) : 0,
+                take: query?.limit,
+                // ...query.query as any
             });
             return products?.map(product => new Product({ ...product }));
         } catch (error) {
@@ -238,7 +269,8 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         try {
             const products = await this.product.findMany({
                 where: {
-                    businessId: businessId
+                    businessId: businessId,
+                    ...(query?.query ? query.query as any : {})
                 },
                 skip: query?.page ? ((query.page - 1) * query.limit) : 0,
                 take: query?.limit,
@@ -409,6 +441,94 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
             return products?.map(product => new Product({ ...product }));
         } catch (ex) {
             throw new PrismaException({ source: "Get business top products", statusCode: 400, code: ex.code, meta: ex.meta });
+        }
+    }
+
+    async addMembershipIdToProducts(productIds: string[], membershipId: string): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const products = await prisma.product.findMany({
+                    where: {
+                        id: { in: productIds }
+                    }
+                });
+                if (products.length != productIds.length) {
+                    throw new RequestValidationException({ source: "Add membership ", statusCode: 400, message: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const updatedProducts = await Promise.all(products.map(product => {
+                    const uniqueMembershipIds = uniq([...product.membershipIds, membershipId]);
+                    return prisma.product.update({
+                        where: { id: product.id },
+                        data: {
+                            membershipIds: { set: uniqueMembershipIds }
+                        }
+                    });
+                }));
+                console.log("update product result ", updatedProducts.length);
+                return updatedProducts;
+            });
+            return true;
+        } catch (error) {
+            console.log("error", error)
+            throw new PrismaException({ source: "Add membership id to products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async removeMembershipIdFromProducts(productIds: string[], membershipId: string): Promise<boolean> {
+        try {
+            const transactionResult = await this.$transaction(async (prisma) => {
+                const products = await prisma.product.findMany({
+                    where: {
+                        id: { in: productIds }
+                    }
+                });
+                if (products.length != productIds.length) {
+                    throw new RequestValidationException({ source: "Remove membership id from products", statusCode: 400, message: CommonProductErrorMessages.PRODUCT_NOT_FOUND });
+                }
+                const updatedProducts = products.map(product => {
+                    const updatedMembershipIds = product.membershipIds?.filter(id => id !== membershipId);
+                    return prisma.product.update({
+                        where: { id: product.id },
+                        data: {
+                            membershipIds: { set: updatedMembershipIds }
+                        }
+                    });
+                });
+                return updatedProducts;
+            });
+            return true;
+        } catch (error) {
+            console.log("error", error)
+            throw new PrismaException({ source: "Remove membership id from products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async getMembershipProducts(membershipId: string): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: {
+                    membershipIds: { has: membershipId }
+                }
+            });
+            return products?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get membership products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async queryProducts(queryHelper: QueryHelper<Product>): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: { ...queryHelper.query as any },
+                orderBy: {
+                    ...queryHelper.orderBy as any
+                },
+                skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
+                take: queryHelper?.limit,
+            });
+            return products?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Get popular products", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

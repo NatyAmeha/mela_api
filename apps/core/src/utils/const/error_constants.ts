@@ -19,6 +19,9 @@ export class CommonSubscriptionErrorMessages {
     static SUBSCRIPTION_NOT_FOUND = "Subscription not found";
     static SUBSCRIPTION_NOT_UPDATED = "Subscription not updated";
     static SUBSCRIPTION_NOT_DELETED = "Subscription not deleted";
+    static UPGRADE_SUBSCRIPTION = "Upgrade subscription";
+    static SUBSCRIPTION_EXPIRED_FOR_THIS_SERVICE = "Subscription expired for this service. Please renew your subscription to use this service";
+    static UPGRADE_SUBSCRIPTION_TO_USE_THIS_SERVICE = "Unable to use this service. Upgrade your subscription"
 }
 
 export class CommonProductErrorMessages {
@@ -27,4 +30,8 @@ export class CommonProductErrorMessages {
     static PRODUCT_NOT_DELETED = "Product not deleted";
     static PRODUCT_NOT_CREATED = "Product not created";
     static ADDON_ALREADY_EXIST = "Addon already exist";
+}
+
+export class CommonCustomerErrorMessages {
+    static CUSTOMER_ALREADY_EXIST = "Customer already exist";
 }

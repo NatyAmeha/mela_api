@@ -5,6 +5,7 @@ import { Subscription } from "../model/subscription.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { SubscriptionResponse, SubscriptionResponseBuilder } from "../model/response/subscription.response";
 import { PrismaClient } from '@prisma/client'
+import { first } from "lodash";
 
 
 export interface ISubscritpionRepository {
@@ -25,6 +26,8 @@ export interface ISubscritpionRepository {
     getActiveSubscriptions(planId: string, owner?: string): Promise<Subscription[]>
     updateSubscriptionInfo(id: string, subscriptionInfo: Partial<Subscription>): Promise<boolean>
     isplatformServiceInSubscription(platformServiceId: string[]): Promise<boolean>
+
+    getUserActiveMembershipSubscription(userId: string, memberhipId: string): Promise<Subscription>
 
 
 }
@@ -142,6 +145,12 @@ export class SubscriptionRepository extends PrismaClient implements ISubscritpio
     async ownerHasSubscription(owner: string, subsciptionId: string): Promise<boolean> {
         var result = await this.subscription.findFirst({ where: { owner: owner, id: subsciptionId } })
         return result?.id != undefined
+    }
+
+    async getUserActiveMembershipSubscription(userId: string, memberhipId: string): Promise<Subscription> {
+        var results = await this.subscription.findMany({ where: { owner: userId, subscribedTo: memberhipId } })
+        const activeSubscriptions = results.filter(sub => sub.isActive && sub.endDate > new Date(Date.now()))
+        return first(activeSubscriptions?.map(sub => new Subscription({ ...sub })))
     }
 
     async onModuleDestroy() {

@@ -11,6 +11,9 @@ export class CreatePaymentOptionInput {
     @Type(() => LocalizedFieldInput)
     name: LocalizedFieldInput[];
 
+    @Type(() => LocalizedFieldInput)
+    description?: LocalizedFieldInput[];
+
     @Field(types => PaymentOptionType)
     @IsNotEmpty()
     type: string;

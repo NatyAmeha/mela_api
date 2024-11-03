@@ -23,7 +23,7 @@ export class BaseAuthProvider implements IAuthProvider {
     }
     async logout(userId: string): Promise<boolean> {
         var updateTokenResult = await this.userRepo.updateUserInfo(userId, { refreshToken: null })
-        return updateTokenResult;
+        return updateTokenResult.id ? true : false
     }
 
 }

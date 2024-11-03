@@ -20,7 +20,7 @@ import { BranchService } from './branch/usecase/branch.service';
 import { BranchResolver } from './branch/branch.resolver';
 import { ProductRepository } from './product/repo/product.repository';
 import { ProductResolver } from './product/product.resolver';
-import { ProductService } from './product/product.service';
+import { ProductService } from './product/usecase/product.service';
 import { StaffRepository } from './staff/repo/staff.repo';
 import { StaffResolver } from './staff/staff.resolver';
 import { StaffService } from './staff/staff.service';
@@ -34,11 +34,14 @@ import { InventoryService } from './inventory/inventory.service';
 import { BusinessResponseBuilder } from './business/model/business.response';
 import { InventoryLocationBuilder } from './inventory/model/inventory_location.model';
 import { InventoryResolver } from './inventory/inventory.resolver';
-import { ProductBundleRepository } from './product/repo/bundle..repository';
-import { BundleService } from './product/bundle.service';
+import { ProductBundleRepository } from './product/repo/bundle.repository';
+import { BundleService } from './product/usecase/bundle.service';
 import { ProductAddonResolver } from './product/product_addon.resolver';
 import { DiscoverResolver } from './discover/discover.resolver';
 import { DiscoverService } from './discover/discover.service';
+import { BundleResolver } from './product/bundle/bundle.resolver';
+import { ProductPriceRepository } from './product/repo/product_price.repository';
+import { ProductDataLoaders, ProductInventoryLoader, ProductPriceLoader } from './product/product_data_loader.service';
 
 
 @Module({
@@ -83,8 +86,11 @@ import { DiscoverService } from './discover/discover.service';
     BranchResolver,
 
     { provide: ProductRepository.injectName, useClass: ProductRepository },
+    { provide: ProductPriceRepository.injectName, useClass: ProductPriceRepository },
     { provide: ProductResourceUsageTracker.injectName, useClass: ProductResourceUsageTracker },
-    ProductService, ProductResolver, ProductAddonResolver,
+    ProductService, ProductResolver, ProductAddonResolver, BundleResolver,
+
+    ...ProductDataLoaders,
 
     { provide: ProductBundleRepository.injectName, useClass: ProductBundleRepository },
     BundleService,

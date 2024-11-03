@@ -6,6 +6,7 @@ import { AppResources, ProductResourceAction } from "apps/mela_api/src/const/app
 import { BaseResourceUsageTracker } from "./base_resource_usage_tracker";
 import { Subscription } from "apps/subscription/src/model/subscription.model";
 import { PlatformServiceType } from "apps/subscription/src/model/platform_service.model";
+import { CommonSubscriptionErrorMessages } from "../utils/const/error_constants";
 
 
 
@@ -19,12 +20,12 @@ export class ProductResourceUsageTracker extends BaseResourceUsageTracker {
 
 
     async getBusinessProductCreationUsage(businessId: string, businessSubscription: Subscription, platformServices: PlatformServiceGateway[]): Promise<ResourceUsage> {
-        var allowedProductCreationActions = Object.values(ProductResourceAction);
+        const allowedProductCreationActions = Object.values(ProductResourceAction);
         let isSubscriptionValid = await this.isPlatformServiceSubscriptionValid(businessSubscription, PlatformServiceType.POINT_OF_SALE, platformServices);
         if (!isSubscriptionValid) {
             return new ResourceUsage({
                 success: false,
-                message: "Subscription expired for this product. Please renew your subscription to continue using this product",
+                message: CommonSubscriptionErrorMessages.UPGRADE_SUBSCRIPTION_TO_USE_THIS_SERVICE,
                 resourceId: businessId,
                 resourceType: AppResources.PRODUCT,
                 usage: 0,

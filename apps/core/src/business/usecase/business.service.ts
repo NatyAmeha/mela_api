@@ -12,12 +12,19 @@ import { ClassDecoratorValidator } from "@app/common/validation_utils/class_deco
 import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
+import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
+import { ProductPriceRepository } from "../../product/repo/product_price.repository";
+import { PriceList } from "../../product/model/price_list_.model";
+import { CreatePriceListInput, UpdatePriceListInput } from "../../product/dto/price_list.input";
+import { IProductRepository, ProductRepository } from "../../product/repo/product.repository";
 
 @Injectable()
 export class BusinessService {
     // try-catch block  must be used on the methods that handles message broker message/event
     constructor(
         @Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository,
+        @Inject(ProductRepository.injectName) private productRepo: IProductRepository,
+        @Inject(ProductPriceRepository.injectName) private priceRepo: ProductPriceRepository,
         @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator) {
 
     }
@@ -25,20 +32,38 @@ export class BusinessService {
         return await this.businessRepo.createBusiness(data);
     }
 
-    async getBusiness(id: string) {
+    async getBusinessByWorkspaceUrl(workspaceUrl: string): Promise<Business> {
+        return await this.businessRepo.getBusinessByWorkspaceUrl(workspaceUrl);
+    }
+
+    async getMinimalBusinessInfo(businessId: string): Promise<Business> {
+        return await this.businessRepo.getBusiness(businessId);
+    }
+
+    async getBusinessDetails(id: string) {
         const businessResult = await this.businessRepo.getBusiness(id);
         await this.businessRepo.updateBusinessStats(businessResult.id, { totalViews: businessResult.totalViews + 1 })
         return businessResult;
     }
 
+    async getBusinessSectionDetails(businessId: string, { sectionId, branchId }: { sectionId: string, branchId?: string }): Promise<BusinessResponse> {
+        const businessInfo = await this.getBusinessDetails(businessId);
+        const sectionInfo = businessInfo.getsectionIinfo(sectionId);
+        let sectionProducts = await this.productRepo.getProductsById(sectionInfo?.productIds);
+        if (branchId) {
+            sectionProducts = sectionProducts.filter(product => product.branchIds?.some(id => id == branchId));
+        }
+        return new BusinessResponseBuilder().withProducts(sectionProducts).build();
+    }
+
     async isBusinessExist(businessId: string): Promise<boolean> {
-        const businessInfo = await this.getBusiness(businessId);
+        const businessInfo = await this.getBusinessDetails(businessId);
         return businessInfo.id ? true : false;
     }
 
     async getBusinessResponse(id: string): Promise<BusinessResponse> {
         try {
-            let business = await this.getBusiness(id);
+            let business = await this.getBusinessDetails(id);
             return new BusinessResponse({ business: business, success: true });
         } catch (error) {
             return new BusinessResponse({ success: false, message: "Business not found" });
@@ -70,7 +95,7 @@ export class BusinessService {
         let businessSectionInfo = sections?.map(section => CreateBusinessSectionInput.toBusinessSection(section));
         let response = await this.businessRepo.createBusinessSection(businessId, businessSectionInfo);
         if (response.success) {
-            return new BusinessResponseBuilder().basicResponse(response.success, response.message);
+            return response;
         }
     }
 
@@ -105,9 +130,14 @@ export class BusinessService {
         return userBusinessResult;
     }
 
+    async getBusinessesInfoForOrder(businessIds: string[]): Promise<BusinessResponse> {
+        const businesses = await this.businessRepo.findBusinessesById(businessIds);
+        return new BusinessResponseBuilder().withBusinesses(businesses).build();
+    }
+
     async addPaymentOptions(businessId: string, paymentOptions: CreatePaymentOptionInput[]): Promise<BusinessResponse> {
         await this.inputValidator.validateArrayInput(paymentOptions, CreatePaymentOptionInput);
-        const businessInfo = await this.getBusiness(businessId)
+        const businessInfo = await this.getBusinessDetails(businessId)
         if (!businessInfo.id) {
             return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BUSINESS_NOT_FOUND);
         }
@@ -147,7 +177,7 @@ export class BusinessService {
     }
 
     async getBusinessPaymentOptions(businessId: string, paymentOptionId?: string[]): Promise<PaymentOption[]> {
-        const businessInfo = await this.getBusiness(businessId);
+        const businessInfo = await this.getBusinessDetails(businessId);
         if (!businessInfo.id) {
             return [];
         }
@@ -155,6 +185,25 @@ export class BusinessService {
             return businessInfo.paymentOptions;
         }
         return businessInfo.paymentOptions.filter(option => paymentOptionId.includes(option.id));
+    }
+
+    async createBusinessPriceList(businessId: string, priceLists: CreatePriceListInput[]): Promise<BusinessResponse> {
+        await this.inputValidator.validateArrayInput(priceLists, CreatePriceListInput);
+        const priceListInfo = priceLists.map(price => PriceList.fromCreatePriceListInput(price));
+        const result = await this.priceRepo.createPriceList(businessId, priceListInfo);
+        return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
+    }
+
+    async updatePriceList(businessId: string, priceList: UpdatePriceListInput[]): Promise<BusinessResponse> {
+        await this.inputValidator.validateArrayInput(priceList, UpdatePriceListInput);
+        const priceListInfo = priceList.map(price => PriceList.fromCreatePriceListInput(price));
+        const result = await this.priceRepo.updatePriceList(businessId, priceListInfo);
+        return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
+    }
+
+    async deletePriceList(businessId: string, priceListIds: string[]): Promise<BusinessResponse> {
+        const result = await this.priceRepo.deletePriceList(businessId, priceListIds);
+        return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
     }
 
 }  

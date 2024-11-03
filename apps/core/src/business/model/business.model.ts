@@ -1,5 +1,4 @@
 import { Field, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
-import { Customer, CustomerInput } from "../../customer/model/customer.model";
 import { BusinessSection, CreateBusinessSectionInput } from "./business_section.model";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Gallery, GalleryInput } from "./gallery.model";
@@ -12,9 +11,12 @@ import { includes } from "lodash";
 import { DeliveryInfo } from "../../product/model/delivery.model";
 import { ProductBundle } from "../../product/model/product_bundle.model";
 import { PaymentOption } from "./payment_option.model";
+import { PriceList } from "../../product/model/price_list_.model";
+import { Discount } from "../../product/model/discount.model";
 
 @ObjectType()
 export class Business extends BaseModel {
+
     @Field(type => ID)
     id?: string
 
@@ -24,6 +26,8 @@ export class Business extends BaseModel {
     @Field(types => [String])
     categories: string[];
 
+    @Field()
+    workspaceUrl: string;
     @Field()
     isActive?: boolean;
 
@@ -53,6 +57,9 @@ export class Business extends BaseModel {
 
     @Field(types => [Product])
     products?: Product[]
+
+    @Field(types => [String])
+    bundleIds?: string[]
 
     @Field(types => Address)
     mainAddress: Address;
@@ -84,9 +91,6 @@ export class Business extends BaseModel {
     @Field(types => [LocalizedField])
     description?: LocalizedField[];
 
-    @Field(types => [Customer])
-    customers?: Customer[];
-
     @Field(types => [DeliveryInfo])
     deliveryInfo?: DeliveryInfo[]
 
@@ -96,11 +100,24 @@ export class Business extends BaseModel {
     @Field(types => [PaymentOption])
     paymentOptions?: PaymentOption[]
 
+    @Field(types => [PriceList])
+    priceLists?: PriceList[]
+
+    @Field(type => [Discount])
+    discounts?: Discount[]
+
     @Field(types => Int, { defaultValue: 0 })
-    totalViews: number;
+    totalViews?: number;
+
+    @Field(type => Boolean, { defaultValue: false })
+    requireBranchSelection?: boolean
 
     platformServiceTrialPeriodUsed(platformServiceId: string) {
         return includes(this.trialPeriodUsedServiceIds, platformServiceId)
+    }
+
+    getsectionIinfo(sectionId: string) {
+        return this.sections?.find(section => section.id == sectionId)
     }
 
     constructor(partial?: Partial<Business>) {

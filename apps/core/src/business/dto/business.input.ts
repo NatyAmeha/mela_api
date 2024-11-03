@@ -66,7 +66,7 @@ export class CreateBusinessInput {
     toBusiness(): Business {
         const business = new Business({
             ...this,
-            paymentOptions: this.paymentOptions.map(option => PaymentOption.fromCreatePaymentOptionInput(option)),
+            paymentOptions: this.paymentOptions?.map(option => PaymentOption.fromCreatePaymentOptionInput(option)),
             stage: BusinessRegistrationStage.BUSINESS_CREATED
         });
         return business;

@@ -1,5 +1,5 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Field, Float, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, Float, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 
 export enum PaymentOptionType {
@@ -9,7 +9,13 @@ export enum PaymentOptionType {
     PAY_LATER = 'PAY_LATER'
 }
 
-@ObjectType({ isAbstract: true })
+export enum PaymentOptionUpfrontPaymentType {
+    PERCENTAGE = 'PERCENTAGE',
+    AMOUNT = 'AMOUNT'
+}
+
+@ObjectType()
+@Directive('@shareable')
 export class PaymentOption {
     @Field(type => String)
     id?: string;
@@ -17,14 +23,23 @@ export class PaymentOption {
     @Field(type => [LocalizedField])
     name: LocalizedField[]
 
+    @Field(type => [LocalizedField])
+    description?: LocalizedField[]
+
     @Field(type => PaymentOptionType, { defaultValue: PaymentOptionType.FULL_PAYMENT })
     type: string;
 
     @Field(types => Float)
     upfrontPayment?: number
 
+    @Field(type => PaymentOptionUpfrontPaymentType, { defaultValue: PaymentOptionUpfrontPaymentType.PERCENTAGE })
+    upfrontPaymentType?: string
+
     @Field()
     dueDate?: Date
+
+    @Field()
+    dueAfterDays?: number
 
     @Field()
     createdAt?: Date;
@@ -45,3 +60,7 @@ export class PaymentOption {
 registerEnumType(PaymentOptionType, {
     name: 'PaymentOptionType'
 })
+
+registerEnumType(PaymentOptionUpfrontPaymentType, {
+    name: 'PaymentOptionUpfrontPaymentType'
+});

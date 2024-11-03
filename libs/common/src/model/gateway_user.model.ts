@@ -1,13 +1,18 @@
 // user info used by microservices to get the user info fetched from auth service
 // auth service has his own user class extending graphql fields
 
-export interface GatewayApiFetchResponse {
+
+export class GatewayApiFetchResponse {
     user?: UserInfo
-    accesses?: GatewayUserAccess[],
+    accesses?: GatewayUserAccess[]
+
+    constructor(data: Partial<GatewayApiFetchResponse>) {
+        Object.assign(this, data)
+    }
 
 }
 
-export interface UserInfo {
+export class UserInfo {
     id?: string
     email?: string
     phoneNumber?: string
@@ -23,7 +28,17 @@ export interface UserInfo {
     emailVerified?: boolean
     phoneVerified?: boolean
     accesses?: GatewayUserAccess[]
+    favoriteBusinesses?: {
+        id?: string
+        businessId?: string
+    }[]
     accessIds?: string[]
+
+    constructor(data: Partial<UserInfo>) {
+        Object.assign(this, data)
+    }
+
+
 }
 
 interface GatewayUserAccess {

@@ -5,6 +5,7 @@ import { PlatformService } from "../platform_service.model";
 @ObjectType()
 export class PlatformServiceResponse extends BaseResponse {
     service: PlatformService
+    platformServices: PlatformService[]
 
     constructor(data: Partial<PlatformServiceResponse>) {
         super()
@@ -27,6 +28,12 @@ export class PlatformSErviceResponseBuilder {
     withService(service: PlatformService): PlatformSErviceResponseBuilder {
         this.response.success = true
         this.response.service = service
+        return this
+    }
+
+    withPlatformServices(platformServices: PlatformService[]): PlatformSErviceResponseBuilder {
+        this.response.success = true
+        this.response.platformServices = platformServices
         return this
     }
 

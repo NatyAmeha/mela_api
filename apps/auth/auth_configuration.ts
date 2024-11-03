@@ -9,8 +9,8 @@ export const configuration = () => ({
     auth: {
         acessToken: process.env.ACCESS_TOKEN || "DEFAULTACCESSTOKEN",
         refreshToken: process.env.REFRESH_TOKEN || "DEFAULT_REFRESH_TOKEN",
-        accessTokenExpiresIn: "1d",
-        refreshTokenExpiresIn: "7d"
+        accessTokenExpiresIn: "14d",
+        refreshTokenExpiresIn: "30d"
     },
     rmq: {
         rmq_config: {  // host.docker.internal

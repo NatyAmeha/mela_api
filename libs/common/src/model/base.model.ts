@@ -1,7 +1,7 @@
 import { Field, ID, ObjectType } from "@nestjs/graphql";
 import { classToPlain, instanceToPlain } from "class-transformer";
 
-ObjectType({ isAbstract: true })
+ObjectType({})
 export class BaseModel {
 
     @Field(types => ID)

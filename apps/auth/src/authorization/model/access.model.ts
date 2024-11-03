@@ -9,8 +9,7 @@ import { LocalizedField } from "@app/common/model/localized_model";
 
 
 @ObjectType()
-@Directive('@extends')
-@Directive('@key(fields: "id name{key,value} resourceId role permissions{action,resourceType,resourceTarget,effect,groups{id,key,name{key,value}}} owner ownerType dateCreated dateUpdated permissionType")')
+@Directive('@shareable')
 export class Access extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -38,18 +37,23 @@ export class Access extends BaseModel {
         Object.assign(this, data)
     }
 
+    assignOwner(ownerId: string) {
+        this.owner = ownerId
+        this.ownerType = AccessOwnerType.USER
+    }
+
     static getAccessInfoFromAccessInput(inputs: CreateAccessInput[]): Access[] {
         return inputs.map(input => new Access({
             permissions: input.permissions.map(permissionInput => new Permission({ ...permissionInput, groups: PermissionGroup.getPermissionGroupFromInput(permissionInput.groups) })),
             resourceId: input.resourceId,
-            role: input.role
+            role: input.role,
+            permissionType: PermissionType.BUSINESS_MANAGEMENT_PERMISSION
         }))
     }
 }
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id name{key,value} action resourceType resourceTarget effect groups{id,key,name{key,value}} userGenerated resourcTargetName")')
+@ObjectType()
+@Directive('@shareable')
 export class Permission {
     @Field(types => ID)
     id?: string
@@ -82,6 +86,7 @@ export class Permission {
 
 
 @ObjectType()
+@Directive('@shareable')
 export class PermissionGroup {
     @Field()
     id: string

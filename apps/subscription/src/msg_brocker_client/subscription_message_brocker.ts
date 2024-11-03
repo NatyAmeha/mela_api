@@ -2,7 +2,7 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import { Access, AccessOwnerType } from "apps/auth/src/authorization/model/access.model";
 import { AppMessageBrocker } from "libs/rmq/app_message_brocker";
-import { AuthServiceMessageType, CoreServiceMessageType, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
+import { AuthServiceMessageType, CoreServiceMessageType, MembershipMessageType, SubscriptionServiceMessageType } from "libs/rmq/const/app_message_type";
 import { AppMsgQueues, ExchangeNames, ExchangeTopics, RoutingKey } from "libs/rmq/const/constants";
 import { ExchangeType, IMessageBrocker, MessageBrockerMsgBuilder } from "libs/rmq/message_brocker";
 import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
@@ -16,6 +16,9 @@ import { AccessQueryMetadata, AccessRenewalInfo as AccessRenewalInfo } from "app
 import { Business } from "apps/core/src/business/model/business.model";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { BusinessResponse } from "apps/core/src/business/model/business.response";
+import { ProductResponse } from "apps/core/src/product/model/product.response";
+import { MembershipType } from "../membership/model/memberhip.model";
+import { MembershipProduct } from "../membership/model/membership_product.model";
 
 export interface ISubscriptionMessageBrocker {
     createPlatformAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>>
@@ -47,12 +50,12 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
 
     async createPlatformServiceAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>> {
         let messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
-        let reply = await this.sendMessageGetReply<Access[], any>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        let reply = await this.sendMessageGetReply<Access[], any>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo, 60)
         return reply;
     }
 
     async getBusinessInformationFromCoreService(businessId: string): Promise<BusinessResponse> {
-        var messageId = `${CoreServiceMessageType.GET_BUSINESS_INFO}-${businessId}`;
+        const messageId = `${CoreServiceMessageType.GET_BUSINESS_INFO}-${businessId}`;
         let messageInfo = new MessageBrockerMsgBuilder<string>().withData(businessId).withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withMessageId(messageId).withCoorelationId(CoreServiceMessageType.GET_BUSINESS_INFO).build();
         let reply = await this.sendMessageGetReply<string, BusinessResponse>(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo)
         if (!reply.success || !reply.data) {
@@ -66,9 +69,25 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
         return sendResult;
     }
 
+    async sendProductAssignedToMembershipEvent(membershipId: string, productIds: string[]): Promise<boolean> {
+        const messageId = `${SubscriptionServiceMessageType.PRODUCT_ASSIGNMENT_TO_MEMBERSHIP}-${membershipId}`;
+        const messageInfo = new MessageBrockerMsgBuilder<{ membershipId: string, productIds: string[] }>().withData({ membershipId, productIds }).withMessageId(messageId).withCoorelationId(SubscriptionServiceMessageType.PRODUCT_ASSIGNMENT_TO_MEMBERSHIP).build();
+        let sendResult = await this.sendMessage(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo, messageId);
+        return sendResult;
+    }
+
+    async getMembershipProductsFromCoreService(membershipId: string): Promise<MembershipProduct[]> {
+        const messageId = `${MembershipMessageType.GET_MEMBERSHIP_PRODUCTS}-${membershipId}`;
+        let messageInfo = new MessageBrockerMsgBuilder<string>().withData(membershipId).withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withMessageId(messageId).withCoorelationId(MembershipMessageType.GET_MEMBERSHIP_PRODUCTS).build();
+        let reply = await this.sendMessageGetReply<string, MembershipProduct[]>(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo, 60)
+        if (!reply.success) {
+            throw new RequestValidationException({ message: "Error occured, please try again later" })
+        }
+        return MembershipProduct.getMembershipProductsfromRawProductDataInput(reply.data);
+    }
+
     async listenSubscriptionRequestAndReply() {
         this.rmqService.listenMessageBeta(this.channel, this.requestQueue).subscribe(async (incommingMessage) => {
-            // this.channel.ack(incommingMessage)
             console.log("Reply message received in Subscription service", incommingMessage.content.toString());
             let replyResponse: IMessageBrockerResponse<any> = { success: false }
             let replyCoorelationId = incommingMessage.properties.correlationId;

@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { Branch } from "../model/branch.model";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { Business } from "../../business/model/business.model";
@@ -28,7 +28,7 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
     }
 
     async addBranchToBusiness(bId: string, branchData: Branch): Promise<Branch> {
-        const { productIds, products, staffs, staffsId, businessId, inventoryLocations, bundles, ...restBranchData } = branchData;
+        const { productIds, products, staffs, staffsId, businessId, inventoryLocations, bundles, productPrices, ...restBranchData } = branchData;
         var result = await this.$transaction(async (prisma) => {
             const branchCreateResult = await prisma.branch.create({
                 data: {
@@ -83,7 +83,7 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
 
     async updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch> {
         try {
-            const { products, staffs, business, businessId, inventoryLocations, bundles, ...restBranchData } = branchData;
+            const { products, staffs, business, businessId, inventoryLocations, bundles, productPrices, ...restBranchData } = branchData;
             var result = await this.branch.update({ where: { id: branchId }, data: { ...restBranchData } });
             if (!result.id) {
                 throw new RequestValidationException({ message: CommonBusinessErrorMessages.BRANCH_NOT_FOUND });

@@ -4,9 +4,8 @@ import { Type } from "class-transformer";
 import { IsArray, IsNotEmpty } from "class-validator";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id")')
+@ObjectType()
+@Directive('@shareable')
 export class SubscriptionRenewalInfo {
     @Field(type => ID)
     id?: string
@@ -45,9 +44,8 @@ export class SubscriptionRenewalInfoInput {
     discountAmount: number
 }
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id")')
+@ObjectType()
+@Directive('@shareable')
 export class PlatformService extends BaseModel {
     @Field(type => ID)
     id?: string
@@ -156,9 +154,8 @@ export class CreatePlatformServiceInput {
 }
 
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id")')
+@ObjectType()
+@Directive('@shareable')
 export class Customization {
     @Field(type => ID)
     id?: string
@@ -197,9 +194,8 @@ export class CustomizationInput extends Customization {
     default?: boolean
 }
 
-@ObjectType({ isAbstract: true })
-@Directive('@extends')
-@Directive('@key(fields: "id")')
+@ObjectType()
+@Directive('@shareable')
 export class CustomizationCategory {
     @Field(type => ID)
     id?: string
@@ -252,7 +248,8 @@ export enum PlatformServiceType {
     POINT_OF_SALE = "POINT_OF_SALE",
     INVENTORY = "INVENTORY",
     ONLINE_STORE = "ONLINE_STORE",
-    SUBSCRIPTION = "SUBSCRIPTION"
+    SUBSCRIPTION = "SUBSCRIPTION",
+    MEMBERSHIP = "MEMBERSHIP",
 }
 
 registerEnumType(SelectionType, { name: "SelectionType" })

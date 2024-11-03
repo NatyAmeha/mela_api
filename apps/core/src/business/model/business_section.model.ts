@@ -3,8 +3,9 @@ import { ObjectType, Field, InputType } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import { types } from 'joi';
+import { ProductAddon } from '../../product/model/product_addon.model';
 
-@ObjectType({ isAbstract: true })
+@ObjectType()
 export class BusinessSection {
     @Field()
     id: string;
@@ -21,6 +22,9 @@ export class BusinessSection {
 
     @Field(types => [String])
     images?: string[];
+
+    @Field(types => [ProductAddon])
+    orderAddons?: ProductAddon[]
 
     @Field(types => [LocalizedField])
     description?: LocalizedField[];

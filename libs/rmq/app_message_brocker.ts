@@ -15,7 +15,7 @@ export interface IAppMessageBrocker {
     connectMessageBrocker(): Promise<void>
     sendMessage<T, K>(queue: string, message: T, messageId: string): Promise<boolean>
     sendMessageGetReply<T, K>(queue: string, messageInfo: IMessageBrocker<T>, waitForInSecond: number): Promise<IMessageBrockerResponse<K>>
-    publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string }): Promise<boolean>
+    publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string, routingKey: string }): Promise<boolean>
     // common message brocker methods
     generateAccessMessageToSendToAuthService(access: Access[], replyQueue: string): IMessageBrocker<Access[]>
 }
@@ -53,7 +53,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         } catch (ex) {
             console.log("error occured while sending message")
         } finally {
-            await this.channel.close();
+            // await this.channel.close();
         }
     }
 
@@ -73,26 +73,28 @@ export class AppMessageBrocker implements IAppMessageBrocker {
                 await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo)
                 let reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
                 if (reply?.content) {
+                    console.log('message content ', reply.content.toString())
                     let response = reply.content.toString()
                     this.channel.ack(reply)
                     return JSON.parse(response) as IMessageBrockerResponse<K>
                 }
                 return undefined;
             } catch (error) {
+
                 console.log("error occured while sending message and waiting response")
             } finally {
-                await this.channel.close();
+                // await this.channel.close();
             }
         })();
         return Promise.race([operationPromise, timeoutPromise]);
     }
 
-    async publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string }): Promise<boolean> {
+    async publishMessageByTopic<T>(message: T, topic: string, coorelationId: string, options: { messageId?: string, routingKey?: string }): Promise<boolean> {
         try {
             this.channel = await this.rmqService.createChannel([this.eventQueue])
             let messageInfo: IMessageBrocker<T> = {
                 data: message,
-                routingKey: RoutingKey.CORE_SERVICE_EVENT,
+                routingKey: options.routingKey,
                 exchange: topic,
                 messageId: options.messageId,
                 coorelationId: coorelationId,
@@ -103,7 +105,7 @@ export class AppMessageBrocker implements IAppMessageBrocker {
         } catch (ex) {
             console.log("error occured while sending message")
         } finally {
-            await this.channel.close();
+            // await this.channel.close();
         }
     }
 

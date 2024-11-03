@@ -6,6 +6,8 @@ import { Product } from "../../product/model/product.model";
 import { Access } from "apps/auth/src/authorization/model/access.model";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { PaymentOption } from "./payment_option.model";
+import { BusinessMembership } from "./business_memership.model";
+import { BusinessSection } from "./business_section.model";
 
 @ObjectType()
 export class BusinessResponse extends BaseResponse {
@@ -22,10 +24,15 @@ export class BusinessResponse extends BaseResponse {
     @Field(type => [Branch])
     branchUpdated?: Branch[]
 
+
     @Field(type => [PaymentOption])
     paymentOptions?: PaymentOption[]
+    @Field(type => [BusinessMembership])
+    memberships?: BusinessMembership[]
 
     accesses?: Access[]
+
+    sections?: BusinessSection[]
 
     constructor(data: Partial<BusinessResponse>) {
         super()
@@ -111,9 +118,20 @@ export class BusinessResponseBuilder extends BaseResponseBuilder {
         return this;
     }
 
+    withMemberships(memberships: BusinessMembership[]): BusinessResponseBuilder {
+        this.response.success = true;
+        this.response.memberships = memberships;
+        return this;
+    }
+
     withPaymentOptions(paymentOptions: PaymentOption[]): BusinessResponseBuilder {
         this.response.success = true;
         this.response.paymentOptions = paymentOptions;
+        return this;
+    }
+
+    withSections(sections: BusinessSection[]): BusinessResponseBuilder {
+        this.response.sections = sections;
         return this;
     }
 

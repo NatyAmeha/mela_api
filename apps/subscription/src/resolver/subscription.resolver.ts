@@ -1,6 +1,6 @@
 import { Inject, UseGuards } from '@nestjs/common';
 import { SubscriptionService } from '../usecase/subscription.usecase';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { SubscriptionPlan } from '../model/subscription_plan.model';
 import { Subscription } from '../model/subscription.model';
 import { CreateSubscriptionPlanInput, UpdateSubscriptionPlanInput } from '../dto/subscription_plan.input';
@@ -64,10 +64,10 @@ export class SubscriptionResolver {
   }
 
 
-  @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE }] })
+  @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.MANAGE, resourcTargetName: "businessId" }] })
   @UseGuards(PermissionGuard)
   @Mutation(returns => SubscriptionResponse)
-  async subscribeBusinessToPlatformServices(@Args("id", { description: "id of the business" }) businessId: string, @Args("input") planInput: CreatePlatformSubscriptionInput) {
+  async subscribeBusinessToPlatformServices(@Args("businessId", { description: "id of the business" }) businessId: string, @Args("input") planInput: CreatePlatformSubscriptionInput) {
     // get business info from core service
     let businessInfo = await this.subscriptionBroker.getBusinessInformationFromCoreService(businessId)
     let subscritpionResponse = await this.subscriptionService.subscribeToPlatformServices(planInput, businessInfo.business);
@@ -78,6 +78,7 @@ export class SubscriptionResolver {
     // create access permission for business on auth servcie
     let platformServiceAccess = await this.subscriptionAccessGenerator.createAccess(subscritpionResponse.subscription, SubscriptionType.PLATFORM);
     let reply = await this.subscriptionBroker.createPlatformServiceAccessPermission(platformServiceAccess);
+    console.log("subscription created", reply)
     if (reply.success) {
       let updateResult = await this.subscriptionService.updateSubscriptionStatus(subscritpionResponse.subscription!.id!, true)
       subscritpionResponse.changeSubscritpioStatus(updateResult)
@@ -184,4 +185,9 @@ export class SubscriptionResolver {
     let response = await this.subscriptionService.deleteSubscriptionPlan(planId);
     return response
   }
+
+
+
+
+
 }

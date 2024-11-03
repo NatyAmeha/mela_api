@@ -1,7 +1,7 @@
 generator client {
     provider      = "prisma-client-js"
     // output   = "./generated/prisma_subscription_client"
-    binaryTargets = ["native", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
 }
 
 datasource db {
@@ -35,6 +35,7 @@ model Subscription {
     plan                SubscriptionPlan?             @relation(fields: [subscriptioinPlanId], references: [id])
     isTrialPeriod       Boolean?
     type                String
+    subscribedTo        String?                       @db.ObjectId
     owner               String?                       @db.ObjectId
     createdAt           DateTime                      @default(now())
     updatedAt           DateTime                      @default(now())
@@ -55,6 +56,35 @@ model PlatformService {
     subscriptionRenewalInfo SubscriptionRenewalInfo[]
     trialPeriod             Int                       @default(30)
     duration                Int                       @default(90)
+}
+
+model Membership {
+    id                String           @id @default(auto()) @map("_id") @db.ObjectId
+    name              LocalizedField[]
+    description       LocalizedField[]
+    price             PriceInfo[]
+    category          String[]         @default([])
+    benefits          Benefit[]
+    duration          Int              @default(30)
+    trialPeriod       Int              @default(0)
+    type              String
+    owner             String
+    isActive          Boolean          @default(true)
+    groupsId          String[]
+    membersProductIds String[]         @default([])
+    subscriptionsId   String[]
+    groups            Group[]
+
+    // subscriptions?: Subscription[]
+}
+
+model Group {
+    id           String           @id @default(auto()) @map("_id") @db.ObjectId
+    name         LocalizedField[]
+    members      GroupMember[]
+    default      Boolean          @default(false)
+    membershipId String?          @db.ObjectId
+    membership   Membership?      @relation(fields: [membershipId], references: [id])
 }
 
 type SubscriptionRenewalInfo {
@@ -104,7 +134,45 @@ type CustomizationInfo {
     action          String
 }
 
+type Benefit {
+    id        String           @default(uuid())
+    name      LocalizedField[]
+    perkType  String?
+    discounts Discount[]
+}
+
+type GroupMember {
+    userId               String
+    memberStatus         String
+    activeSubscriptionId String?        @db.ObjectId
+    paymentMethod        PaymentMethod?
+    dateJoined           DateTime       @default(now())
+}
+
+type PaymentMethod {
+    name          LocalizedField[]
+    amount        PriceInfo
+    receiptImages String[]
+}
+
 type LocalizedField {
     key   String
     value String
+}
+
+type PriceInfo {
+    id       String @default(uuid())
+    amount   Float
+    currency String
+}
+
+type Discount {
+    id             String?          @default(uuid())
+    name           LocalizedField[]
+    type           String
+    value          Float?
+    condition      String
+    conditionValue Float?
+    startDate      DateTime?
+    endDate        DateTime?
 }

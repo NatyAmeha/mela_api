@@ -2,8 +2,8 @@ import { Directive, Field, InputType, ObjectType, registerEnumType } from "@nest
 import { Transform } from "class-transformer"
 
 
-@ObjectType({ isAbstract: true })
-@Directive('@key(fields: "key")')
+@ObjectType()
+@Directive('@shareable')
 export class LocalizedField {
     @Field(type => LanguageKey, { description: "the name of the language, ex. english, amharic" })
     @Transform((param) => param.value?.toUpperCase())
