@@ -3,7 +3,7 @@ import { Price } from "@app/common/model/price.model";
 import { Directive, Field, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Subscription } from "../../model/subscription.model";
 import { Benefit } from "./benefit.model";
-import { Group } from "./group.model";
+import { Group, GroupMember } from "./group.model";
 import { CreateMembershipInput, UpdateMembershipInput } from "../dto/membership.input";
 import { User } from "apps/auth/src/auth/model/user.model";
 
@@ -14,16 +14,15 @@ export enum MembershipType {
 export enum MembershipPerkType {
     DISCOUNT_ON_MEMBERS_PRODUCT = "DISCOUNT_ON_MEMBERS_PRODUCT",
     DISCOUNT = "DISCOUNT",
-    FREE = "FREE",
-    CASHBACK = "CASHBACK",
     POINTS = "POINTS",
-    OTHER = "OTHER"
+    FREE_DELIVERY = "FREE_DELIVERY"
 
 }
 
 
 @ObjectType()
 @Directive('@shareable')
+@Directive('@key(fields: "id")')
 export class Membership {
     @Field(types => ID)
     id: string;
@@ -61,6 +60,14 @@ export class Membership {
     subscriptions?: Subscription[]
     @Field(type => [String])
     membersProductIds?: string[]
+
+    @Field(type => [GroupMember])
+    allMembers?: GroupMember[]
+
+    @Field(type => Subscription, { nullable: true })
+    currentUserSubscription?: Subscription
+
+
 
     constructor(data: Partial<Membership>) {
         Object.assign(this, data)

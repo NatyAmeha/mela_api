@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ProductBundle } from "../model/product_bundle.model";
-import { Bundle, PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { Bundle, PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { uniq } from "lodash";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
@@ -15,7 +15,7 @@ export interface IBundleRepository {
     queryBundles(queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
     getBundleDetails(bundleId: string): Promise<ProductBundle>
     getBundlesAvailableInBranch(branchId: string): Promise<ProductBundle[]>
-    getBusinessBundles(businessId: string, queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
+    getBusinessBundles(businessId: string[], queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
     updateBundleInfo(bundleId: string, bundle: Partial<ProductBundle>): Promise<ProductBundle>
     addProductToBundle(bundleId: string, productId: string[]): Promise<ProductBundle>
     removeProductFromBundle(bundleId: string, productId: string[]): Promise<ProductBundle>
@@ -36,12 +36,12 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
 
     async createBundle(bundle: ProductBundle): Promise<ProductBundle> {
         try {
-            const { business, branches, branchIds, businessId, products, ...restBundleInfo } = bundle;
+            const { businesses, branches, branchIds, businessIds, products, ...restBundleInfo } = bundle;
             const result = await this.$transaction(async (prisma) => {
                 const bundleCreateResult = await prisma.bundle.create({
                     data: {
                         ...restBundleInfo,
-                        business: { connect: { id: businessId } },
+                        businesses: { connect: businessIds.map(businessId => ({ id: businessId })) },
                         branches: { connect: branchIds.map(branchId => ({ id: branchId })) },
                     }
                 });
@@ -58,16 +58,16 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
         try {
             const bundleResult = await this.bundle.findUnique({
                 where: { id: bundleId },
-                include: { branches: true, business: true }
+                include: { branches: true, businesses: true }
             });
             if (!bundleResult) {
                 throw new RequestValidationException({ message: CommonBusinessErrorMessages.BUNDLE_NOT_FOUND, statusCode: 400 })
             }
 
-            const { business, branches, ...restBundleInfo } = bundleResult;
+            const { businesses, branches, ...restBundleInfo } = bundleResult;
             return new ProductBundle({
                 ...restBundleInfo,
-                business: new Business({ ...business }),
+                businesses: businesses.map(business => new Business({ ...business })),
                 branches: branches.map(branch => new Branch({ ...branch })),
             });
         } catch (ex) {
@@ -104,10 +104,10 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
         }
     }
 
-    async getBusinessBundles(businessId: string, queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]> {
+    async getBusinessBundles(businessId: string[], queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]> {
         try {
             const result = await this.bundle.findMany({
-                where: { businessId },
+                where: { businessIds: { hasSome: businessId } },
                 orderBy: { ...queryHelper.orderBy as any },
                 skip: queryHelper?.page ? ((queryHelper.page - 1) * queryHelper.limit) : 0,
                 take: queryHelper?.limit,
@@ -227,7 +227,7 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
 
     async updateBundleInfo(bundleId: string, bundle: Partial<ProductBundle>): Promise<ProductBundle> {
         try {
-            const { business, branches, branchIds, products, ...restBundleInfo } = bundle;
+            const { businesses, branches, branchIds, products, ...restBundleInfo } = bundle;
             const result = await this.bundle.update({
                 where: { id: bundleId },
                 data: { ...restBundleInfo }

@@ -5,6 +5,7 @@ import { PriceList } from "./price_list_.model";
 import { CreateProductPriceInput, UpdateProductPriceInput } from "../dto/product_price.input";
 import { Product } from "./product.model";
 import { removeNull } from "@app/common/utils/helper";
+import { Discount } from "./discount.model";
 
 @ObjectType()
 @Directive('@shareable')
@@ -15,8 +16,7 @@ export class ProductPrice {
     productId: string
     @Field()
     branchId?: string
-    @Field()
-    priceListId?: string
+
     @Field(types => [Price])
     price: Price[]
     @Field()
@@ -31,6 +31,12 @@ export class ProductPrice {
 
     @Field(type => Product)
     product: Product
+
+    @Field()
+    priceListId?: string
+
+    @Field(type => [Discount])
+    discounts?: Discount[]
 
     @Field(types => PriceList)
     priceList?: PriceList

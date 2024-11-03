@@ -94,6 +94,18 @@ export class BranchResolver {
         return response;
     }
 
+    // @RequiresPermission({
+    //     permissions: [
+    //         { resourceType: AppResources.POS, action: PERMISSIONACTION.DELETE, resourcTargetName: "branchId", },
+    //         { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
+    //     ]
+    // })
+    @Query(returns => BranchResponse)
+    async getPosBranch(@Args("businessId") businessId: string, @Args("branchId") branchId: string): Promise<BranchResponse> {
+        let response = await this.branchService.getBranchDetailsForPOS(businessId, branchId);
+        return response;
+    }
+
 
 
 

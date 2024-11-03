@@ -36,6 +36,7 @@ export class OrderResponseBuilder extends BaseResponseBuilder {
 
     withOrder(order: Order): OrderResponseBuilder {
         this.orderResponse.success = true
+        this.orderResponse.message = 'Order created successfully'
         this.orderResponse.order = order
         return this
     }

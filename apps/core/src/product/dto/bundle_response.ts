@@ -40,9 +40,9 @@ export class BundleResponseBuilder extends BaseResponseBuilder {
         this.bundleResponse.bundle.branches = branches
         return this
     }
-    withBusiness(business: Business): BundleResponseBuilder {
+    withBusinesses(businesses: Business[]): BundleResponseBuilder {
         this.bundleResponse.success = true
-        this.bundleResponse.bundle.business = business
+        this.bundleResponse.bundle.businesses = businesses
         return this
     }
     build(): BundleResponse {

@@ -1,5 +1,5 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Field, Float, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, Float, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 
 export enum PaymentOptionType {
@@ -15,12 +15,16 @@ export enum PaymentOptionUpfrontPaymentType {
 }
 
 @ObjectType()
+@Directive('@shareable')
 export class PaymentOption {
     @Field(type => String)
     id?: string;
 
     @Field(type => [LocalizedField])
     name: LocalizedField[]
+
+    @Field(type => [LocalizedField])
+    description?: LocalizedField[]
 
     @Field(type => PaymentOptionType, { defaultValue: PaymentOptionType.FULL_PAYMENT })
     type: string;

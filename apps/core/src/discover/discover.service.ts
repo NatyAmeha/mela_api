@@ -26,9 +26,10 @@ export class DiscoverService {
 
     async getForYouData(userFavoriteBusinessIds: string[], limit: number): Promise<ForYouResponse> {
         const topProducts = await this.getTopProductsFromUserFavoriteBusinesses(userFavoriteBusinessIds, limit);
-
+        const favoriteBusinesses = await this.businessRepo.findBusinessesById(userFavoriteBusinessIds);
         const topBusinessBundles = await this.getTopBusinessBundles(userFavoriteBusinessIds, limit);
-        const result = new ForYouResponseBuilder().withTopProductsByBusiness(topProducts).withBundles(topBusinessBundles).build();
+        console.log('topBusinessBundles', topBusinessBundles)
+        const result = new ForYouResponseBuilder().withTopProductsByBusiness(topProducts).withFavoriteBusinesses(favoriteBusinesses).withBundles(topBusinessBundles).build();
         return result;
     }
 
@@ -43,7 +44,7 @@ export class DiscoverService {
         // const newProductsWithPrices = await this.productService.addSelectedPricesToProducts(newProducts, {});
         const newProductDiscoveryResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: ProductDiscovery.getNewProductsTitle(), items: newProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.NEW_PRODUCTS, sequence: 1 });
 
-        const topBusinesses = await this.businessRepo.queryBusinesses({ orderBy: { totalViews: "desc" }, limit: 5 });
+        const topBusinesses = await this.businessRepo.queryBusinesses({ orderBy: { totalViews: "desc" }, limit: 8 });
         const topBusinessDeiscoveryResponse = BusinessDiscovery.toDiscoverResponse({ lcoalizedField: BusinessDiscovery.getTopBusinessTitle(), items: topBusinesses, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.TOP_BUSINESS, sequence: 0 });
 
         const topBundles = await this.productBundleRepo.queryBundles({ orderBy: { createdAt: "desc" }, limit: 5 });
@@ -74,7 +75,7 @@ export class DiscoverService {
         let businessIds = await this.businessRepo.findBusinessesById(businessId);
         let bundleResponse = await Promise.all(
             businessIds.map(async (business) => {
-                const businessBundles = await this.productBundleRepo.getBusinessBundles(business.id, { limit: limit });
+                const businessBundles = await this.productBundleRepo.getBusinessBundles([business.id], { limit: limit });
                 const discoverResponse = BundleDiscovery.toDiscoverResponse({ lcoalizedField: business.name, items: businessBundles, selectedLanguage: LanguageKey.ENGLISH, sequence: 1, discoverType: DiscoverTypes.TOP_BUSINESS_BUNDLES });
                 return discoverResponse;
             }),

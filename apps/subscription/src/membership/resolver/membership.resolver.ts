@@ -15,24 +15,42 @@ import { PlatfromUsecase } from "../../usecase/platform.usecase";
 import { ResourceTargetIdentifier } from "@app/common/utils/resource_target_constants";
 import { CurrentUser } from "libs/common/get_user_decorator";
 import { User } from "apps/auth/src/auth/model/user.model";
-import { Group, GroupMemberStatus } from "../model/group.model";
+import { Group, GroupMember, GroupMemberStatus } from "../model/group.model";
 import { AuthzGuard } from "libs/common/authorization.guard";
 import { ISubscriptionOption, MembershipSubscriptionOption } from "../../utils/subscrption_factory";
+import { PaymentMethodInput } from "../../dto/payment_method_input";
+import { Subscription } from "../../model/subscription.model";
+import { MembershipLoader } from "./membership_loader";
 
 @Resolver(of => Membership)
 export class MembershipResolver {
     constructor(
         private membershipService: MembershipService,
         private subscriptionService: SubscriptionService,
+
         private platformService: PlatfromUsecase) {
 
     }
 
-    @UseGuards(AuthzGuard)
+
+    // @UseGuards(AuthzGuard)
     @Query(returns => MembershipResponse)
-    async getMembershipDetails(@Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string, @CurrentUser() user: User): Promise<MembershipResponse> {
+    async getMembershipDetails(@Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string, @CurrentUser() user?: User): Promise<MembershipResponse> {
         const response = await this.membershipService.getMembershipInfo(membershipId, user);
         return response.build();
+    }
+
+    @UseGuards(AuthzGuard)
+    @Query(returns => MembershipResponse)
+    async getUserMemberships(@CurrentUser() user: User): Promise<MembershipResponse> {
+        const response = await this.membershipService.getUserMemberships(user.id);
+        return response;
+    }
+
+    @Query(returns => MembershipResponse)
+    async getBusinessMembershipPlans(@Args(ResourceTargetIdentifier.BUSINESSID) businessId: string, @CurrentUser() user?: User): Promise<MembershipResponse> {
+        const response = await this.membershipService.getBusinessMembershipPlans(businessId, user);
+        return response;
     }
 
     @RequiresPermission({
@@ -81,9 +99,9 @@ export class MembershipResolver {
 
     @UseGuards(AuthzGuard)
     @Mutation(returns => MembershipResponse)
-    async joinMemership(@Args("membershipId") membershipId: string, @CurrentUser() user: User) {
+    async joinMemership(@Args("membershipId") membershipId: string, @CurrentUser() user: User, @Args("paymentMethod") paymentMethod: PaymentMethodInput) {
         // join membership
-        const result = await this.membershipService.joinToMembershipGroups(user.id, membershipId, { onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING });
+        const result = await this.membershipService.joinToMembershipGroups(user.id, membershipId, { paymentMethod: paymentMethod, onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING });
         return result;
     }
 
@@ -101,8 +119,29 @@ export class MembershipResolver {
     }
 
 
+    @ResolveField('allMembers', returns => [GroupMember])
+    async getMembershipMembers(@Parent() membership: Membership): Promise<GroupMember[]> {
+        const result = await this.membershipService.getMembershipMembers(membership.id);
+        return result;
+    }
 
+    @ResolveField('activeSubscription', returns => Subscription)
+    async getActiveSubscription(@Parent() membershipGroupMember: GroupMember): Promise<Subscription> {
+        console.log('resolve subscription  filed', membershipGroupMember)
+        const result = await this.subscriptionService.getActiveSubscription(membershipGroupMember.activeSubscriptionId);
+        console.log('resolve subscription  filed', result)
+        return result;
+    }
 
+    @ResolveField('currentUserSubscription', returns => Subscription, { nullable: true })
+    async getCurrentUserSubscription(@Parent() membership: Membership, @CurrentUser() user?: User): Promise<Subscription | null> {
+        console.log('resolve current user subscription', membership, user)
+        if (!user) {
+            return null;
+        }
+        const result = await this.membershipService.getUserActiveMembershipSubscription(user.id, membership.id);
+        return result;
+    }
 
 
 }

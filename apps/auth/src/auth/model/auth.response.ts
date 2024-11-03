@@ -6,6 +6,7 @@ import { BaseResponse } from "@app/common/model/base.response";
 
 @ObjectType()
 export class AuthResponse extends BaseResponse {
+
     @Field(type => User)
     user?: User
     @Field()
@@ -14,6 +15,11 @@ export class AuthResponse extends BaseResponse {
     refreshToken?: string
     @Field()
     isNewUser?: boolean
+
+    constructor(data: Partial<AuthResponse>) {
+        super()
+        Object.assign(this, data)
+    }
 
     static getEnvVariableForAuth(configService: ConfigService) {
         var accessTokenKey = configService.get<string>(ACCESS_TOKEN);

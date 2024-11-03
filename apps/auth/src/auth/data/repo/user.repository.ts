@@ -12,7 +12,7 @@ export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>
     abstract isUserRegisteredBefore(checkingField: Partial<User>): Promise<boolean>
     abstract getUser(query: Partial<User>): Promise<User | undefined>
-    abstract updateUserInfo(userId: string, userInfo: Partial<User>): Promise<boolean>
+    abstract updateUserInfo(userId: string, userInfo: Partial<User>): Promise<User>
     abstract addBusinessToFavorites(userId: string, businessInfos: FavoriteBusinessInfo[]): Promise<boolean>
     abstract removeBusinessFromFavorites(userId: string, businessIds: string[])
 }
@@ -31,7 +31,8 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
         return result?.id != undefined;
     }
     async createUser(userInfo: User): Promise<User> {
-        var userResult = await this.user.create({ data: { ...userInfo } });
+        const { accesses, ...restUserInfo } = userInfo;
+        var userResult = await this.user.create({ data: { ...restUserInfo } });
         return new User({ ...userResult })
     }
 
@@ -43,9 +44,14 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
         return new User({ ...userInfo });
     }
 
-    async updateUserInfo(userId: string, userInfo: Partial<User>): Promise<boolean> {
-        await this.user.update({ where: { id: userId }, data: { ...userInfo } })
-        return true;
+    async updateUserInfo(userId: string, userInfo: Partial<User>): Promise<User> {
+        try {
+            const userResult = await this.user.update({ where: { id: userId }, data: { ...userInfo } })
+            return new User({ ...userResult })
+
+        } catch (error) {
+            throw new PrismaException({ message: error.message, statusCode: 500, exception: error })
+        }
     }
 
     async addBusinessToFavorites(userId: string, businessInfos: FavoriteBusinessInfo[]): Promise<boolean> {

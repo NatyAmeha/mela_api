@@ -3,6 +3,7 @@ import { Field, Float, InputType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
 import { ArrayNotEmpty, IsNotEmpty, IsNumber, ValidateNested } from "class-validator";
 import { CreateOrderConfigInput } from "./order_config.input";
+import { PriceInput } from "@app/common/model/price.model";
 
 @InputType()
 export class CreateOrderItemInput {
@@ -26,8 +27,11 @@ export class CreateOrderItemInput {
     @IsNotEmpty()
     productId: string
 
-    @Field()
+    @Field(type => Float)
     subTotal: number
+
+    @Field(type => Float)
+    total: number
 
     @Field(types => [OrderItemDiscountInput])
     discount?: OrderItemDiscountInput[]
@@ -36,6 +40,9 @@ export class CreateOrderItemInput {
     @Type(() => CreateOrderConfigInput)
     @ValidateNested()
     config?: CreateOrderConfigInput[]
+
+    @Field(type => Float, { defaultValue: 0 })
+    point?: number
 }
 
 @InputType()
@@ -45,6 +52,9 @@ export class OrderItemDiscountInput {
     @Field(types => Float)
     amount: number
 
+    @Field(types => [String])
+    claimedRewardId?: string[]
+
     constructor(partial?: Partial<OrderItemDiscountInput>) {
         Object.assign(this, partial)
     }
@@ -52,10 +62,19 @@ export class OrderItemDiscountInput {
 
 @InputType()
 export class OrderPaymentMethodInput {
+    @Type(() => LocalizedFieldInput)
     @Field(types => [LocalizedFieldInput])
     name: LocalizedFieldInput[]
-    @Field(types => Float)
-    amount: number
+
+    @Type(() => PriceInput)
+    @Field(types => PriceInput)
+    amount: PriceInput
+
+    @Field({ defaultValue: false })
+    requireReceiptImage: boolean
+
+    @Field(types => [String])
+    receiptImages?: string[]
     constructor(partial) {
         Object.assign(this, partial);
     }

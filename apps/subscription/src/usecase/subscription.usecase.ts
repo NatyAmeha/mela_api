@@ -33,6 +33,11 @@ export class SubscriptionService {
     return result;
   }
 
+  async getActiveSubscription(subscriptionId: string) {
+    let result = await this.subscriptionRepo.getSubscriptionById(subscriptionId);
+    return result;
+  }
+
   async getSubscriptions(queryInfo: QueryHelper<SubscriptionPlan>) {
     let result = await this.subscriptionRepo.getPlans(queryInfo);
     return result;

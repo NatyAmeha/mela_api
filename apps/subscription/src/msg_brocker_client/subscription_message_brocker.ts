@@ -50,7 +50,7 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
 
     async createPlatformServiceAccessPermission(access: Access[]): Promise<IMessageBrockerResponse<any>> {
         let messageInfo = this.generateAccessMessageToSendToAuthService(access, AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE);
-        let reply = await this.sendMessageGetReply<Access[], any>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo)
+        let reply = await this.sendMessageGetReply<Access[], any>(AppMsgQueues.AUTH_SERVICE_REQUEST_QUEUE, messageInfo, 60)
         return reply;
     }
 
@@ -79,7 +79,7 @@ export class SubscriptionMessageBrocker extends AppMessageBrocker implements OnM
     async getMembershipProductsFromCoreService(membershipId: string): Promise<MembershipProduct[]> {
         const messageId = `${MembershipMessageType.GET_MEMBERSHIP_PRODUCTS}-${membershipId}`;
         let messageInfo = new MessageBrockerMsgBuilder<string>().withData(membershipId).withReplyQueue(AppMsgQueues.SUBSCRIPTION_SERVICE_REPLY_QUEUE).withMessageId(messageId).withCoorelationId(MembershipMessageType.GET_MEMBERSHIP_PRODUCTS).build();
-        let reply = await this.sendMessageGetReply<string, MembershipProduct[]>(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo)
+        let reply = await this.sendMessageGetReply<string, MembershipProduct[]>(AppMsgQueues.CORE_SERVICE_REQUEST_QUEUE, messageInfo, 60)
         if (!reply.success) {
             throw new RequestValidationException({ message: "Error occured, please try again later" })
         }

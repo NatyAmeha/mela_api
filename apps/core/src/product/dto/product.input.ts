@@ -33,6 +33,9 @@ export class CreateProductInput {
     @Type(() => PriceInput)
     defaultPrice: PriceInput[]
 
+    @Field()
+    featured?: boolean
+
     @Field(types => GalleryInput)
     @Type(() => GalleryInput)
     @ValidateNested({ each: true })
@@ -57,10 +60,11 @@ export class CreateProductInput {
     @Field(types => ProductType)
     type: string;
 
-    @Field(types => CreateInventoryInput)
+    @Field(types => [CreateInventoryInput])
     @Type(() => CreateInventoryInput)
     @ValidateNested({ always: true, each: true })
-    inventoryInfo: CreateInventoryInput
+    inventoryInfo: CreateInventoryInput[]
+
 
     @Field(types => [ProductOptionInput])
     @Type(() => ProductOptionInput)

@@ -7,6 +7,7 @@ import { AuthService } from "./usecase/auth.service";
 import { UpdateUserInput } from "./dto/update_user.input";
 import { UserResponse } from "./dto/user.response";
 import { UserService } from "./usecase/user.service";
+import { AuthResponse } from "./model/auth.response";
 
 @Resolver(of => UserResponse)
 export class UserResolver {
@@ -21,11 +22,11 @@ export class UserResolver {
 
 
     @UseGuards(JwtGuard)
-    @Mutation(returns => Boolean)
-    async updateProfileInfo(@CurrentUser() currentUser: User, @Args("user") updateInput: UpdateUserInput): Promise<boolean> {
+    @Mutation(returns => AuthResponse)
+    async updateProfileInfo(@CurrentUser() currentUser: User, @Args("user") updateInput: UpdateUserInput): Promise<AuthResponse> {
         var userInfo = updateInput.getUserInfo();
-        var isUpdated = await this.authService.updateUserInfo(currentUser.id!, userInfo);
-        return isUpdated;
+        const result = await this.authService.updateUserInfo(currentUser.id!, userInfo);
+        return result;
     }
 
     @UseGuards(JwtGuard)

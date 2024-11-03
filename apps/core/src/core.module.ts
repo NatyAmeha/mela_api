@@ -41,6 +41,7 @@ import { DiscoverResolver } from './discover/discover.resolver';
 import { DiscoverService } from './discover/discover.service';
 import { BundleResolver } from './product/bundle/bundle.resolver';
 import { ProductPriceRepository } from './product/repo/product_price.repository';
+import { ProductDataLoaders, ProductInventoryLoader, ProductPriceLoader } from './product/product_data_loader.service';
 
 
 @Module({
@@ -88,6 +89,8 @@ import { ProductPriceRepository } from './product/repo/product_price.repository'
     { provide: ProductPriceRepository.injectName, useClass: ProductPriceRepository },
     { provide: ProductResourceUsageTracker.injectName, useClass: ProductResourceUsageTracker },
     ProductService, ProductResolver, ProductAddonResolver, BundleResolver,
+
+    ...ProductDataLoaders,
 
     { provide: ProductBundleRepository.injectName, useClass: ProductBundleRepository },
     BundleService,

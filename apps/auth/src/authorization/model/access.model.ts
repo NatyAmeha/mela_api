@@ -37,11 +37,17 @@ export class Access extends BaseModel {
         Object.assign(this, data)
     }
 
+    assignOwner(ownerId: string) {
+        this.owner = ownerId
+        this.ownerType = AccessOwnerType.USER
+    }
+
     static getAccessInfoFromAccessInput(inputs: CreateAccessInput[]): Access[] {
         return inputs.map(input => new Access({
             permissions: input.permissions.map(permissionInput => new Permission({ ...permissionInput, groups: PermissionGroup.getPermissionGroupFromInput(permissionInput.groups) })),
             resourceId: input.resourceId,
-            role: input.role
+            role: input.role,
+            permissionType: PermissionType.BUSINESS_MANAGEMENT_PERMISSION
         }))
     }
 }

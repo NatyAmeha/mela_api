@@ -14,7 +14,7 @@ export class CreateProductAddonInput {
     @Field(type => [LocalizedFieldInput])
     name: LocalizedFieldInput[];
 
-    @Field(types => AddonInputType)
+    @Field(types => String)
     inputType: string;
 
     @IsOptional()

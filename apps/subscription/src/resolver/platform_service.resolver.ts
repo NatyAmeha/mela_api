@@ -23,10 +23,11 @@ export class PlatformServiceResolver {
         return response;
     }
 
-    @Query(returns => [PlatformService])
-    async getPlatformServices(): Promise<PlatformService[]> {
+    @Query(returns => PlatformServiceResponse)
+    async getPlatformServices(): Promise<PlatformServiceResponse> {
         let queryHelper: QueryHelper<PlatformService> = { query: null }
         let result = await this.platformServiceUsecase.getPlatAllPlatformServices(queryHelper)
-        return result;
+        return new PlatformSErviceResponseBuilder().withPlatformServices(result).build();
+
     }
 }

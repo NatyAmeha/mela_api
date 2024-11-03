@@ -3,6 +3,7 @@ import { Directive, Field, ID, ObjectType } from "@nestjs/graphql";
 import { Membership } from "./memberhip.model";
 import { Subscription } from "../../model/subscription.model";
 import { User } from "apps/auth/src/auth/model/user.model";
+import { PaymentMethod } from "../../model/payment_method";
 
 export enum GroupMemberStatus {
     PENDING = 'PENDING',
@@ -34,7 +35,8 @@ export class Group {
         return new Group({
             name: membershipInfo.name,
             members: [],
-            default: true
+            default: true,
+            membershipId: membershipInfo.id
         })
     }
 
@@ -54,13 +56,15 @@ export class GroupMember {
     activeSubscriptionId?: string
     @Field(type => Subscription)
     activeSubscription?: Subscription
+    @Field(type => PaymentMethod)
+    paymentMethod?: PaymentMethod
     dateJoined: Date;
 
     constructor(data: Partial<GroupMember>) {
         Object.assign(this, data)
     }
 
-    static getGroupMembers(userId: string[], memberStatus: GroupMemberStatus = GroupMemberStatus.PENDING, activeSubscriptionId?: string) {
-        return userId.map(userId => new GroupMember({ userId, memberStatus: memberStatus, activeSubscriptionId: activeSubscriptionId, dateJoined: new Date() }))
+    static getGroupMembers(userId: string[], memberStatus: GroupMemberStatus = GroupMemberStatus.PENDING, activeSubscriptionId?: string, paymentMethod?: PaymentMethod) {
+        return userId.map(userId => new GroupMember({ userId, memberStatus: memberStatus, activeSubscriptionId: activeSubscriptionId, dateJoined: new Date(), paymentMethod: paymentMethod }))
     }
 }

@@ -1,8 +1,9 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Field, Int, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, Int, ObjectType } from "@nestjs/graphql";
 import { Gallery } from "apps/core/src/business/model/gallery.model";
 
 @ObjectType()
+@Directive('@shareable')
 export class MembershipProduct {
     @Field(type => String)
     id: string;
@@ -55,6 +56,6 @@ export class MembershipProduct {
 
     static getMembershipProductsfromRawProductDataInput(data: any[]) {
         if (!data || data.length) return []
-        return data.map(product => new MembershipProduct({ ...product }));
+        return data?.map(product => new MembershipProduct({ ...product }));
     }
 }

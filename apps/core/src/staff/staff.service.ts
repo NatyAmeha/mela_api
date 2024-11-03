@@ -1,13 +1,23 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { IStaffRepository, StaffRepository } from "./repo/staff.repo";
+import { CreateStaffInput } from "./dto/staff.input";
+import { Staff } from "./model/staff.model";
+import { StaffResponseBuilder } from "./model/staff.response";
 
 @Injectable()
 export class StaffService {
     constructor(@Inject(StaffRepository.injectName) private staffRepo: IStaffRepository) {
     }
 
-    async createStaff(staffInfo: any) {
-        return await this.staffRepo.createStaff(staffInfo);
+    async createStaff(staffInfo: Staff) {
+        let staffResult = await this.staffRepo.createStaff(staffInfo);
+        return new StaffResponseBuilder().withStaff(staffResult).build();
+    }
+
+    async authenticateStaff(phoneNumber: string, pin: number, branchId: string, businessId: string) {
+        let staffResult = await this.staffRepo.authenticateStaff(phoneNumber, pin, branchId, businessId);
+        return new StaffResponseBuilder().withStaff(staffResult).build();
+
     }
 
     async assignStaffToBranch(branchId: string, staffId: string) {

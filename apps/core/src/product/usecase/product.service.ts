@@ -22,6 +22,7 @@ import { CreateProductPriceInput, UpdateProductPriceInput } from "../dto/product
 import { ProductPrice } from "../model/product_price.model";
 import { BranchResponse } from "../../branch/model/branch.response";
 import { ProductBundle } from "../model/product_bundle.model";
+import { Inventory } from "../../inventory/model/inventory.model";
 
 @Injectable()
 export class ProductService {
@@ -54,6 +55,19 @@ export class ProductService {
 
     }
 
+    async getBatchProductPrices(keys: { productId: string, branchId?: string, priceListId?: string }[]): Promise<ProductPrice[]> {
+        const productIds = keys.map(key => key.productId);
+        const branchIds = keys.map(key => key.branchId).filter(id => id !== undefined);
+        const priceListIds = keys.map(key => key.priceListId).filter(id => id !== undefined);
+        console.log("productIds", productIds, "branchIds", branchIds, "priceListIds", priceListIds)
+        return await this.productPriceRepo.getProductsPrices(productIds, { branchId: branchIds?.at(0), pricelistId: priceListIds?.at(0) });
+    }
+
+    async getBatchProducts(keys: Array<{ productIds: string[] }>): Promise<Product[]> {
+        const productIds = keys.map(key => key.productIds).flat();
+        return await this.productRepository.getProductsById(productIds);
+    }
+
     // async addSelectedPricesToProducts(products: Product[], { branchId, priceListId }: { branchId?: string, priceListId?: string } | null): Promise<Product[]> {
     //     for await (const product of products) {
     //         const selectedProductPrice = await this.getProductPrice(product.id, branchId, priceListId);
@@ -67,16 +81,18 @@ export class ProductService {
         if (!productInfo) {
             throw new RequestValidationException({ message: CommonProductErrorMessages.PRODUCT_NOT_FOUND, statusCode: 400 });
         }
-        // const inventoryLocationIds = branchInfo?.getInventoryLocationIds()
-        // will be refactored to get accurate product inventory info
-        const productInventories = await this.inventoryRepo.getProductInventories(productId, locationId);
-        let response = new ProductResponseBuilder().withProduct(productInfo).withinventories(productInventories);
-        if (productInfo.hasVariant()) {
-            const productVariants = await this.productRepository.getProductsById(productInfo.variantsId);
-            response.withProductVariants(productVariants, branchInfo);
-        }
+
+        let response = new ProductResponseBuilder().withProduct(productInfo)
+        // if (productInfo.hasVariant()) {
+        //     const productVariants = await this.productRepository.getProductsById(productInfo.variantsId);
+        //     response.withProductVariants(productVariants, branchInfo);
+        // }
         await this.productRepository.updateProductStats(productId, { totalViews: productInfo.totalViews + 1 });
         return response.build()
+    }
+
+    async getProductInventory(productId: string, locationId?: string): Promise<Inventory[]> {
+        return await this.inventoryRepo.getProductInventories(productId, locationId);
     }
 
     async adddMembershipIdToProducts(productId: string[], membershipId: string): Promise<ProductResponse> {
@@ -122,16 +138,22 @@ export class ProductService {
 
 
 
-    async getBranchProducts(branchId: string): Promise<Product[]> {
-        return await this.productRepository.getBranchProducts(branchId);
+    async getBranchProducts(branchId: string, query?: QueryHelper<Product>): Promise<Product[]> {
+        return await this.productRepository.getBranchProducts(branchId, query);
     }
 
     async getProductsById(productIds: string[]): Promise<Product[]> {
         return await this.productRepository.getProductsById(productIds);
     }
 
-    async getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]> {
-        return await this.productRepository.getBusinessProducts(businessId, query);
+    async getBusinessProducts(businessId: string, query: QueryHelper<Product>, branchId?: string): Promise<Product[]> {
+        let products = [];
+        if (branchId != null) {
+            products = await this.productRepository.getBranchProducts(branchId, query);
+        } else {
+            products = await this.productRepository.getBusinessProducts(businessId, query);
+        }
+        return products;
     }
 
     async createProductAddon(productId: string, addons: CreateProductAddonInput[]): Promise<ProductResponse> {

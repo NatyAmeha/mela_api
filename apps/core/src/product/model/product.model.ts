@@ -3,7 +3,6 @@ import { Directive, Field, Float, InputType, Int, ObjectType, registerEnumType }
 import { DeliveryInfo, DeliveryInfoInput } from "./delivery.model";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Branch } from "../../branch/model/branch.model";
-import { Customer } from "../../customer/model/customer.model";
 import { Gallery, GalleryInput } from "../../business/model/gallery.model";
 import { Type } from "class-transformer";
 import { ValidateNested, validate } from "class-validator";
@@ -15,6 +14,8 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { CreateProductInput } from "../dto/product.input";
 import { ProductAddon } from "./product_addon.model";
 import { ProductPrice } from "./product_price.model";
+import { Discount } from "./discount.model";
+import { Membership } from "apps/subscription/src/membership/model/memberhip.model";
 
 @ObjectType()
 @Directive('@extends')
@@ -29,6 +30,9 @@ export class Product extends BaseModel {
     @Field(type => [LocalizedField])
     @Type(() => LocalizedField)
     displayName?: LocalizedField[]
+
+    @Field({ defaultValue: false })
+    featured: boolean
 
     @Field(types => [LocalizedField])
     description: LocalizedField[];
@@ -96,7 +100,7 @@ export class Product extends BaseModel {
     @Type(() => Inventory)
     inventory?: Inventory[]
 
-    @Field(types => CallToActionType, { defaultValue: "Order" })
+    @Field(types => String, { defaultValue: "Order" })
     callToAction?: string;
 
     @Field(types => [String])
@@ -116,6 +120,12 @@ export class Product extends BaseModel {
 
     @Field(types => [String])
     membershipIds?: string[];
+
+    @Field(type => [Membership])
+    memberships?: Membership[];
+
+    @Field(type => [Discount])
+    discounts?: Discount[]
 
 
     // stats
@@ -144,9 +154,7 @@ export class Product extends BaseModel {
             ...restProductInfo,
             sku: generatedSku,
             prices: [ProductPrice.createDefaultPrice(productInput.defaultPrice)],
-            businessId: businessId, inventory: [
-                await Inventory.fromCreateInventory(productInput.name[0].value, generatedSku, productInput.inventoryInfo)
-            ]
+            businessId: businessId, inventory: await Promise.all(productInput.inventoryInfo.map(inventory => Inventory.fromCreateInventory(productInput.name[0].value, generatedSku, inventory)))
         });
         return product;
     }
@@ -154,6 +162,27 @@ export class Product extends BaseModel {
 
     isProductPartOfBusiness(businessId: string): boolean {
         return this.businessId === businessId;
+    }
+
+    static applyFetchedPrices(products: Product[], prices: ProductPrice[]): Product[] {
+        const priceMap = new Map<string, ProductPrice[]>();
+
+        // Group prices by product ID
+        prices.forEach(price => {
+            if (!priceMap.has(price.productId)) {
+                priceMap.set(price.productId, []);
+            }
+            priceMap.get(price.productId)!.push(price);
+        });
+
+        // Apply prices to products
+        return products.map(product => {
+            const productPrices = priceMap.get(product.id);
+            if (productPrices) {
+                product.prices = productPrices;
+            }
+            return product;
+        });
     }
 }
 

@@ -12,6 +12,7 @@ import { IAuthProvider } from '../service/auth_provider/Iauth_provider.interface
 import { PhoneAuthProvder } from '../service/auth_provider/phone_auth_provider';
 import { ExceptionHelper } from '@app/common/errors/exception_helper';
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
+import { UserResponse } from '../dto/user.response';
 
 @Injectable()
 export class AuthService {
@@ -22,10 +23,28 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService
   ) { }
-  async createUserAccountUsingEmailPassword(userInfo: User) {
+  async createUserAccountUsingEmailPassword(userInfo: User,) {
     let registredUser = await this.emailAuthProvider.createAccount(userInfo)
     let authResponse = await this.tokenGeneratorHelper(registredUser)
     await this.userRepo.updateUserInfo(registredUser.id, { refreshToken: authResponse.refreshToken })
+    return {
+      ...authResponse,
+      isNewUser: true
+    }
+  }
+
+  async createOrGetUserAccountUsingEmailPassword(userInfo: User) {
+    let finalUser: User;
+    let existingUser = await this.userRepo.isUserRegisteredBefore({ email: userInfo.email });
+    if (existingUser) {
+      finalUser = await this.userRepo.getUser({ email: userInfo.email });
+    }
+    else {
+      let registeredUser = await this.emailAuthProvider.createAccount(userInfo)
+      finalUser = registeredUser;
+    }
+    let authResponse = await this.tokenGeneratorHelper(finalUser)
+    await this.userRepo.updateUserInfo(finalUser.id, { refreshToken: authResponse.refreshToken })
     return {
       ...authResponse,
       isNewUser: true
@@ -72,9 +91,10 @@ export class AuthService {
     }
   }
 
-  async updateUserInfo(userId: string, updateUserInfo: User): Promise<boolean> {
-    let result = await this.userRepo.updateUserInfo(userId, updateUserInfo)
-    return result
+  async updateUserInfo(userId: string, updateUserInfo: User): Promise<AuthResponse> {
+    let userResult = await this.userRepo.updateUserInfo(userId, updateUserInfo)
+    const authResult = await this.tokenGeneratorHelper(userResult)
+    return authResult
   }
 
   async refreshToken(userInfo: User): Promise<AuthResponse> {

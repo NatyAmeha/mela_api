@@ -1,7 +1,7 @@
 generator client {
     provider      = "prisma-client-js"
     // output   = "./generated/prisma_subscription_client"
-    binaryTargets = ["native", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
 }
 
 datasource db {
@@ -135,16 +135,24 @@ type CustomizationInfo {
 }
 
 type Benefit {
-    id       String           @default(uuid())
-    name     LocalizedField[]
-    perkType String?
+    id        String           @default(uuid())
+    name      LocalizedField[]
+    perkType  String?
+    discounts Discount[]
 }
 
 type GroupMember {
     userId               String
     memberStatus         String
-    activeSubscriptionId String?  @db.ObjectId
-    dateJoined           DateTime @default(now())
+    activeSubscriptionId String?        @db.ObjectId
+    paymentMethod        PaymentMethod?
+    dateJoined           DateTime       @default(now())
+}
+
+type PaymentMethod {
+    name          LocalizedField[]
+    amount        PriceInfo
+    receiptImages String[]
 }
 
 type LocalizedField {
@@ -156,4 +164,15 @@ type PriceInfo {
     id       String @default(uuid())
     amount   Float
     currency String
+}
+
+type Discount {
+    id             String?          @default(uuid())
+    name           LocalizedField[]
+    type           String
+    value          Float?
+    condition      String
+    conditionValue Float?
+    startDate      DateTime?
+    endDate        DateTime?
 }

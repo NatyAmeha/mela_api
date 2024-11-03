@@ -32,8 +32,10 @@ export class ProductBundle {
     productIds: string[]
     @Field(types => [String])
     branchIds: string[]
-    @Field()
-    businessId: string
+    @Field(types => [String])
+    businessIds: string[]
+    @Field(types => [Business])
+    businesses?: Business[];
     @Field(types => Date)
     startDate?: Date
     @Field(types => Date)
@@ -45,8 +47,7 @@ export class ProductBundle {
 
     @Field(types => [Product])
     products?: Product[]
-    @Field(types => Business)
-    business?: Business;
+
     @Field(types => [Branch])
     branches?: Branch[];
     @Field({ defaultValue: true })
@@ -60,7 +61,7 @@ export class ProductBundle {
         Object.assign(this, partial)
     }
 
-    static fromCreateBundleInput({ businessId, branchIds, input }: { businessId: string, branchIds: string[], input: CreateBundleInput }) {
+    static fromCreateBundleInput({ businessId, branchIds, input }: { businessId: string[], branchIds: string[], input: CreateBundleInput }) {
         const bundle = new ProductBundle({
             name: input.name,
             description: input.description,
@@ -71,7 +72,7 @@ export class ProductBundle {
 
         })
         bundle.startDate = input.type == BundleType.TIMELY_BUNDLE ? input.startDate ?? new Date() : null;
-        bundle.businessId = businessId;
+        bundle.businessIds = businessId;
         bundle.branchIds = branchIds;
         if (input.discountType) {
             bundle.discount = new Discount({
@@ -82,7 +83,7 @@ export class ProductBundle {
         return bundle
     }
 
-    static async fromUpdateBundleInput(businessId: string, updateInput: UpdateBundleInput) {
+    static async fromUpdateBundleInput(businessId: string[], updateInput: UpdateBundleInput) {
         const bundleInfo = this.fromCreateBundleInput({ businessId, branchIds: [], input: new CreateBundleInput({ ...updateInput }) })
         return bundleInfo;
     }

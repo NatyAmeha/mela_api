@@ -38,6 +38,7 @@ export class EmailAuthProvider extends BaseAuthProvider {
         if (userByEmail && userByEmail.password) {
             var hashedPassword = userByEmail.password;
             var isMatched = await this.authSecurity.verifyPassword(authInfo.password, hashedPassword);
+            console.log('IS MATCHED', isMatched);
             if (!isMatched) {
                 throw new RequestValidationException({ message: "Password is incorrect", statusCode: 400 })
             }

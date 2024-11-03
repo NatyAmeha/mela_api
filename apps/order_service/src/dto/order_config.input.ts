@@ -9,7 +9,7 @@ export class CreateOrderConfigInput {
     @Field(type => [LocalizedFieldInput])
     @Type(() => LocalizedFieldInput)
     name: LocalizedFieldInput[];
-    @Field(types => OrderConfigType)
+    // @Field(types => OrderConfigType)
     type: string;
 
     @Field()

@@ -32,6 +32,7 @@ export class BranchResponseBuilder extends BaseResponseBuilder {
     }
 
     withBranch(branch: Branch): BranchResponseBuilder {
+        this.branchResponse.success = true
         this.branchResponse.branch = branch;
         return this;
     }
@@ -52,7 +53,7 @@ export class BranchResponseBuilder extends BaseResponseBuilder {
     }
 
     withPriceList(priceList: PriceList[]): BranchResponseBuilder {
-        this.branchResponse.priceList = priceList;
+        this.branchResponse.branch.priceLists = priceList;
         return this;
     }
 

@@ -9,6 +9,7 @@ import { CreatePlatformSubscriptionInput } from "../dto/platform_service_subscri
 import { AppResourceAction } from "apps/mela_api/src/const/app_resource.constant";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { Business } from "apps/core/src/business/model/business.model";
+import { PaymentMethod } from "apps/core/src/business/model/payment_method.model";
 
 
 @ObjectType()
@@ -42,6 +43,7 @@ export class Subscription extends BaseModel {
 
     @Field()
     isActive?: boolean
+
 
     @Field(type => [PlatfromServiceSubscription])
     platformServices?: PlatfromServiceSubscription[]

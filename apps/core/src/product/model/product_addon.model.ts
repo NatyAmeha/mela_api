@@ -4,6 +4,7 @@ import { Price } from "@app/common/model/price.model";
 import { Field, Float, ID, InputType, ObjectType, PartialType, registerEnumType } from "@nestjs/graphql";
 import { CreateProductAddonInput, UpdateProductAddonInput } from "../dto/product_addon.input";
 import { Type } from "class-transformer";
+import { Product } from "./product.model";
 
 export enum AddonInputType {
     NUMBER_INPUT = "QUANTITY_INPUT",
@@ -13,7 +14,10 @@ export enum AddonInputType {
     DATE_INPUT = "DATE_INPUT",
     TIME_INPUT = "TIME_INPUT",
     DATE_TIME_INPUT = "DATE_TIME_INPUT",
-    NO_INPUT_REQUIRED = "NO_INPUT_REQUIRED"
+    NO_INPUT_REQUIRED = "NO_INPUT",
+    LOCATION_PER_KM_INPUT = "LOCATION_PER_KM_INPUT",
+    LOCATION_INPUT = "LOCATION_INPUT",
+    PRODUCT_SELECTION_INPUT = "PRODUCT_SELECTION_INPUT"
 }
 
 @ObjectType()
@@ -22,8 +26,8 @@ export class ProductAddon extends BaseModel {
     id: string;
     @Field(type => [LocalizedField])
     name: LocalizedField[]
-    @Field(types => AddonInputType)
-    inputType: string
+    @Field(types => String)
+    inputType?: string
     @Field(types => Float, { defaultValue: 1 })
     minAmount?: number
     @Field(types => Float, { defaultValue: 1 })
@@ -44,13 +48,24 @@ export class ProductAddon extends BaseModel {
     isDateRange?: boolean
     @Field(types => [String])
     productIds?: string[]
+
+    @Field(type => [Product])
+    products?: Product[]
+
     @Field(types => [Price], { defaultValue: [] })
     additionalPrice: Price[]
-
+    @Field(types => [String])
+    membershipIds?: string[]
     @Field()
     createdAt?: Date
     @Field()
     updatedAt?: Date
+
+    @Field()
+    category?: string
+    @Field()
+    dependndentOnAddon?: string
+
     constructor(partial?: Partial<ProductAddon>) {
         super()
         Object.assign(this, partial)

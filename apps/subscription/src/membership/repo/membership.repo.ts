@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import { Group, GroupMember, GroupMemberStatus } from "../model/group.model";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
-import { result, uniq, uniqBy, update } from "lodash";
+import { keyBy, result, uniq, uniqBy, update } from "lodash";
 import { Subscription } from "../../model/subscription.model";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 
@@ -13,6 +13,7 @@ export interface IMembershipRepository {
     updateMembershipPlan(planId: string, membershipInfo: Partial<Membership>): Promise<boolean>
     getBusinessMembershipPlans(businessId: string): Promise<Membership[]>
     getMembershipPlan(planId: string): Promise<Membership>
+    getMembershipPlans(membershipIds: string[]): Promise<Membership[]>
     deleteMembershipPlan(planId: string): Promise<boolean>
 
     createGroup(groupInfo: Group): Promise<Group>
@@ -29,9 +30,15 @@ export interface IMembershipRepository {
 
     approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription): Promise<boolean>
 
+    getUserMemberships(userId: string): Promise<Membership[]>
+
+    getAllMembershipMembers(membershipId: string): Promise<GroupMember[]>
+
 
     // Discovery
     getPopularMemberships(queryHelper: QueryHelper<Membership>): Promise<Membership[]>
+
+
 
 }
 
@@ -90,10 +97,22 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
     async getMembershipPlan(planId: string): Promise<Membership> {
         try {
             const result = await this.membership.findUnique({ where: { id: planId }, include: { groups: true } })
+            if (!result) {
+                throw new RequestValidationException({ message: "Membership plan not found", statusCode: 400 })
+            }
             return new Membership({ ...result })
         } catch (ex) {
+            console.log("error", ex);
+            if (ex instanceof RequestValidationException) {
+                throw ex;
+            }
             throw new PrismaException({ message: " Unable to get membership plan", exception: ex })
         }
+    }
+
+    async getMembershipPlans(membershipIds: string[]): Promise<Membership[]> {
+        const result = await this.membership.findMany({ where: { id: { in: membershipIds } } })
+        return result.map(membership => new Membership({ ...membership }))
     }
 
     async deleteMembershipPlan(planId: string): Promise<boolean> {
@@ -314,6 +333,26 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
             throw new PrismaException({ message: " Unable to get popular memberships", exception: ex })
 
         }
+    }
+
+    async getAllMembershipMembers(membershipId: string): Promise<GroupMember[]> {
+        const userGroups = await this.group.findMany({ where: { membershipId } })
+        const allMembers = userGroups.map(group => group.members).flat()
+        const uniqueMembers = uniq(allMembers) as GroupMember[]
+        const groupMembers = uniqueMembers.map(member => new GroupMember({ ...member }))
+        const activeSubscription = await this.subscription.findMany({ where: { id: { in: groupMembers.map(member => member.activeSubscriptionId) } } })
+        const subscriptionMap = keyBy(activeSubscription, 'id')
+        groupMembers?.forEach(member => {
+            member.activeSubscription = new Subscription({ ...subscriptionMap[member.activeSubscriptionId] })
+        })
+        return groupMembers;
+    }
+
+    async getUserMemberships(userId: string): Promise<Membership[]> {
+        const userGroups = await this.group.findMany({ where: { members: { some: { userId } } } })
+        const membershipIds = uniq(userGroups.map(group => group.membershipId))
+        const memberships = await this.membership.findMany({ where: { id: { in: membershipIds } } })
+        return memberships.map(membership => new Membership({ ...membership }))
     }
 
     async onModuleDestroy() {

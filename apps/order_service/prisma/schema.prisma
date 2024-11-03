@@ -1,7 +1,7 @@
 generator client {
     provider      = "prisma-client-js"
     output        = "./generated/prisma_order_client"
-    binaryTargets = ["native", "linux-musl"]
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
 }
 
 datasource db {
@@ -10,36 +10,94 @@ datasource db {
 }
 
 model Cart {
-    id         String           @id @default(auto()) @map("_id") @db.ObjectId
-    name       LocalizedField[]
-    businessId String           @db.ObjectId
-    userId     String           @db.ObjectId
-    items      OrderItem[]
-    createdAt  DateTime         @default(now())
-    updatedAt  DateTime         @updatedAt
+    id             String           @id @default(auto()) @map("_id") @db.ObjectId
+    name           LocalizedField[]
+    businessId     String           @db.ObjectId
+    userId         String           @db.ObjectId
+    items          OrderItem[]
+    configs        OrderConfig[]
+    paymentOptions PaymentOption[]
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
 }
 
 model Order {
-    id              String              @id @default(auto()) @map("_id") @db.ObjectId
+    id              String               @id @default(auto()) @map("_id") @db.ObjectId
     orderNumber     Int?
     // orderType       String
     status          String
     items           OrderItem[]
-    userId          String              @db.ObjectId
+    userId          String?              @db.ObjectId
     paymentType     String
     remainingAmount Float?
     subTotal        Float
     discount        OrderItemDiscount[]
     totalAmount     Float?
-
-    paymentMethods OrderPaymentMethod[]
+    paidAmount      Float?
+    paymentMethods  OrderPaymentMethod[]
+    config          OrderConfig[]
 
     isOnlineOrder Boolean  @default(false)
     note          String?
+    code          String?
     businessId    String[]
+    branchId      String?  @db.ObjectId
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+}
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model Customer {
+    id                String            @id @default(auto()) @map("_id") @db.ObjectId
+    name              String
+    userId            String?           @db.ObjectId
+    customerLoyalties CustomerLoyalty[]
+    redeemedRewards   RedeemedReward[]
+    phoneNumber       String
+    email             String?
+    businessId        String            @db.ObjectId
+    createdAt         DateTime          @default(now())
+    updatedAt         DateTime          @updatedAt
+}
+
+model CustomerLoyalty {
+    id                String           @id @default(auto()) @map("_id") @db.ObjectId
+    name              LocalizedField[]
+    customerId        String           @db.ObjectId
+    businessId        String           @db.ObjectId
+    pointsSource      PointSource[]
+    currentPoints     Float            @default(0)
+    eligibleRewardIds String[]
+    createdAt         DateTime         @default(now())
+    updatedAt         DateTime         @updatedAt
+    Customer          Customer         @relation(fields: [customerId], references: [id])
+    Reward            Reward[]
+}
+
+model Reward {
+    id                String           @id @default(auto()) @map("_id") @db.ObjectId
+    name              LocalizedField[]
+    description       LocalizedField[]
+    minPointsToRedeem Int
+    conditions        LocalizedField[]
+    businessId        String           @db.ObjectId
+    rewardType        String?
+    isActive          Boolean          @default(true)
+    discountType      String?
+    discountAmount    Float?
+    createdAt         DateTime         @default(now())
+    updatedAt         DateTime         @updatedAt
+    CustomerLoyalty   CustomerLoyalty? @relation(fields: [customerLoyaltyId], references: [id])
+    customerLoyaltyId String?          @db.ObjectId
+}
+
+model RedeemedReward {
+    id         String   @id @default(auto()) @map("_id") @db.ObjectId
+    rewardId   String   @db.ObjectId
+    businessId String   @db.ObjectId
+    customerId String   @db.ObjectId
+    pointUsed  Int
+    createdAt  DateTime @default(now())
+    Customer   Customer @relation(fields: [customerId], references: [id])
 }
 
 type OrderItem {
@@ -52,12 +110,14 @@ type OrderItem {
     subTotal  Float
     tax       Float?
     discount  OrderItemDiscount[]
+    point     Float?              @default(0)
     createdAt DateTime            @default(now())
     updatedAt DateTime?
     config    OrderConfig[]
 }
 
 type OrderConfig {
+    id              String?          @default(uuid())
     name            LocalizedField[]
     type            String
     singleValue     String?
@@ -67,21 +127,50 @@ type OrderConfig {
     addonId         String?
 }
 
+type PaymentOption {
+    id                 String           @default(uuid())
+    name               LocalizedField[]
+    type               String
+    upfrontPayment     Float?           @default(0)
+    upfrontPaymentType String?
+    dueAfterDays       Int?
+    dueDate            DateTime?
+    createdAt          DateTime?        @default(now())
+    updatedAt          DateTime?
+}
+
 type OrderPaymentMethod {
-    id        String           @default(uuid())
-    name      LocalizedField[]
-    amount    Float
-    createdAt DateTime         @default(now())
-    updatedAt DateTime?
+    id                  String           @default(uuid())
+    name                LocalizedField[]
+    amount              PriceInfo
+    requireReceiptImage Boolean          @default(false)
+    receiptImages       String[]
+    createdAt           DateTime         @default(now())
+    updatedAt           DateTime?
 }
 
 type OrderItemDiscount {
-    id     String           @default(uuid())
-    name   LocalizedField[]
-    amount Float
+    id              String           @default(uuid())
+    name            LocalizedField[]
+    amount          Float
+    claimedRewardId String[]         @db.ObjectId
 }
 
 type LocalizedField {
     key   String
     value String
+}
+
+type PointSource {
+    id         String  @default(uuid())
+    name       String?
+    sourceType String  @default("PRODUCT_PURCHASE")
+    sourceId   String
+    value      Float
+}
+
+type PriceInfo {
+    id       String @default(uuid())
+    amount   Float
+    currency String
 }

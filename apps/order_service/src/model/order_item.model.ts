@@ -26,7 +26,8 @@ export class OrderItem {
     discount?: OrderItemDiscount[]
     @Field(type => [OrderConfig])
     config?: OrderConfig[]
-
+    @Field(type => Float)
+    point?: number
     @Field()
     createdAt?: Date
     @Field()
@@ -45,6 +46,9 @@ export class OrderItemDiscount {
     name: LocalizedField[]
     @Field(types => Float)
     amount: number
+    @Field(types => [String])
+    claimedRewardId?: string[]
+
     constructor(partial?: Partial<OrderItemDiscount>) {
         Object.assign(this, partial)
     }

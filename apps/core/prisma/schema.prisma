@@ -1,8 +1,7 @@
 generator client {
     provider      = "prisma-client-js"
-    output        = "./generated/prisma_auth_client"
-    binaryTargets = ["native", "linux-musl"]
-    timeout       = 30000
+    output        = "./generated/prisma_core_client"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
 }
 
 datasource db {
@@ -26,6 +25,7 @@ model Product {
     name             LocalizedData[]
     displayName      LocalizedData[]
     description      LocalizedData[]
+    featured         Boolean         @default(false)
     tag              String[]
     gallery          Gallery
     loyaltyPoint     Int             @default(0)
@@ -45,7 +45,7 @@ model Product {
     deliveryInfoId   String?
     branchIds        String[]        @default([]) @db.ObjectId
     branches         Branch[]        @relation(fields: [branchIds], references: [id])
-    sku              String
+    sku              String?
     options          ProductOption[]
     optionsIncluded  String[]        @default([])
     variantsId       String[]        @default([]) @db.ObjectId
@@ -57,6 +57,7 @@ model Product {
 
     totalViews Int?           @default(0)
     prices     ProductPrice[]
+    discounts  Discount[]
 }
 
 type ProductOption {
@@ -111,6 +112,7 @@ model Business {
     description               LocalizedData[]
     type                      String              @default("RESTAURANT") // will be removed
     categories                String[]
+    workspaceUrl              String              @unique
     isActive                  Boolean             @default(false)
     gallery                   Gallery
     createdAt                 DateTime?           @default(now())
@@ -136,10 +138,12 @@ model Business {
     trialPeriodUsedServiceIds String[]            @default([]) @db.ObjectId
     inventoryLocations        InventoryLocation[]
     deliveryInfo              DeliveryInfo[]
-    bundles                   Bundle[]
+    bundles                   Bundle[]            @relation(fields: [bundleIds], references: [id])
+    bundleIds                 String[]            @default([]) @db.ObjectId
     paymentOptions            PaymentOption[]
     totalViews                Int?                @default(0)
     priceLists                PriceList[]
+    discounts                 Discount[]
 }
 
 // branch.model.ts
@@ -169,17 +173,19 @@ model Branch {
 
 // staff.model.ts
 model Staff {
-    id         String    @id @default(auto()) @map("_id") @db.ObjectId
-    name       String
-    pin        Int
-    roles      String[]
-    branchId   String?   @db.ObjectId
-    branch     Branch?   @relation(fields: [branchId], references: [id])
-    businessId String?   @db.ObjectId
-    business   Business? @relation(fields: [businessId], references: [id])
-    isActive   Boolean   @default(false)
-    createdAt  DateTime  @default(now())
-    updatedAt  DateTime  @updatedAt
+    id          String    @id @default(auto()) @map("_id") @db.ObjectId
+    name        String
+    phoneNumber String
+    password    String
+    pin         Int?
+    roles       String[]
+    branchId    String?   @db.ObjectId
+    branch      Branch?   @relation(fields: [branchId], references: [id])
+    businessId  String?   @db.ObjectId
+    business    Business? @relation(fields: [businessId], references: [id])
+    isActive    Boolean   @default(false)
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
 }
 
 model Bundle {
@@ -192,8 +198,8 @@ model Bundle {
     endDate     DateTime?
     gallery     Gallery
     discount    Discount?
-    businessId  String          @db.ObjectId
-    business    Business        @relation(fields: [businessId], references: [id])
+    businessIds String[]        @default([]) @map("businessIds") @db.ObjectId
+    businesses  Business[]      @relation(fields: [businessIds], references: [id])
     branchIds   String[]        @default([]) @db.ObjectId
     branches    Branch[]        @relation(fields: [branchIds], references: [id])
     isActive    Boolean?        @default(false)
@@ -211,6 +217,7 @@ model ProductPrice {
     priceListId String?     @default(uuid())
     isDefault   Boolean     @default(false)
     isActive    Boolean     @default(true)
+    discounts   Discount[]
     createdAt   DateTime    @default(now())
     updatedAt   DateTime?   @updatedAt
 
@@ -230,7 +237,7 @@ type PriceList {
 type ProductAddon {
     id              String               @default(uuid())
     name            LocalizedData[]
-    inputType       String
+    inputType       String?
     minAmount       Float?
     maxAmount       Float?
     options         ProductAddonOption[]
@@ -242,6 +249,7 @@ type ProductAddon {
     isActive        Boolean              @default(true)
     isRequired      Boolean              @default(false)
     additionalPrice PriceInfo[]
+    membershipIds   String[]             @default([])
     createdAt       DateTime?            @default(now())
     updatedAt       DateTime?
 }
@@ -255,6 +263,7 @@ type ProductAddonOption {
 type PaymentOption {
     id                 String          @default(uuid())
     name               LocalizedData[]
+    description        LocalizedData[]
     type               String
     upfrontPayment     Float?          @default(0)
     upfrontPaymentType String?
@@ -313,6 +322,7 @@ type BusinessSection {
     categoryId  String?
     productIds  String[]        @default([]) @db.ObjectId
     images      String[]        @default([])
+    orderAddons ProductAddon[]
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @default(now())
 }
@@ -330,8 +340,12 @@ type PriceInfo {
 }
 
 type Discount {
+    id             String?         @default(uuid())
+    name           LocalizedData[]
     type           String
     value          Float?
     condition      String
     conditionValue Float?
+    startDate      DateTime?
+    endDate        DateTime?
 }

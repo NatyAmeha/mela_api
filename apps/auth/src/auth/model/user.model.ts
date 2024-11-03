@@ -50,6 +50,8 @@ export class User extends BaseModel {
     emailVerified?: boolean = false
     @Field()
     phoneVerified?: boolean = false
+
+    @Type(() => Access)
     @Field(type => [Access])
     accesses?: Access[]
     @Field(type => [String])
@@ -64,6 +66,11 @@ export class User extends BaseModel {
     constructor(data: Partial<User>) {
         super();
         Object.assign(this, data)
+    }
+
+
+    assignOwnerToAccess(userId: string) {
+        this.accesses.forEach(access => access.assignOwner(userId))
     }
 
     static createUserFromSignupInfo(signupInfo: SignupInput) {
@@ -84,9 +91,11 @@ export class User extends BaseModel {
     getTokenPayloadFromUser(): JwtPayload {
         return {
             sub: this.id,
-            username: this.email,
+            username: this.firstName,
             accesses: this.accesses,
-            email: this.email
+            phoneNumber: this.phoneNumber,
+            email: this.email,
+            // refreshToken: this.refreshToken,
         }
     }
 

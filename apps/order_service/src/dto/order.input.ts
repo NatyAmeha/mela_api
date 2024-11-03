@@ -4,6 +4,7 @@ import { CreateOrderItemInput, OrderItemDiscountInput, OrderPaymentMethodInput }
 import { Type } from "class-transformer";
 import { ArrayNotEmpty, IsNotEmpty, ValidateIf, ValidateNested } from "class-validator";
 import { PaymentOptionType } from "apps/core/src/business/model/payment_option.model";
+import { CreateOrderConfigInput } from "./order_config.input";
 
 @InputType()
 export class CreateOrderInput {
@@ -13,7 +14,6 @@ export class CreateOrderInput {
     @Field(types => [CreateOrderItemInput])
     @Type(() => CreateOrderItemInput)
     @ArrayNotEmpty()
-    @ValidateNested()
     items: CreateOrderItemInput[]
 
     @Field()
@@ -29,6 +29,9 @@ export class CreateOrderInput {
     remainingAmount?: number
 
     @Field(types => Float)
+    paidAmount?: number
+
+    @Field(types => Float)
     subTotal: number
 
     @Field(types => [OrderItemDiscountInput])
@@ -37,6 +40,10 @@ export class CreateOrderInput {
 
     @Field(types => Float)
     totalAmount?: number
+
+    @Field(type => [CreateOrderConfigInput])
+    @Type(() => CreateOrderConfigInput)
+    config?: CreateOrderConfigInput[]
 
     @Field(types => [OrderPaymentMethodInput])
     @Type(() => OrderPaymentMethodInput)
@@ -50,6 +57,11 @@ export class CreateOrderInput {
 
     @Field()
     branchId?: string
+
+    @Field()
+    customerName?: string
+    @Field()
+    customerPhoneNumber?: string
 
     constructor(partial: Partial<CreateOrderInput>) {
         Object.assign(this, partial);

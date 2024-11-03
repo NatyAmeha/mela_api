@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql";
 import { ProductAddon } from "./model/product_addon.model";
 import { CreateProductAddonInput, UpdateProductAddonInput } from "./dto/product_addon.input";
 import { ProductService } from "./usecase/product.service";
@@ -8,6 +8,7 @@ import { PERMISSIONACTION } from "@app/common/permission_helper/permission_const
 import { UseGuards } from "@nestjs/common";
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
 import { ProductResponse } from "./model/product.response";
+import { Product } from "./model/product.model";
 
 @Resolver(of => ProductAddon)
 export class ProductAddonResolver {
@@ -53,5 +54,11 @@ export class ProductAddonResolver {
     async deleteProductAddon(@Args("businessId") businessId: string, @Args("productId") productId: string, @Args("addonId") addonId?: string) {
         var result = await this.productService.deleteProductAddon(productId, addonId)
         return result;
+    }
+
+
+    @ResolveField("products", returns => [Product], { nullable: true })
+    async getProducts(@Parent() addon: ProductAddon) {
+        return this.productService.getProductsById(addon.productIds)
     }
 }

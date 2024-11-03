@@ -8,7 +8,7 @@ import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 
 export class BusinessAccessGenerator implements IAccessGenerator<Business> {
     static injectName = "BusinessAccessFacotry";
-    async createAccess(businessInfo: Business, role?: string,): Promise<Access[]> {
+    async createAccess(businessInfo: Business, role?: string): Promise<Access[]> {
         var accessList: Access[] = []
         switch (role) {
             case DefaultRoles.BUSINESS_OWNER:

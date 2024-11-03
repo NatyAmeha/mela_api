@@ -31,3 +31,7 @@ export class CommonProductErrorMessages {
     static PRODUCT_NOT_CREATED = "Product not created";
     static ADDON_ALREADY_EXIST = "Addon already exist";
 }
+
+export class CommonCustomerErrorMessages {
+    static CUSTOMER_ALREADY_EXIST = "Customer already exist";
+}

@@ -1,10 +1,12 @@
 import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.response";
 import { Membership } from "../model/memberhip.model";
-import { Field, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, ObjectType } from "@nestjs/graphql";
 import { MembershipProduct } from "../model/membership_product.model";
 import { Subscription } from "../../model/subscription.model";
+import { GroupMember } from "../model/group.model";
 
 @ObjectType()
+@Directive('@shareable')
 export class MembershipResponse extends BaseResponse {
     @Field(type => Membership)
     membership?: Membership

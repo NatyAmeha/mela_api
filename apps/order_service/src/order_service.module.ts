@@ -11,6 +11,12 @@ import { OrderService } from './usecase/order.usecase';
 import { OrderRepository } from './repo/order_repository';
 import { OrderResolver } from './resolver/order.resolver';
 import { CartRepository } from './repo/cart.repository';
+import { LoyaltyRepository } from './loyalty/repo/loyalty.repository';
+import { CustomerService } from './customer/customer.service';
+import { LoyaltyService } from './loyalty/loyalty.service';
+import { CustomerRepository } from './customer/repo/customer.repository';
+import { LoyaltyRewardResolver } from './loyalty/loyalty_reward.resolver';
+import { CustomerResolver } from './customer/customer.resolver';
 
 @Module({
   imports: [
@@ -41,7 +47,10 @@ import { CartRepository } from './repo/cart.repository';
   providers: [
     { provide: OrderRepository.injectName, useClass: OrderRepository },
     { provide: CartRepository.injectName, useClass: CartRepository },
-    OrderService, OrderResolver
+    { provide: LoyaltyRepository.injectName, useClass: LoyaltyRepository },
+    { provide: CustomerRepository.injectName, useClass: CustomerRepository },
+
+    OrderService, OrderResolver, CustomerService, LoyaltyService, LoyaltyRewardResolver, CustomerResolver
   ],
 })
 export class OrderServiceModule { }

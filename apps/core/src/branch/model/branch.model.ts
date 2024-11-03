@@ -9,6 +9,7 @@ import { InventoryLocation } from "../../inventory/model/inventory_location.mode
 import { ProductBundle } from "../../product/model/product_bundle.model";
 import { PriceList } from "../../product/model/price_list_.model";
 import { ProductPrice } from "../../product/model/product_price.model";
+import { PaymentOption } from "../../business/model/payment_option.model";
 
 @ObjectType()
 export class Branch {
@@ -63,6 +64,9 @@ export class Branch {
 
     @Field(types => [PriceList])
     priceLists?: PriceList[]
+    
+    @Field(type => [PaymentOption])
+    paymentOptions?: PaymentOption[]
 
 
 

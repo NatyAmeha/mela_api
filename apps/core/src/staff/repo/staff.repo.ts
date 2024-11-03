@@ -1,10 +1,12 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { Staff } from "../model/staff.model";
 import { PrismaException } from "@app/common/errors/prisma_exception";
+import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 
 export interface IStaffRepository {
     createStaff(staffInfo: Staff): Promise<Staff>
+    authenticateStaff(phoneNumber: string, pin: number, branchId: string, businessId: string): Promise<Staff>
     assignStaffToBranch(branchId: string, staffId: string): Promise<Staff>
     assignStaffToBusiness(businessId: string, staffId: string): Promise<Staff>
     unAssignStaffFromBranch(branchId: string, staffId: string): Promise<Staff>
@@ -33,9 +35,23 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
                     business: staffInfo.businessId ? { connect: { id: businessId } } : undefined
                 }
             });
-            return createdStaff;
+            return new Staff({ ...createdStaff });
         } catch (error) {
             throw new PrismaException({ source: 'StaffRepository.createStaff', message: error.message, statusCode: 500, exception: error })
+        }
+    }
+
+    async authenticateStaff(phoneNumber: string, pin: number, branchId: string, businessId: string): Promise<Staff> {
+        try {
+            const staff = await this.staff.findFirst({
+                where: { phoneNumber, pin, branchId, businessId }
+            });
+            if (!staff) {
+                throw new RequestValidationException({ source: 'authenticate Staff', message: 'Invalid phone number, pin, branch or business' })
+            }
+            return new Staff({ ...staff });
+        } catch (error) {
+            throw new PrismaException({ source: 'authenticate Staff', message: error.message, statusCode: 500, exception: error })
         }
     }
 
@@ -47,7 +63,7 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
                     branch: { connect: { id: branchId } }
                 }
             });
-            return staff;
+            return new Staff({ ...staff });
         } catch (error) {
             throw new PrismaException({ source: 'assign Staff To Branch', message: error.message, statusCode: 500, exception: error })
         }
@@ -61,7 +77,7 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
                     business: { connect: { id: businessId } }
                 }
             });
-            return staff;
+            return new Staff({ ...staff });
         } catch (error) {
             throw new PrismaException({ source: 'assign Staff To Business', message: error.message, statusCode: 500, exception: error })
         }
@@ -75,7 +91,7 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
                     branch: { disconnect: true }
                 }
             });
-            return staff;
+            return new Staff({ ...staff });
         } catch (error) {
             throw new PrismaException({ source: 'unAssign Staff From Branch', message: error.message, statusCode: 500, exception: error })
         }
@@ -89,7 +105,7 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
                     business: { disconnect: true }
                 }
             });
-            return staff;
+            return new Staff({ ...staff });
         } catch (error) {
             throw new PrismaException({ source: 'unAssign Staff From Business', message: error.message, statusCode: 500, exception: error })
         }
@@ -102,7 +118,7 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
                 where: { id: staffId },
                 data: basicStaffInfo
             });
-            return updatedStaff;
+            return new Staff({ ...updatedStaff });
         } catch (error) {
             throw new PrismaException({ source: 'update Staff Info', message: error.message, statusCode: 500, exception: error })
         }
@@ -110,11 +126,12 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
 
     async getBusinessStaffs(businessId: string): Promise<Staff[]> {
         try {
-            return await this.staff.findMany({
+            let staffs = await this.staff.findMany({
                 where: {
                     businessId: businessId
                 }
             });
+            return staffs.map(staff => new Staff({ ...staff }));
         } catch (error) {
             throw new PrismaException({ source: 'get Business Staffs', message: error.message, statusCode: 500, exception: error })
         }
@@ -122,11 +139,12 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
 
     async getBranchStaffs(branchId: string): Promise<Staff[]> {
         try {
-            return await this.staff.findMany({
+            let staffs = await this.staff.findMany({
                 where: {
                     branchId: branchId
                 }
             });
+            return staffs.map(staff => new Staff({ ...staff }));
         } catch (error) {
             throw new PrismaException({ source: 'get Branch Staffs', message: error.message, statusCode: 500, exception: error })
         }

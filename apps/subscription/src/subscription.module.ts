@@ -21,6 +21,7 @@ import { MembershipService } from './membership/resolver/membership.service';
 import { MembershipRepository } from './membership/repo/membership.repo';
 import { MembershipResourceTracker } from './membership/membership_resource_usage_tracker';
 import { GroupResolver } from './membership/resolver/group.resolver';
+import { MembershipLoader } from './membership/resolver/membership_loader';
 
 @Module({
   imports: [
@@ -78,6 +79,8 @@ import { GroupResolver } from './membership/resolver/group.resolver';
 
     { provide: MembershipRepository.injectName, useClass: MembershipRepository },
     MembershipResolver, MembershipService, MembershipResourceTracker, GroupResolver,
+
+    MembershipLoader,
 
 
   ],

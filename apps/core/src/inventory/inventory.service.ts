@@ -13,6 +13,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 
 @Injectable()
 export class InventoryService {
+
     constructor(
         @Inject(InventoryRepository.injectName) private inventoryRepository: IInventoryRepository,
         @Inject(InventoryLocationRepository.injectName) private inventoryLocationRepository: InventoryLocationRepository,
@@ -48,5 +49,11 @@ export class InventoryService {
         const inventoryLocationInfo = InventoryLocation.getInventoryLocationInfo(businessId, branchId, locationInfo)
         const inventoryLocationResult = await this.inventoryLocationRepository.createInventoryLocation(inventoryLocationInfo)
         return new InventoryResponseBuilder().withInvetoryLocation(inventoryLocationResult).build()
+    }
+
+    async getBatchProductInventories(keys: { productId: string; locationId?: string; }[]) {
+        const productIds = keys.map(key => key.productId);
+        const locationIds = keys.map(key => key.locationId).filter(id => id !== undefined);
+        return await this.inventoryRepository.getBatchProductInventories(productIds, locationIds);
     }
 }

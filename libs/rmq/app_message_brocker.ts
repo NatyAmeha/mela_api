@@ -73,12 +73,14 @@ export class AppMessageBrocker implements IAppMessageBrocker {
                 await this.rmqService.sendMessageAndWaitResponse(this.channel, queue, messageInfo)
                 let reply = await this.rmqService.listenMessage(this.channel, messageInfo.replyQueue, messageInfo.coorelationId)
                 if (reply?.content) {
+                    console.log('message content ', reply.content.toString())
                     let response = reply.content.toString()
                     this.channel.ack(reply)
                     return JSON.parse(response) as IMessageBrockerResponse<K>
                 }
                 return undefined;
             } catch (error) {
+
                 console.log("error occured while sending message and waiting response")
             } finally {
                 // await this.channel.close();

@@ -1,4 +1,4 @@
-import { ArgumentsHost, BadRequestException, Catch, HttpException, UnauthorizedException } from "@nestjs/common";
+import { ArgumentsHost, BadRequestException, Catch, ForbiddenException, HttpException, UnauthorizedException } from "@nestjs/common";
 import { GqlArgumentsHost, GqlExceptionFilter } from "@nestjs/graphql";
 import { DbException } from "./db_exception";
 import { RequestValidationException } from "./request_validation_exception";
@@ -21,6 +21,7 @@ export class GqlExceptionHandler implements GqlExceptionFilter {
             // throw exception;
         }
         else if (exception instanceof RequestValidationException) {
+            console.log("request validation exception", exception.exception)
             errorResponse = exception.serializeError()
             // throw exception;
         }
@@ -32,8 +33,15 @@ export class GqlExceptionHandler implements GqlExceptionFilter {
             errorResponse = exception.serializeError();
         }
         else if (exception instanceof UnauthorizedException) {
+            console.log("unauthorized  error message unauthorized")
             errorResponse = {
                 errors: [{ message: "UnAuthorized exception", statusCode: 401 } as AppException,]
+            }
+        }
+        else if (exception instanceof ForbiddenException) {
+            console.log("forbidden error message unauthorized")
+            errorResponse = {
+                errors: [{ message: "UnAuthorized Access Exception", statusCode: 401 } as AppException,]
             }
         }
         else if (exception instanceof HttpException) {
@@ -48,7 +56,7 @@ export class GqlExceptionHandler implements GqlExceptionFilter {
                 ]
             }
         }
-        console.log("error", exception)
+        console.log("error error", exception)
         exception = errorResponse
         var error = new GraphQLError(errorResponse.errors.map(e => e.message).join(","), {
             extensions: { code: first(errorResponse.errors)?.statusCode ?? 400 },

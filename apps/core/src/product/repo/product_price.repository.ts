@@ -1,6 +1,6 @@
 import { OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ProductPrice } from "../model/product_price.model";
-import { PrismaClient } from "apps/core/prisma/generated/prisma_auth_client";
+import { PrismaClient } from "apps/core/prisma/generated/prisma_core_client";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { PriceList } from "../model/price_list_.model";
@@ -13,6 +13,7 @@ export interface IProductPriceRepository {
     updatePriceList(businessId: string, priceList: PriceList[]): Promise<boolean>;
 
     getProductPrice(productId: string, { branchId, pricelistId }: { branchId?: string, pricelistId?: string }): Promise<ProductPrice>;
+    getProductsPrices(productIds: string[], { branchId, pricelistId }: { branchId?: string, pricelistId?: string }): Promise<ProductPrice[]>;
     getPriceList(businessId: string, branchId?: string): Promise<PriceList[]>;
     deleteProductPrice(priceId: string[]): Promise<boolean>;
     deletePriceList(businessId: string, priceListId: string[]): Promise<boolean>;
@@ -74,6 +75,25 @@ export class ProductPriceRepository extends PrismaClient implements OnModuleInit
                     throw new RequestValidationException({ message: "Product price not found" });
                 }
                 return new ProductPrice({ ...productPriceResult });
+            })
+            return result;
+        } catch (ex) {
+            console.log(ex);
+            throw new PrismaException({ message: ex.message, meta: { modelName: "ProductPrice" } });
+        }
+    }
+
+    async getProductsPrices(productIds: string[], { branchId, pricelistId }: { branchId?: string; pricelistId?: string; }): Promise<ProductPrice[]> {
+        try {
+            const result = await this.$transaction(async (prisma) => {
+                const productPrices = await prisma.productPrice.findMany({
+                    where: {
+                        productId: { in: productIds },
+                        branchId: branchId != null ? branchId : undefined,
+                        priceListId: pricelistId != null ? pricelistId : undefined,
+                    }
+                })
+                return productPrices.map(price => new ProductPrice({ ...price }))
             })
             return result;
         } catch (ex) {
