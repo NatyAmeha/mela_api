@@ -135,7 +135,6 @@ export class MembershipResolver {
 
     @ResolveField('currentUserSubscription', returns => Subscription, { nullable: true })
     async getCurrentUserSubscription(@Parent() membership: Membership, @CurrentUser() user?: User): Promise<Subscription | null> {
-        console.log('resolve current user subscription', membership, user)
         if (!user) {
             return null;
         }

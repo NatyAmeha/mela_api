@@ -9,7 +9,7 @@ export const orderServiceConfiguration = () => ({
 
     rmq: {
         rmq_config: {  // host.docker.internal
-            url: "amqp://localhost:5672",
+            url: process.env.MESSAGE_BROKER_URL,
             queue: AppMsgQueues.ORDER_SERVICE_EVENT_QUEUE,
             requestQueue: AppMsgQueues.ORDER_SERVICE_REQUEST_QUEUE,
             replyQueue: AppMsgQueues.ORDER_SERVICE_REPLY_QUEUE,

@@ -62,7 +62,7 @@ export class DiscoverService {
         const businesses = await this.businessRepo.findBusinessesById(businessIds);
         const topProductResponse = await Promise.all(
             businesses.map(async (business) => {
-                let businessProducts = await this.productRepo.getBusinessTopProducts(business.id, { limit: limit });
+                let businessProducts = await this.productRepo.getBusinessTopProducts(business.id, { query: { mainProduct: true }, limit: limit });
                 // const businessProductsWithPrice = await this.productService.addSelectedPricesToProducts(businessProducts, {});
                 let discoverResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: business.name, items: businessProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.TOP_BUSINESS_PRODUCTS, sequence: 0 });
                 return discoverResponse;

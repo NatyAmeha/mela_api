@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: iimela/mela-api-gateway # Pre-built Docker Hub image
+          # imagePullPolicy: Never
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ENV
+              value: "development"
+          ports:
+            - containerPort: 3000
+          # volumeMounts:
+          #   - name: node-modules
+          #     mountPath: /usr/src/app/node_modules
+          #   - name: app-source
+          #     mountPath: /usr/src/app
+          resources: # Add resource requests and limits here
+            requests:
+              memory: "128Mi" # Minimum memory the container needs
+              cpu: "100m" # Minimum CPU the container needs
+            limits:
+              memory: "256Mi" # Maximum memory the container can use
+              cpu: "500m"
+      # volumes:
+      #   - name: app-source
+      #     hostPath:
+      #       path: ./apps/mela_api
+      #   - name: node-modules
+      #     emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+
+  type: LoadBalancer

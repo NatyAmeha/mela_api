@@ -126,8 +126,8 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
 
     async createGroup(groupInfo: Group): Promise<Group> {
         try {
-            const { members, membership, membershipId, ...resetGroupInfo } = groupInfo
-            const createResult = await this.group.create({ data: resetGroupInfo })
+            const { members, membership, membershipId, ...restGroupInfo } = groupInfo
+            const createResult = await this.group.create({ data: { ...restGroupInfo, membership: { connect: { id: membershipId } } } })
             if (!createResult.id) {
                 throw new PrismaException({ message: "Unable to create group", statusCode: 400 })
             }

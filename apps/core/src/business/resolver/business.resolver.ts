@@ -28,6 +28,7 @@ import { CreatePriceListInput, UpdatePriceListInput } from "../../product/dto/pr
 import { ProductBundle } from "../../product/model/product_bundle.model";
 import { BundleService } from "../../product/usecase/bundle.service";
 import { MembershipResponse } from "apps/subscription/src/membership/dto/membership.response";
+import { ProductResponse } from "../../product/model/product.response";
 
 
 @Resolver(of => Business)
@@ -59,6 +60,7 @@ export class BusinessResolver {
         let sectionResult = await this.businessService.getBusinessSectionDetails(businessId, { sectionId, branchId });
         return sectionResult;
     }
+
 
     @Query(returns => MembershipResponse)
     @UseGuards(AuthzGuard)

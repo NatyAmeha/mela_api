@@ -95,7 +95,7 @@ export class MembershipService {
         let groupsResult: Group[] = []
         if (options.onlyDefaultGroups) {
             groupsResult = await this.membershipRepo.getDefaultGroupsForMembership(membershipId)
-            if (groupsResult?.length === 0) {
+            if (groupsResult?.length == 0) {
                 const membershipInfo = await this.membershipRepo.getMembershipPlan(membershipId)
                 const defaultGroup = Group.getDefaultGroupForMembership(membershipInfo)
                 const createDefaultGroupsResult = await this.membershipRepo.createGroup(defaultGroup)

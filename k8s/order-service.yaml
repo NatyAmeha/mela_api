@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: iimela/mela-order-service # Pre-built Docker Hub image
+          # imagePullPolicy: Never
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ENV
+              value: "development"
+          ports:
+            - containerPort: 3004
+          # volumeMounts:
+          #   - name: node-modules
+          #     mountPath: /usr/src/app/node_modules
+          #   - name: app-source
+          #     mountPath: /usr/src/app
+          envFrom:
+            - configMapRef:
+                name: my-app-config
+          resources: # Add resource requests and limits here
+            requests:
+              memory: "128Mi" # Minimum memory the container needs
+              cpu: "100m" # Minimum CPU the container needs
+            limits:
+              memory: "256Mi" # Maximum memory the container can use
+              cpu: "500m"
+      # volumes:
+      #   - name: app-source
+      #     hostPath:
+      #       path: ./apps/order_service
+      #   - name: node-modules
+      #     emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector:
+    app: order-service
+  ports:
+    - protocol: TCP
+      port: 3004
+      targetPort: 3004
+  type: ClusterIP

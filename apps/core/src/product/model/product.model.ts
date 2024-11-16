@@ -16,6 +16,7 @@ import { ProductAddon } from "./product_addon.model";
 import { ProductPrice } from "./product_price.model";
 import { Discount } from "./discount.model";
 import { Membership } from "apps/subscription/src/membership/model/memberhip.model";
+import { SearchResult, SearchType } from "../../search/model/search.model";
 
 @ObjectType()
 @Directive('@extends')
@@ -164,24 +165,12 @@ export class Product extends BaseModel {
         return this.businessId === businessId;
     }
 
-    static applyFetchedPrices(products: Product[], prices: ProductPrice[]): Product[] {
-        const priceMap = new Map<string, ProductPrice[]>();
-
-        // Group prices by product ID
-        prices.forEach(price => {
-            if (!priceMap.has(price.productId)) {
-                priceMap.set(price.productId, []);
-            }
-            priceMap.get(price.productId)!.push(price);
-        });
-
-        // Apply prices to products
-        return products.map(product => {
-            const productPrices = priceMap.get(product.id);
-            if (productPrices) {
-                product.prices = productPrices;
-            }
-            return product;
+    toSearchResult(): SearchResult {
+        return new SearchResult({
+            id: this.id,
+            type: SearchType.PRODUCT,
+            name: this.name,
+            prices: this.prices?.[0]?.price,
         });
     }
 }

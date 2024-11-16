@@ -1,8 +1,7 @@
 version: '3.4'
-
 services:
-  auth_service:
-    # image: auth_service
+  auth-service:
+    image: iimela/mela-auth-service
     build:
      context: .
      dockerfile: ./apps/auth/Dockerfile
@@ -14,15 +13,15 @@ services:
       - rabbitmq
     ports:
       - 3002:3002
-    container_name: Auth_service
+    container_name: auth-service
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     command: npm run start:dev auth
     networks:
       - api_network
-  subscription_service:
-    # image: subscription_service
+  subscription-service:
+    image: iimela/mela-subscription-service
     build:
      context: .
      dockerfile: ./apps/subscription/Dockerfile
@@ -37,12 +36,12 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    container_name: Subscription_service
+    container_name: subscription-service
     command: npm run start:dev subscription   
     networks:
       - api_network
-  core_service:
-    # image: subscription_service
+  core-service:
+    image: iimela/mela-core-service
     build:
      context: .
      dockerfile: ./apps/core/Dockerfile
@@ -57,12 +56,12 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    container_name: Core_service
+    container_name: core-service
     command: npm run start:dev core   
     networks:
       - api_network
-  order_service:
-    # image: subscription_service
+  order-service:
+    image: iimela/mela-order-service
     build:
      context: .
      dockerfile: ./apps/order_service/Dockerfile
@@ -77,12 +76,12 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    container_name: order_service
+    container_name: order-service
     command: npm run start:dev order_service   
     networks:
       - api_network
   api_gateway:
-    # image: api_gateway
+    image: iimela/mela-api-gateway
     build:
      context: .
      dockerfile: ./apps/mela_api/Dockerfile
@@ -91,14 +90,17 @@ services:
     env_file:
       - .env
     depends_on:
-      - auth_service
-      - subscription_service
+      - auth-service
+      - subscription-service
+      - core-service
+      - order-service
+      - rabbitmq
     ports:
       - 3000:3000
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    container_name: Api_gateway
+    container_name: Api-gateway
     command: npm run start:dev mela_api
     networks:
       - api_network
@@ -114,8 +116,6 @@ services:
     networks:
         - api_network
 networks:
-  rabbitmq_go_net:
-    driver: bridge
   api_network:
     driver: bridge
 

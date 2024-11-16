@@ -29,7 +29,16 @@ import * as path from 'path';
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
       useFactory: async () => {
-        var dockerendpoint = "http://host.docker.internal:"
+        const subscriptionServiceUrl = 'http://localhost:3001' // `http://subscription-service:3001`; //
+        const authServiceUrl = 'http://localhost:3002' // `http://auth-service:3002`; //
+        const coreServiceUrl = 'http://localhost:3003' // `http://core-service:3003`; //
+        const orderServiceUrl = 'http://localhost:3004' // `http://order-service:3004`; //
+
+        const subscriptionserviceGraphQLEndpoint = `${subscriptionServiceUrl}/graphql`
+        const authserviceGraphQLEndpoint = `${authServiceUrl}/graphql`
+        const coreServiceGraphQLEndpoint = `${coreServiceUrl}/graphql`
+        const orderServiceGraphQLEndpoint = `${orderServiceUrl}/graphql`
+
         var appService = new AppService()
         const gateway: GatewayConfig = {
 
@@ -38,8 +47,8 @@ import * as path from 'path';
               url: definition.url,
               willSendRequest: (async ({ request, context }) => {
                 var bypassToken = context.token?.toLowerCase() == "true" ? true : false
-                console.log("context", bypassToken);
-                var userResponse = await appService.validateJwtAndQueryUser(context.authorization, bypassToken)
+                console.log("context", bypassToken, process.env.MESSAGE_BROKER_URL);
+                var userResponse = await appService.validateJwtAndQueryUser({ authorization: context.authorization, authServiceEndpoint: authServiceUrl, coreServiceEndpoint: coreServiceUrl, bypassToken: bypassToken })
                 if (userResponse != undefined) {
                   request.http.headers.set("authorization", context.authorization)
                   request.http.headers.set("user", JSON.stringify(userResponse.user));
@@ -50,12 +59,14 @@ import * as path from 'path';
             })
           },
 
+
+
           supergraphSdl: new IntrospectAndCompose({
             subgraphs: [
-              { name: "subscription_service", url: `${dockerendpoint}3001/graphql` },
-              { name: "auth_service", url: `${dockerendpoint}3002/graphql` },
-              { name: "core_service", url: `${dockerendpoint}3003/graphql` },
-              { name: "order_service", url: `${dockerendpoint}3004/graphql` },
+              { name: "subscription_service", url: subscriptionserviceGraphQLEndpoint },
+              { name: "auth_service", url: authserviceGraphQLEndpoint },
+              { name: "core_service", url: coreServiceGraphQLEndpoint },
+              { name: "order_service", url: orderServiceGraphQLEndpoint },
             ]
 
           }),
@@ -65,10 +76,10 @@ import * as path from 'path';
         const gatewaydata = new ApolloGateway({
           supergraphSdl: new IntrospectAndCompose({
             subgraphs: [
-              { name: "subscription_service", url: `${dockerendpoint}3001/graphql` },
-              { name: "auth_service", url: `${dockerendpoint}3002/graphql` },
-              { name: "core_service", url: `${dockerendpoint}3003/graphql` },
-              { name: "order_service", url: `${dockerendpoint}3004/graphql` },
+              { name: "subscription_service", url: subscriptionserviceGraphQLEndpoint },
+              { name: "auth_service", url: authserviceGraphQLEndpoint },
+              { name: "core_service", url: coreServiceGraphQLEndpoint },
+              { name: "order_service", url: orderServiceGraphQLEndpoint },
             ],
           }),
         });

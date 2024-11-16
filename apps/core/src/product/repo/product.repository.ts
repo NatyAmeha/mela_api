@@ -21,6 +21,7 @@ export interface IProductRepository {
     getBranchProducts(branchId: string, query?: QueryHelper<Product>): Promise<Product[]>;
     getBusinessSectionProducts(businessId: string, sectionId: string[], branchId?: string, query?: QueryHelper<Product>): Promise<Product[]>;
     getBusinessProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]>;
+    searchProducts(term: string, query?: QueryHelper<Product>): Promise<Product[]>;
     createProductsWithVariants(products: Product[]): Promise<Product[]>;
 
     // Productd addon
@@ -282,6 +283,22 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
+    async searchProducts(term: string, query?: QueryHelper<Product>): Promise<Product[]> {
+        try {
+            const products = await this.product.findMany({
+                where: {
+                    name: { contains: term },
+                    ...(query?.query ? query.query as any : {})
+                },
+                skip: query?.page ? ((query.page - 1) * query.limit) : 0,
+                take: query?.limit,
+            })
+            return products?.map(product => new Product({ ...product }));
+        } catch (error) {
+            throw new PrismaException({ source: "Search products", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
     async createProductAddon(productId: string, productAddon: ProductAddon[]): Promise<boolean> {
         try {
             const transactionResult = await this.$transaction(async (prisma) => {
@@ -433,7 +450,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async getBusinessTopProducts(businessId: string, query: QueryHelper<Product>): Promise<Product[]> {
         try {
             const products = await this.product.findMany({
-                where: { businessId },
+                where: { businessId, ...(query?.query ? query.query as any : {}) },
                 orderBy: { ...query.orderBy as any },
                 skip: query?.page ? ((query.page - 1) * query.limit) : 0,
                 take: query?.limit,

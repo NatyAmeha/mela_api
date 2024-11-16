@@ -6,14 +6,14 @@ export const Configuration = () => ({
         refreshToken: process.env.REFRESH_TOKEN || "DEFAULT_REFRESH_TOKEN",
         accessTokenExpiresIn: "1d",
         refreshTokenExpiresIn: "7d",
-        userAccessEndpointFromAuthService: (userId: string) => {
-            return `http://localhost:3002/access/user?id=${userId}`;
+        userAccessEndpointFromAuthService: (authServiceEndpoint: string, userId: string) => {
+            return `${authServiceEndpoint}/access/user?id=${userId}`;
         },
-        businessAccessFetchEndpoint: (businessId: string) => {
-            return `http://localhost:3002/access/business?id=${businessId}`;
+        businessAccessFetchEndpoint: (coreServiceEndpoint: string, businessId: string) => {
+            return `${coreServiceEndpoint}/access/business?id=${businessId}`;
         },
-        businessSubscriptionEndpoint: (businessId: string) => {
-            return `http://localhost:3002/subscription/business?id=${businessId}`
+        businessSubscriptionEndpoint: (subscriptionServiceEndpoint: string, businessId: string) => {
+            return `${subscriptionServiceEndpoint}/subscription/business?id=${businessId}`
         }
 
     },

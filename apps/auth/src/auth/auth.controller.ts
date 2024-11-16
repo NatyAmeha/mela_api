@@ -10,10 +10,18 @@ export class AuthController {
     }
     @Get("/access/user")
     async getUserAccess(@Query("id") userId: string): Promise<UserResponse | undefined> {
-        var userResult = await this.authservice.getUserInfo(userId)
-        let userAccesses = await this.authorizationService.getAllUserAccesses(userId)
+        try {
+            console.log('userId', userId)
+            var userResult = await this.authservice.getUserInfo(userId)
+            console.log('userResult', userResult)
+            let userAccesses = await this.authorizationService.getAllUserAccesses(userId)
 
-        return new UserResponse({ user: userResult, accesses: userAccesses })
+            return new UserResponse({ user: userResult, accesses: userAccesses })
+        } catch (error) {
+            console.log('error', error)
+            return undefined
+
+        }
     }
 
     // @Get("/access/business")

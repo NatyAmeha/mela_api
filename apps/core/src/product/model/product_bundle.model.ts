@@ -1,5 +1,5 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Field, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Field, Float, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Gallery } from "../../business/model/gallery.model";
 import { Discount, DiscountCondition } from "./discount.model";
 import { Product } from "./product.model";
@@ -9,13 +9,12 @@ import { CreateBundleInput, UpdateBundleInput } from "../dto/product_bundle.inpu
 import { CreateProductInput } from "../dto/product.input";
 import { validate } from "class-validator";
 import { plainToClass } from "class-transformer";
+import { ProductAddon } from "./product_addon.model";
 
 export enum BundleType {
     DEFAULT = "DEFAULT",
     SERVICE_BUNDLE = "SERVICE_BUNDLE",
     TIMELY_BUNDLE = "TIMELY_BUNDLE",
-
-
 }
 
 @ObjectType()
@@ -30,6 +29,8 @@ export class ProductBundle {
     type: string
     @Field(types => [String])
     productIds: string[]
+    @Field(type => [BundleProductInfo])
+    productsInfo?: BundleProductInfo[]
     @Field(types => [String])
     branchIds: string[]
     @Field(types => [String])
@@ -47,6 +48,9 @@ export class ProductBundle {
 
     @Field(types => [Product])
     products?: Product[]
+
+    @Field(types => [ProductAddon])
+    addons?: ProductAddon[]
 
     @Field(types => [Branch])
     branches?: Branch[];
@@ -86,6 +90,23 @@ export class ProductBundle {
     static async fromUpdateBundleInput(businessId: string[], updateInput: UpdateBundleInput) {
         const bundleInfo = this.fromCreateBundleInput({ businessId, branchIds: [], input: new CreateBundleInput({ ...updateInput }) })
         return bundleInfo;
+    }
+}
+
+@ObjectType()
+export class BundleProductInfo {
+    @Field()
+    productId: string
+    @Field(type => Float, { defaultValue: 1 })
+    minQty: number
+    @Field(type => Float, { defaultValue: 10 })
+    maxQty: number
+
+    @Field(types => Product)
+    product?: Product
+
+    constructor(partial?: Partial<BundleProductInfo>) {
+        Object.assign(this, partial)
     }
 
 }

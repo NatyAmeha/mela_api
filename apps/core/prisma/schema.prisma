@@ -1,7 +1,7 @@
 generator client {
     provider      = "prisma-client-js"
     output        = "./generated/prisma_core_client"
-    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x", "windows"]
 }
 
 datasource db {
@@ -189,22 +189,27 @@ model Staff {
 }
 
 model Bundle {
-    id          String          @id @default(auto()) @map("_id") @db.ObjectId
-    name        LocalizedData[]
-    description LocalizedData[]
-    type        String          @default("DEFAULT")
-    productIds  String[]
-    startDate   DateTime?
-    endDate     DateTime?
-    gallery     Gallery
-    discount    Discount?
-    businessIds String[]        @default([]) @map("businessIds") @db.ObjectId
-    businesses  Business[]      @relation(fields: [businessIds], references: [id])
-    branchIds   String[]        @default([]) @db.ObjectId
-    branches    Branch[]        @relation(fields: [branchIds], references: [id])
-    isActive    Boolean?        @default(false)
-    createdAt   DateTime        @default(now())
-    updatedAt   DateTime        @updatedAt
+    id             String              @id @default(auto()) @map("_id") @db.ObjectId
+    name           LocalizedData[]
+    summary        LocalizedData[]
+    description    LocalizedData[]
+    type           String              @default("DEFAULT")
+    productIds     String[]
+    startDate      DateTime?
+    endDate        DateTime?
+    gallery        Gallery
+    discount       Discount?
+    condition      String?
+    conditionValue String?
+    addons         ProductAddon[]
+    productsInfo   BundleProductInfo[]
+    businessIds    String[]            @default([]) @map("businessIds") @db.ObjectId
+    businesses     Business[]          @relation(fields: [businessIds], references: [id])
+    branchIds      String[]            @default([]) @db.ObjectId
+    branches       Branch[]            @relation(fields: [branchIds], references: [id])
+    isActive       Boolean?            @default(false)
+    createdAt      DateTime            @default(now())
+    updatedAt      DateTime            @updatedAt
 }
 
 model ProductPrice {
@@ -224,6 +229,12 @@ model ProductPrice {
     @@unique([productId, branchId, priceListId])
 }
 
+type BundleProductInfo {
+    productId String
+    minQty    Float
+    maxQty    Float
+}
+
 type PriceList {
     id          String          @default(uuid())
     name        LocalizedData[]
@@ -237,6 +248,10 @@ type PriceList {
 type ProductAddon {
     id              String               @default(uuid())
     name            LocalizedData[]
+    summary         LocalizedData[]
+    description     LocalizedData[]
+    condition       String?
+    conditionValue  String?
     inputType       String?
     minAmount       Float?
     maxAmount       Float?

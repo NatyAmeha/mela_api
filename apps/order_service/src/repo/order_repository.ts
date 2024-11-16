@@ -25,6 +25,10 @@ export class OrderRepository extends PrismaClient implements OnModuleInit, OnMod
         this.transactionClient = client;
     }
 
+    removeTransactionClient(): void {
+        this.transactionClient = null;
+    }
+
     async onModuleInit() {
         await this.$connect()
     }
@@ -35,11 +39,12 @@ export class OrderRepository extends PrismaClient implements OnModuleInit, OnMod
         try {
             const { paymentMethods, ...orderData } = orderInfo
             const orderCreateResult = await (this.transactionClient ?? this).order.create({ data: { ...orderData, paymentMethods: paymentMethods } })
-            this.transactionClient?.$disconnect()
             return new Order({ ...orderCreateResult })
         } catch (ex) {
             console.log(ex)
             throw new PrismaException({ message: ex.message, code: ex.code, meta: ex.meta })
+        } finally {
+            this.removeTransactionClient()
         }
     }
 
@@ -47,16 +52,18 @@ export class OrderRepository extends PrismaClient implements OnModuleInit, OnMod
     async getUserOrders(userId: string): Promise<Order[]> {
         try {
 
-            const orders = await (this.transactionClient || this).order.findMany({ where: { userId: userId } })
+            const orders = await (this).order.findMany({ where: { userId: userId } })
             return orders.map(order => new Order({ ...order }))
         } catch (error) {
             throw new PrismaException({ message: error.message, code: error.code, meta: error.meta })
+        } finally {
+            this.removeTransactionClient()
         }
     }
 
     async getOrderById(orderId: string): Promise<Order> {
         try {
-            const order = await (this.transactionClient || this).order.findUnique({ where: { id: orderId } })
+            const order = await (this).order.findUnique({ where: { id: orderId } })
             return new Order({ ...order })
         } catch (error) {
             throw new PrismaException({ message: error.message, code: error.code, meta: error.meta })

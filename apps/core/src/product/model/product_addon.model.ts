@@ -26,6 +26,10 @@ export class ProductAddon extends BaseModel {
     id: string;
     @Field(type => [LocalizedField])
     name: LocalizedField[]
+    @Field(type => [LocalizedField])
+    summary?: LocalizedField[]
+    @Field(type => [LocalizedField])
+    description?: LocalizedField[]
     @Field(types => String)
     inputType?: string
     @Field(types => Float, { defaultValue: 1 })
@@ -34,6 +38,10 @@ export class ProductAddon extends BaseModel {
     maxAmount?: number
     @Field(types => [ProductAddonOption], { defaultValue: [] })
     options?: ProductAddonOption[]
+    @Field({ defaultValue: "NONE" })
+    condition?: string
+    @Field()
+    conditionValue?: string
     @Field()
     checkCalendar?: boolean
     @Field(types => [String], { defaultValue: [] })

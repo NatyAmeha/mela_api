@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-service
+  template:
+    metadata:
+      labels:
+        app: core-service
+    spec:
+      containers:
+        - name: core-service
+          image: iimela/mela-core-service
+          # imagePullPolicy: Never
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ENV
+              value: "development"
+          ports:
+            - containerPort: 3003
+          # volumeMounts:
+          #   - name: node-modules
+          #     mountPath: /usr/src/app/node_modules
+          #   - name: app-source
+          #     mountPath: /usr/src/app
+          envFrom:
+            - configMapRef:
+                name: my-app-config
+          resources: # Add resource requests and limits here
+            requests:
+              memory: "128Mi" # Minimum memory the container needs
+              cpu: "100m" # Minimum CPU the container needs
+            limits:
+              memory: "256Mi" # Maximum memory the container can use
+              cpu: "500m"
+      # volumes:
+      #   - name: app-source
+      #     hostPath:
+      #       path: ./apps/core
+      #   - name: node-modules
+      #     emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-service
+spec:
+  selector:
+    app: core-service
+  ports:
+    - protocol: TCP
+      port: 3003
+      targetPort: 3003
+  type: ClusterIP
