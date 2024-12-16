@@ -29,7 +29,6 @@ export class AppService {
             const { user, accesses } = axiosresponse.data as GatewayApiFetchResponse
             const { favoriteBusinesses, ...resetUserInfo } = user;
             var gatewayApiResponse = new GatewayApiFetchResponse({ user: { ...resetUserInfo, favoriteBusinesses: favoriteBusinesses.map(business => ({ businessId: business.businessId })) }, accesses })
-            console.log('axiosresponse', favoriteBusinesses, gatewayApiResponse.user?.favoriteBusinesses)
             if (!gatewayApiResponse) {
               throw new RequestValidationException({ message: "User not found by this id" })
             }

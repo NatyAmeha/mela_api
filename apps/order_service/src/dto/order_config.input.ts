@@ -1,5 +1,5 @@
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
-import { Field, InputType } from "@nestjs/graphql";
+import { Field, Float, InputType } from "@nestjs/graphql";
 import { OrderConfigType } from "../model/order.config.model";
 import { Type } from "class-transformer";
 import { IsNotEmpty, ValidateIf } from "class-validator";
@@ -27,8 +27,14 @@ export class CreateOrderConfigInput {
     @IsNotEmpty()
     productIds?: string[];
 
+    @Field()
+    calendarId?: string
+
     @Field({ defaultValue: 0 })
     additionalPrice: number;
+
+    @Field(type => Float, { defaultValue: 0 })
+    finalPrice: number;
 
     @Field()
     addonId?: string;

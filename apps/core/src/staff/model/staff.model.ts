@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int, ID, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, Int, ID, InputType, Directive } from '@nestjs/graphql';
 import { Branch } from '../../branch/model/branch.model';
 import { Business } from '../../business/model/business.model';
 import { Access, Permission } from 'apps/auth/src/authorization/model/access.model';
@@ -8,6 +8,7 @@ import { User } from 'apps/auth/src/auth/model/user.model';
 import { PermissionType } from 'apps/auth/src/authorization/model/permission_type.enum';
 
 @ObjectType()
+@Directive('@shareable')
 export class Staff {
     @Field(types => ID)
     id?: string;
@@ -20,7 +21,7 @@ export class Staff {
     @Field()
     phoneNumber: string
     @Field()
-    password: string
+    password?: string
 
     @Field(types => [String])
     roles: string[];
@@ -48,11 +49,22 @@ export class Staff {
         Object.assign(this, partial);
     }
 
-    createDefaultStaffAccess(): Access[] {
+    createBranchStaffAccess(): Access[] {
         return [
             new Access({
                 permissions: [
                     new Permission({ resourceType: AppResources.POS, action: PERMISSIONACTION.ANY, resourceTarget: this.branchId }),
+
+                ],
+                permissionType: PermissionType.BUSINESS_MANAGEMENT_PERMISSION,
+            })
+        ]
+    }
+
+    createBusinessStaffAccess(): Access[] {
+        return [
+            new Access({
+                permissions: [
                     new Permission({ resourceType: AppResources.POS, action: PERMISSIONACTION.ANY, resourceTarget: this.businessId }),
 
                 ],
@@ -68,6 +80,7 @@ export class Staff {
     toUser(): User {
         return new User({
             username: this.name,
+            firstName: this.name,
             email: this.phoneNumber,
 
             phoneNumber: this.phoneNumber,

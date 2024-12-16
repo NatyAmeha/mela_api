@@ -14,6 +14,10 @@ import { Customer } from "../customer/model/customer.model";
 import { User } from "apps/auth/src/auth/model/user.model";
 import { CustomerRepository, ICustomerRepository } from "../customer/repo/customer.repository";
 import { LoyaltyRepository, ILoyaltyRepository } from "../loyalty/repo/loyalty.repository";
+import { IOrderScheduleRepository } from "../repo/schedule.repository";
+import { OrderScheduleRepository } from "../repo/schedule.repository";
+import { OrderSchedule } from "../model/order_schedule.model";
+import { AddOrderSchedulesInput } from "../dto/schedule.input";
 
 @Injectable()
 export class OrderService {
@@ -23,6 +27,7 @@ export class OrderService {
         @Inject(CustomerRepository.injectName) private customerRepository: ICustomerRepository,
         @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator,
         @Inject(LoyaltyRepository.injectName) private loyaltyRepository: ILoyaltyRepository,
+        @Inject(OrderScheduleRepository.injectName) private scheduleRepository: IOrderScheduleRepository,
         private transactionManager: PrismaTransaction
     ) { }
 
@@ -55,35 +60,40 @@ export class OrderService {
             customerInfo = await this.customerRepository.addOrGetCustomer(customerInfo)
         }
         const orderInfo = new OrderBuilder()
-            .createOrderFromPOS(businessId, customerInfo)
+            .createOrderFromPOS(businessId, customerInfo, orderInput.branchId)
             .withItems(orderInput.items)
             .withPaymentInfo(orderInput.paymentType, { remainingAmount: orderInput.remainingAmount, subtotal: orderInput.subTotal, totalAmount: orderInput.totalAmount, paidAmount: orderInput.paidAmount, paymentMethods: orderInput.paymentMethods })
-            .withAdditionalInfo({ note: orderInput.note }).build();
-
+            .withAdditionalInfo({ note: orderInput.note, businessName: orderInput.businessName }).build();
         const orderCreateResult = await this.transactionManager.execute(this.orderRepo, async (transactionContext) => {
             this.orderRepo.addTransactionClient(transactionContext);
             this.customerRepository.addTransactionClient(transactionContext);
             this.loyaltyRepository.addTransactionClient(transactionContext);
+            this.scheduleRepository.addTransactionClient(transactionContext);
+
             const orderCreateResult = await this.orderRepo.createOrderInfo(orderInfo);
+            const scehduleDatas = orderCreateResult.generateOrderSchedules()
+            if (scehduleDatas.length > 0) {
+                await this.scheduleRepository.createSchedule(scehduleDatas)
+            }
+
+
             // handle customer loyalty
+            if (customerInfo != undefined) {
+                customerInfo = await this.customerRepository.addOrGetCustomer(customerInfo)
+                const appliedRewards = orderCreateResult.getAppliedRewards()
+                if (appliedRewards?.length > 0) {
+                    const usedRewardPoints = await this.loyaltyRepository.getRewardsPoints(appliedRewards)
+                    const customerLoyaltyInfo = await this.loyaltyRepository.deductLoayltyPoints(customerInfo.id, customerInfo.businessId, usedRewardPoints)
+                }
 
-            const businessId = orderCreateResult.businessId[0]
-            customerInfo = await this.customerRepository.addOrGetCustomer(customerInfo)
-            // deduct loyalty points from customer
-            const appliedRewards = orderCreateResult.getAppliedRewards()
-            if (appliedRewards?.length > 0) {
-                const usedRewardPoints = await this.loyaltyRepository.getRewardsPoints(appliedRewards)
-                const customerLoyaltyInfo = await this.loyaltyRepository.deductLoayltyPoints(customerInfo.id, customerInfo.businessId, usedRewardPoints)
+                const totalEarnedPoints = orderCreateResult.getPoints()
+                if (totalEarnedPoints > 0) {
+                    const customerLoyaltyInfo = await this.loyaltyRepository.addOrGetCustomerLoyalty(customerInfo.id, customerInfo.businessId)
+                    await this.loyaltyRepository.addPointsToCustomerLoyalty(customerLoyaltyInfo.customerId, customerLoyaltyInfo.businessId, totalEarnedPoints)
+                }
+                console.log('totalEarnedPoints', totalEarnedPoints)
             }
-
-            // apply loyalty points to customer
-            const totalEarnedPoints = orderCreateResult.getPoints()
-            if (totalEarnedPoints > 0) {
-                const customerLoyaltyName = 'default'
-                const customerLoyaltyInfo = await this.loyaltyRepository.addOrGetCustomerLoyalty(customerInfo.id, customerInfo.businessId)
-                await this.loyaltyRepository.addPointsToCustomerLoyalty(customerLoyaltyInfo.customerId, customerLoyaltyInfo.businessId, totalEarnedPoints)
-            }
-            console.log('totalEarnedPoints', totalEarnedPoints)
+            console.log('customer info ', customerInfo)
             return new OrderResponseBuilder().withOrder(orderCreateResult).build();
         });
 
@@ -96,15 +106,19 @@ export class OrderService {
             .createOrderFromOnlineStore(currentUser.id, businessIds)
             .withItems(orderInput.items, orderInput.config)
             .withPaymentInfo(orderInput.paymentType, { remainingAmount: orderInput.remainingAmount, subtotal: orderInput.subTotal, totalAmount: orderInput.totalAmount, paidAmount: orderInput.paidAmount, paymentMethods: orderInput.paymentMethods })
-            .withAdditionalInfo({ note: orderInput.note }).build();
+            .withAdditionalInfo({ note: orderInput.note, businessName: orderInput.businessName }).build();
 
-        console.log('payment methods', orderInfo.paymentMethods)
 
         const orderCreateResult = await this.transactionManager.execute(this.orderRepo, async (transactionContext) => {
             this.orderRepo.addTransactionClient(transactionContext);
             this.customerRepository.addTransactionClient(transactionContext);
             this.loyaltyRepository.addTransactionClient(transactionContext);
+            this.scheduleRepository.addTransactionClient(transactionContext);
             const orderCreateResult = await this.orderRepo.createOrderInfo(orderInfo);
+            const scehduleDatas = orderCreateResult.generateOrderSchedules()
+            if (scehduleDatas.length > 0) {
+                await this.scheduleRepository.createSchedule(scehduleDatas)
+            }
             // handle customer loyalty
 
             const businessId = orderCreateResult.businessId[0]
@@ -130,6 +144,33 @@ export class OrderService {
         });
 
         return orderCreateResult;
+    }
+
+    async addOrderSchedules(orderId: string, schedules: AddOrderSchedulesInput[]): Promise<OrderResponse> {
+        await this.inputValidator.validateArrayInput(schedules, AddOrderSchedulesInput);
+        const scheduleDatas = schedules?.map(schedule => OrderSchedule.fromInput(schedule, { orderId }))
+        const result = await this.scheduleRepository.createSchedule(scheduleDatas)
+        return new OrderResponseBuilder().basicResponse(result);
+    }
+
+    async getOrderSchedules(orderId: string): Promise<OrderSchedule[]> {
+        const result = await this.scheduleRepository.getSchedules(orderId)
+        return result
+    }
+
+    async getOrderSchedulesByCalendar(calendarId: string): Promise<OrderResponse> {
+        const result = await this.scheduleRepository.getScheduleByCalendar(calendarId)
+        const response = new OrderResponseBuilder().withSchedules(result).build()
+        return response
+    }
+
+    async getBranchOrderSchedules(branchId: string): Promise<OrderResponse> {
+        const orders = await this.orderRepo.getBranchOrders(branchId)
+        const orderIds = orders.map(order => order.id)
+        const result = await this.scheduleRepository.getOrdersSchedules(orderIds)
+        console.log('result', result)
+        const response = new OrderResponseBuilder().withSchedules(result).build()
+        return response
     }
 
     async getUserOrders(userId: string): Promise<OrderResponse> {

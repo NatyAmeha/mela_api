@@ -12,7 +12,7 @@ export class Customer {
     @Field()
     name: string;
     @Field()
-    userId: string;
+    userId?: string;
     @Field()
     businessId: string;
     @Field()

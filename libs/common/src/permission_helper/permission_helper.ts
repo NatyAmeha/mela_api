@@ -24,6 +24,7 @@ export class BasePermissionHelper implements IPermissionHelper {
 
     isPermissionInGrantedPermissions(grantedPermissions: Permission[], permissionInfo: RequestedPermissionInfo): boolean {
         var matchedPermission = grantedPermissions.filter((gp) => {
+            console.log('matched permission', gp, permissionInfo)
             var hasAccess = (gp.resourceType == permissionInfo.resourceType)
                 && (gp.action == permissionInfo.action || gp.action == PERMISSIONACTION.ANY)
                 && (permissionInfo.resourceTarget != undefined ? gp.resourceTarget == permissionInfo.resourceTarget : true)
@@ -76,6 +77,7 @@ export class BasePermissionHelper implements IPermissionHelper {
             { key: ResourceTargetIdentifier.OWNER, value: args.owner },
             { key: ResourceTargetIdentifier.OWNERID, value: args.ownerId },
             { key: ResourceTargetIdentifier.BUSINESSID, value: args.businessId },
+            { key: ResourceTargetIdentifier.BRANCHID, value: args.branchId },
             { key: ResourceTargetIdentifier.PRODUCTID, value: args.productId },
             { key: ResourceTargetIdentifier.USERID, value: args.userId },
             { key: ResourceTargetIdentifier.ID, value: args.id },

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Injectable, OnModuleDestroy, OnModuleInit, Scope } from "@nestjs/common";
 import { PrismaClient } from "apps/order_service/prisma/generated/prisma_order_client";
 import { Reward } from "../model/reward.model"
 import { plainToClass } from "class-transformer";
@@ -21,7 +21,9 @@ export interface ILoyaltyRepository {
     getRedeemedRewards(customerId: string): Promise<RedeemedReward[]>
 
     getCustomerLoyalty(customerId: string, businessId: string): Promise<CustomerLoyalty>
+    addCustomerLoyalty(customerLoyalty: CustomerLoyalty): Promise<CustomerLoyalty>
     getCustomerLoyalties(customerId: string): Promise<CustomerLoyalty[]>
+    getLoyaltiesByCustomerIds(customerIds: string[]): Promise<CustomerLoyalty[]>
     addOrGetCustomerLoyalty(customerId: string, businessId: string): Promise<CustomerLoyalty>
     addPointsToCustomerLoyalty(customerId: string, businessId: string, points: number): Promise<CustomerLoyalty>
     deductLoayltyPoints(customerId: string, businessId: string, points: number): Promise<CustomerLoyalty>
@@ -122,25 +124,41 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
 
     async getCustomerLoyalty(customerId: string, businessId: string): Promise<CustomerLoyalty> {
         try {
-            const customerLoyalty = await (this.transactionClient || this).customerLoyalty.findFirst({ where: { customerId, businessId } })
+            const customerLoyalty = await this.customerLoyalty.findFirst({ where: { customerId, businessId } })
             if (!customerLoyalty) {
                 return null
             }
+            console.log("customerLoyalty", customerLoyalty)
             return plainToClass(CustomerLoyalty, customerLoyalty)
         } catch (error) {
-            throw error
+            console.log(error)
+            throw new PrismaException({
+                source: LoyaltyRepository.name,
+                message: "Error getting customer loyalty"
+            })
         }
     }
 
     async getCustomerLoyalties(customerId: string): Promise<CustomerLoyalty[]> {
         try {
-            const customerLoyalties = await (this.transactionClient || this).customerLoyalty.findMany({ where: { customerId } })
+            console.log("customerId", customerId)
+            const customerLoyalties = await (this).customerLoyalty.findMany({ where: { customerId } })
             return customerLoyalties.map(customerLoyalty => plainToClass(CustomerLoyalty, customerLoyalty))
         } catch (error) {
+            console.log(error)
             throw new PrismaException({
                 source: LoyaltyRepository.name,
                 message: "Error getting customer loyalties"
             })
+        }
+    }
+
+    async getLoyaltiesByCustomerIds(customerIds: string[]): Promise<CustomerLoyalty[]> {
+        try {
+            const customerLoyalties = await this.customerLoyalty.findMany({ where: { customerId: { in: customerIds } } })
+            return customerLoyalties.map(customerLoyalty => plainToClass(CustomerLoyalty, customerLoyalty))
+        } catch (error) {
+            throw error
         }
     }
 
@@ -159,6 +177,19 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
             return redeemedRewards.map(redeemedReward => plainToClass(RedeemedReward, redeemedReward))
         } catch (error) {
             throw error
+        }
+    }
+
+    async addCustomerLoyalty(customerLoyalty: CustomerLoyalty): Promise<CustomerLoyalty> {
+        try {
+            const createCustomerLoyaltyResult = await (this.transactionClient || this).customerLoyalty.create({ data: customerLoyalty })
+            return plainToClass(CustomerLoyalty, createCustomerLoyaltyResult)
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({
+                source: LoyaltyRepository.name,
+                message: "Error adding customer loyalty"
+            })
         }
     }
 

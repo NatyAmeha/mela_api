@@ -7,14 +7,17 @@ import { Customer } from "../model/customer.model";
 import { plainToClass } from "class-transformer";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { CommonCustomerErrorMessages } from "apps/core/src/utils/const/error_constants";
+import { CustomerLoyalty } from "../../loyalty/model/customer_loyalty.model";
+import { LocalizedField } from "@app/common/model/localized_model";
 
 export interface ICustomerRepository {
     addTransactionClient: (client: PrismaClient) => void
     isCustomerAlreadyExist(userId: string, businessId: string): Promise<boolean>;
-    addOrGetCustomer(customer: Customer): Promise<Customer>
+    addOrGetCustomer(customer: Customer, businessName?: LocalizedField[]): Promise<Customer>
     addCustomers(customers: Customer[]): Promise<Customer[]>
     getCustomer(customerId: string): Promise<Customer | null>
-    getCustomerByUserId(userId: string): Promise<Customer | undefined>
+    getCustomerByUserIdOrPhoneNumber(userId?: string, phoneNumber?: string): Promise<Customer | null>
+    getCustomersByUserId(userId: string): Promise<Customer[] | undefined>
     getCustomerByPhoneNumber(phoneNumber: string, businessId: string): Promise<Customer | null>
     getBusinessCustomer(userId: string, businessId: string): Promise<Customer | null>
     getBusinessCustomers(businessId: string, queryHelper: QueryHelper<Customer>): Promise<Customer[]>
@@ -40,7 +43,18 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         return existingCustomerByUserIdAndBusinessId != null;
     }
 
-    async addOrGetCustomer(customer: Customer): Promise<Customer> {
+    async getCustomerByUserIdOrPhoneNumber(userId?: string, phoneNumber?: string): Promise<Customer | null> {
+        try {
+            const queryData = userId == null ? { phoneNumber } : { userId }
+            const result = await this.customer.findFirst({ where: queryData })
+            return plainToClass(Customer, result)
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({ source: "Get customer by user id or phone number", message: error })
+        }
+    }
+
+    async addOrGetCustomer(customer: Customer, businessName?: LocalizedField[]): Promise<Customer> {
         try {
             const whereConditions = [];
 
@@ -61,7 +75,13 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
                 return existingCustomerByUserIdAndBusinessId;
             }
             const { customerLoyalties, redeemedRewards, ...customerData } = customer
-            const result = await this.customer.create({ data: customerData })
+            const result = await this.customer.create({
+                data: {
+                    ...customerData, customerLoyalties: {
+                        create: { businessId: customer.businessId, currentPoints: 0, pointsSource: [], name: businessName }
+                    }
+                }
+            })
             return plainToClass(Customer, result)
         } catch (error) {
             console.log(error)
@@ -74,7 +94,7 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
 
     async addCustomers(customers: Customer[]): Promise<Customer[]> {
         try {
-            const result = await (this.transactionClient || this).$transaction(async (tx) => {
+            const result = await this.$transaction(async (tx) => {
                 const result = await Promise.all(customers.map(async (customer) => {
                     const { customerLoyalties, redeemedRewards, ...customerData } = customer
                     const createResult = await tx.customer.create({ data: customerData })
@@ -101,13 +121,13 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async getCustomerByUserId(userId: string): Promise<Customer | undefined> {
+    async getCustomersByUserId(userId: string): Promise<Customer[] | undefined> {
         try {
-            const result = await (this.transactionClient || this).customer.findFirst({ where: { userId } })
+            const result = await this.customer.findMany({ where: { userId } })
             if (!result) {
                 return null
             }
-            return plainToClass(Customer, result)
+            return result.map(customer => plainToClass(Customer, customer))
         } catch (error) {
             throw new PrismaException({ source: "Get customer by user id", message: error })
         }
@@ -140,7 +160,7 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
 
     async getBusinessCustomers(businessId: string, queryHelper: QueryHelper<Customer>): Promise<Customer[]> {
         try {
-            const result = await (this.transactionClient || this).customer.findMany({
+            const result = await this.customer.findMany({
                 where: { businessId },
                 include: {
                     customerLoyalties: true,

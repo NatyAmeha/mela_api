@@ -14,6 +14,7 @@ import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
 import { Product } from "../product/model/product.model";
+import { AuthzGuard } from "libs/common/authorization.guard";
 
 @Resolver(of => Branch)
 export class BranchResolver {
@@ -103,6 +104,13 @@ export class BranchResolver {
     @Query(returns => BranchResponse)
     async getPosBranch(@Args("businessId") businessId: string, @Args("branchId") branchId: string): Promise<BranchResponse> {
         let response = await this.branchService.getBranchDetailsForPOS(businessId, branchId);
+        return response;
+    }
+
+    @Query(returns => BranchResponse)
+    @UseGuards(AuthzGuard)
+    async getStaffBranches(@Args("staffId") staffId: string): Promise<BranchResponse> {
+        let response = await this.branchService.getStaffBranches(staffId);
         return response;
     }
 

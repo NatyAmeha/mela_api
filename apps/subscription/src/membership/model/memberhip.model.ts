@@ -48,6 +48,8 @@ export class Membership {
     type: string
     @Field()
     owner: string
+    @Field()
+    ownerName?: string
     @Field({ defaultValue: true })
     isActive: boolean
     @Field(type => [String])

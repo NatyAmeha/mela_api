@@ -1,5 +1,5 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Field, Float, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, Float, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { Gallery } from "../../business/model/gallery.model";
 import { Discount, DiscountCondition } from "./discount.model";
 import { Product } from "./product.model";
@@ -18,6 +18,7 @@ export enum BundleType {
 }
 
 @ObjectType()
+@Directive('@shareable')
 export class ProductBundle {
     @Field(types => ID)
     id: string
@@ -81,7 +82,7 @@ export class ProductBundle {
         if (input.discountType) {
             bundle.discount = new Discount({
                 type: input.discountType, value: input.discountValue,
-                condition: input.condition, conditionValue: input.conditionValue ?? (input.condition == DiscountCondition.PURCHASE_ALL_ITEMS ? input.productIds?.length : 0),
+                condition: input.condition, conditionValue: input.conditionValue ?? (input.condition == DiscountCondition.PURCHASE_ALL_ITEMS ? `${input.productIds?.length}` : ""),
             })
         }
         return bundle
@@ -94,6 +95,7 @@ export class ProductBundle {
 }
 
 @ObjectType()
+@Directive('@shareable')
 export class BundleProductInfo {
     @Field()
     productId: string

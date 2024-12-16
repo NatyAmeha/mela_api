@@ -1,20 +1,38 @@
 import { Directive, Field, Float, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { User } from "apps/auth/src/auth/model/user.model";
 import { OrderItem, OrderItemDiscount } from "./order_item.model";
-import { LocalizedField } from "@app/common/model/localized_model";
+import { LanguageKey, LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { CreateOrderItemInput, OrderItemDiscountInput, OrderPaymentMethodInput } from "../dto/order_item.input";
-import { CreateOrderInput } from "../dto/order.input";
 import { OrderConfig } from "./order.config.model";
 import { PaymentOptionType } from "apps/core/src/business/model/payment_option.model";
 import { flattenDeep, remove, sum, uniq } from "lodash";
 import { Price } from "@app/common/model/price.model";
 import { Customer } from "../customer/model/customer.model";
 import { CreateOrderConfigInput } from "../dto/order_config.input";
+import { OrderSchedule } from "./order_schedule.model";
+
+import { DateUtils } from "@app/common/utils/date_utils";
 
 export enum OrderType {
     BOOKING = "BOOKING",
     PURCHASE = "PURCHASE",
     RENTAL = "RENTAL",
+}
+
+export enum AddonInputType {
+    NUMBER_INPUT = "QUANTITY_INPUT",
+    TEXT_INPUT = "TEXT_INPUT",
+    SINGLE_SELECTION_INPUT = "SINGLE_SELECTION_INPUT",
+    MULTIPLE_SELECTION_INPUT = "MULTIPLE_SELECTION_INPUT",
+    DATE_INPUT = "DATE_INPUT",
+    TIME_INPUT = "TIME_INPUT",
+    DATE_RANGE_INPUT = "DATE_RANGE_INPUT",
+    DATE_TIME_INPUT = "DATE_TIME_INPUT",
+    NO_INPUT_REQUIRED = "NO_INPUT",
+    LOCATION_PER_KM_INPUT = "LOCATION_PER_KM_INPUT",
+    LOCATION_INPUT = "LOCATION_INPUT",
+    PRODUCT_SELECTION_INPUT = "PRODUCT_SELECTION_INPUT",
+    PRODUCT_SELECTION_WITH_ADDON_DISCOUNT_INPUT = "PRODUCT_SELECTION_WITH_ADDON_DISCOUNT_INPUT"
 }
 
 export enum OrderStatus {
@@ -39,7 +57,7 @@ export class Order {
     code?: string
     // @Field(types => OrderType)
     // orderType: string
-    @Field(types => OrderStatus, { defaultValue: OrderStatus.PENDING.toString() })
+    @Field(types => String, { defaultValue: OrderStatus.PENDING.toString() })
     status: string
     @Field(types => [OrderItem])
     items: OrderItem[]
@@ -73,11 +91,20 @@ export class Order {
     note?: string
     @Field(types => [String])
     businessId?: string[]
+
+    @Field(types => [LocalizedField])
+    businessName?: LocalizedField[]
+
     @Field()
     branchId?: string
 
+    @Field(types => [OrderSchedule])
+    schedules?: OrderSchedule[]
+
     @Field()
     customerPhoneNumber?: string
+    @Field(types => Customer, { nullable: true })
+    customer?: Customer
     @Field()
     createdAt?: Date;
     @Field()
@@ -100,6 +127,47 @@ export class Order {
         // get uniq reward ids using lodash helper method
         return remove(rewardIds);
     }
+
+    generateOrderSchedules() {
+        const schedules: OrderSchedule[] = [];
+
+        this.items.forEach(item => {
+            item.config?.forEach(config => {
+                if (config.type === AddonInputType.DATE_INPUT || config.type === AddonInputType.DATE_TIME_INPUT) {
+                    var keys = item.name.map(name => name.key) as LanguageKey[]
+                    var note = []
+                    console.log('order config info', config.singleValue, DateUtils.toDate(config.singleValue), note)
+                    for (var key of keys) {
+                        note.push(new LocalizedField({ key: key, value: `${LocalizedField.selectValueByKey(key, item.name)} - ${LocalizedField.selectValueByKey(key, config.name)}` }))
+                    }
+                    schedules.push(new OrderSchedule({
+                        bookedTimes: [DateUtils.toDate(config.singleValue)], // Assuming singleValue holds the date
+                        productId: item.productId,
+                        orderId: this.id,
+                        calendarId: config.calendarId,
+                        note: note
+                    })
+                    );
+                } else if (config.type === AddonInputType.DATE_RANGE_INPUT) {
+                    config.multipleValue?.forEach(date => {
+                        schedules.push(new OrderSchedule({
+                            bookedTimes: [DateUtils.toDate(date)],
+                            productId: item.productId,
+                            orderId: this.id,
+                            calendarId: config.calendarId,
+                            note: note
+                        }));
+                    });
+                }
+            });
+        });
+
+        return schedules;
+    }
+
+
+
+
 
     // static createOrderInfo(userId: string, orderInfo: CreateOrderInput) {
     //     return new Order({
@@ -129,6 +197,10 @@ export class Order {
     //     });
     // }
 }
+
+
+
+
 
 export class OrderBuilder {
     private order: Order;
@@ -193,9 +265,10 @@ export class OrderBuilder {
         return this;
     }
 
-    withAdditionalInfo({ orderNumber, note }: { orderNumber?: number, note?: string }) {
+    withAdditionalInfo({ orderNumber, note, businessName }: { orderNumber?: number, note?: string, businessName?: LocalizedFieldInput[] }) {
         this.order.orderNumber = orderNumber;
         this.order.note = note;
+        this.order.businessName = businessName?.map(name => new LocalizedField(name))
         this.order.code = this.generateOrderCode().toString();
         return this;
     }

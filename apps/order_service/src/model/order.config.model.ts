@@ -1,5 +1,5 @@
 import { LocalizedField } from "@app/common/model/localized_model";
-import { Directive, Field, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, Float, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { types } from "joi";
 import { CreateOrderConfigInput } from "../dto/order_config.input";
 
@@ -24,6 +24,10 @@ export class OrderConfig {
     productIds?: string[];
     @Field({ defaultValue: 0 })
     additionalPrice: number;
+    @Field(type => Float, { defaultValue: 0 })
+    finalPrice: number;
+    @Field()
+    calendarId?: string;
     @Field()
     addonId?: string;
 

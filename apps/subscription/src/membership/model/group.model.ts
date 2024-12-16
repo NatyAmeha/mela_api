@@ -49,7 +49,10 @@ export class Group {
 @ObjectType()
 @Directive('@shareable')
 export class GroupMember {
+    @Field()
     userId: string;
+    @Field()
+    phoneNumber: string;
     @Field(type => User)
     user?: User
     memberStatus: string
@@ -64,7 +67,23 @@ export class GroupMember {
         Object.assign(this, data)
     }
 
-    static getGroupMembers(userId: string[], memberStatus: GroupMemberStatus = GroupMemberStatus.PENDING, activeSubscriptionId?: string, paymentMethod?: PaymentMethod) {
-        return userId.map(userId => new GroupMember({ userId, memberStatus: memberStatus, activeSubscriptionId: activeSubscriptionId, dateJoined: new Date(), paymentMethod: paymentMethod }))
+    static getGroupMembers({ userId, phoneNumber, memberStatus, activeSubscriptionId, paymentMethod }: { userId?: string[], phoneNumber?: string, memberStatus: GroupMemberStatus, activeSubscriptionId?: string, paymentMethod?: PaymentMethod }) {
+        if (userId) {
+            return userId.map(userId => new GroupMember({
+                userId,
+                phoneNumber,
+                memberStatus: memberStatus,
+                activeSubscriptionId: activeSubscriptionId,
+                dateJoined: new Date(),
+                paymentMethod: paymentMethod
+            }))
+        }
+        return [new GroupMember({
+            phoneNumber,
+            memberStatus: memberStatus,
+            activeSubscriptionId: activeSubscriptionId,
+            dateJoined: new Date(),
+            paymentMethod: paymentMethod
+        })]
     }
 }

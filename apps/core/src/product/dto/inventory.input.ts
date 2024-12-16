@@ -1,16 +1,15 @@
 import { Field, InputType, Int, OmitType, PartialType } from "@nestjs/graphql";
-import { Inventory } from "../../inventory/model/inventory.model";
-import { PriceInfo } from "apps/subscription/src/model/price.model";
 import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from "class-validator";
 import { types } from "joi";
 import { Type } from "class-transformer";
+import { Price, PriceInput } from "@app/common/model/price.model";
 
 @InputType()
 export class CreateInventoryInput {
-    @Field(types => [PriceInfo])
-    @Type(() => PriceInfo)
+    @Field(types => [PriceInput])
+    @Type(() => PriceInput)
     @IsArray()
-    priceInfo: PriceInfo[];
+    priceInfo: PriceInput[];
     @Field()
     @IsNumber()
     @Min(1)

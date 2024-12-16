@@ -15,6 +15,7 @@ export interface IBranchRepository {
 
     getBusinessBranches(businessId: string): Promise<Branch[]>;
     getProductBranchs(productId: string): Promise<Branch[]>;
+    getStaffBranches(staffId: string): Promise<Branch[]>;
 
     getBranchInfoForStaff(staffId: string): Promise<Branch>;
 }
@@ -68,6 +69,16 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
         } catch (error) {
             if (error instanceof RequestValidationException) throw error;
             throw new PrismaException({ source: "Get branch", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
+        }
+    }
+
+    async getStaffBranches(staffId: string): Promise<Branch[]> {
+        try {
+            const result = await this.staff.findUnique({ where: { id: staffId } }).branch();
+            return result ? [new Branch({ ...result })] : [];
+        } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
+            throw new PrismaException({ source: "Get staff branches", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
         }
     }
 

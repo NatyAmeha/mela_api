@@ -14,6 +14,7 @@ import { ClassDecoratorValidator } from "@app/common/validation_utils/class_deco
 
 @Injectable()
 export class CustomerService {
+
     constructor(
         @Inject(CustomerRepository.injectName) private customerRepository: ICustomerRepository,
         @Inject(LoyaltyRepository.injectName) private loyaltyRepository: ILoyaltyRepository,
@@ -58,4 +59,13 @@ export class CustomerService {
         const customerInfo = await this.customerRepository.getBusinessCustomer(customerId, businessId)
         return new CustomerResponseBuilder().withCustomer(customerInfo).build()
     }
+
+    async getOrderCustomer(userId?: string, customerPhoneNumber?: string) {
+        if (userId) {
+            const result = await this.customerRepository.getCustomerByUserIdOrPhoneNumber(userId, customerPhoneNumber)
+            return result
+        }
+        return null
+    }
+
 }

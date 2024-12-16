@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Injectable, OnModuleDestroy, OnModuleInit, Scope } from "@nestjs/common";
 import { Order, OrderStatus } from "../model/order.model";
 import { PrismaClient } from "apps/order_service/prisma/generated/prisma_order_client";
 import { PrismaException } from "@app/common/errors/prisma_exception";
@@ -37,14 +37,12 @@ export class OrderRepository extends PrismaClient implements OnModuleInit, OnMod
 
     async createOrderInfo(orderInfo: Order): Promise<Order> {
         try {
-            const { paymentMethods, ...orderData } = orderInfo
+            const { paymentMethods, schedules, ...orderData } = orderInfo
             const orderCreateResult = await (this.transactionClient ?? this).order.create({ data: { ...orderData, paymentMethods: paymentMethods } })
             return new Order({ ...orderCreateResult })
         } catch (ex) {
             console.log(ex)
             throw new PrismaException({ message: ex.message, code: ex.code, meta: ex.meta })
-        } finally {
-            this.removeTransactionClient()
         }
     }
 

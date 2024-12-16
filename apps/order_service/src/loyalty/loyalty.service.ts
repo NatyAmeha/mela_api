@@ -24,11 +24,11 @@ export class LoyaltyService {
 
     async getCustomerLoyalties(userId: string): Promise<LoyaltyResponse> {
         let response = new LoyaltyResponseBuilder()
-        const customer = await this.customerRepo.getCustomerByUserId(userId)
-        if (!customer) {
+        const customers = await this.customerRepo.getCustomersByUserId(userId)
+        if (!customers || customers.length === 0) {
             return response.withCustomerLoyalties([]).build()
         }
-        const customerLoyalties = await this.loyaltyRepo.getCustomerLoyalties(customer.id)
+        const customerLoyalties = await this.loyaltyRepo.getLoyaltiesByCustomerIds(customers.map(customer => customer.id))
         return response.withCustomerLoyalties(customerLoyalties).build()
     }
 
@@ -37,6 +37,7 @@ export class LoyaltyService {
         let response = new LoyaltyResponseBuilder().withRewards(rewardResults)
         if (currentUserId) {
             const customerResult = await this.customerRepo.getBusinessCustomer(currentUserId, businessId)
+            console.log('customerResult', businessId, customerResult,)
             if (customerResult?.id) {
                 const customerLoyalty = await this.loyaltyRepo.getCustomerLoyalty(customerResult.id, businessId)
                 response = response.withCustomerLoyalty(customerLoyalty).withCustomer(customerResult)

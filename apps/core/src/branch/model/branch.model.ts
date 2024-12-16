@@ -2,7 +2,7 @@ import { Product } from "../../product/model/product.model";
 import { Address, AddressInput } from "../../business/model/address.model";
 
 import { Staff, StaffInput } from "../../staff/model/staff.model";
-import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, ID, InputType, Directive } from '@nestjs/graphql';
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Business } from "../../business/model/business.model";
 import { InventoryLocation } from "../../inventory/model/inventory_location.model";
@@ -12,6 +12,7 @@ import { ProductPrice } from "../../product/model/product_price.model";
 import { PaymentOption } from "../../business/model/payment_option.model";
 
 @ObjectType()
+@Directive('@shareable')
 export class Branch {
     @Field(types => ID)
     id?: string;
@@ -64,7 +65,7 @@ export class Branch {
 
     @Field(types => [PriceList])
     priceLists?: PriceList[]
-    
+
     @Field(type => [PaymentOption])
     paymentOptions?: PaymentOption[]
 

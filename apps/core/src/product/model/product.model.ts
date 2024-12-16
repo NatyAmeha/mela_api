@@ -17,10 +17,12 @@ import { ProductPrice } from "./product_price.model";
 import { Discount } from "./discount.model";
 import { Membership } from "apps/subscription/src/membership/model/memberhip.model";
 import { SearchResult, SearchType } from "../../search/model/search.model";
+import { Calendar } from "../../calendar/model/calendar.model";
 
 @ObjectType()
 @Directive('@extends')
 @Directive('@key(fields: "id")')
+@Directive('@shareable')
 export class Product extends BaseModel {
     @Field(types => String)
     id?: string;
@@ -66,8 +68,8 @@ export class Product extends BaseModel {
     @Field(types => [String])
     category: string[];
 
-    @Field(types => ProductType)
-    type: string;
+    @Field(types => ProductType, { defaultValue: "PRODUCT" })
+    type?: string;
 
     @Field(types => Date)
     createdAt?: Date;
@@ -127,6 +129,9 @@ export class Product extends BaseModel {
 
     @Field(type => [Discount])
     discounts?: Discount[]
+
+    @Field(type => [Calendar])
+    calendars?: Calendar[]
 
 
     // stats

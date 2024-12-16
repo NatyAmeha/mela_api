@@ -1,4 +1,4 @@
-import { Field, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Directive, Field, ID, InputType, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { BusinessSection, CreateBusinessSectionInput } from "./business_section.model";
 import { LocalizedField, LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Gallery, GalleryInput } from "./gallery.model";
@@ -13,6 +13,8 @@ import { ProductBundle } from "../../product/model/product_bundle.model";
 import { PaymentOption } from "./payment_option.model";
 import { PriceList } from "../../product/model/price_list_.model";
 import { Discount } from "../../product/model/discount.model";
+import { BusinessOrderStatus } from "./business_order_status";
+import { Calendar } from "../../calendar/model/calendar.model";
 
 @ObjectType()
 export class Business extends BaseModel {
@@ -111,6 +113,12 @@ export class Business extends BaseModel {
 
     @Field(type => Boolean, { defaultValue: false })
     requireBranchSelection?: boolean
+
+    @Field(type => [BusinessOrderStatus], { defaultValue: BusinessOrderStatus.defaultOrderStatuses })
+    orderStatuses?: BusinessOrderStatus[]
+
+    @Field(type => [Calendar])
+    calendars?: Calendar[]
 
     platformServiceTrialPeriodUsed(platformServiceId: string) {
         return includes(this.trialPeriodUsedServiceIds, platformServiceId)

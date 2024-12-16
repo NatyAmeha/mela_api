@@ -42,6 +42,7 @@ export class LoyaltyRewardResolver {
 
     @Query(returns => LoyaltyResponse)
     async getCustomerBusinessLoyality(@Args("businessId") businessId: string, @CurrentUser() user?: User): Promise<LoyaltyResponse> {
+        console.log("user id ", user?.id)
         let result = await this.loyaltyService.getBusinessRewards(businessId, user?.id);
         return result;
     }

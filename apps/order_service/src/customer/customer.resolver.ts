@@ -16,6 +16,7 @@ export class CustomerResolver {
     @RequiresPermission({
         permissions: [
             { resourceType: AppResources.CUSTOMER, action: PERMISSIONACTION.CREATE },
+            { resourceType: AppResources.POS, action: PERMISSIONACTION.ANY },
             { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" }
         ],
     })

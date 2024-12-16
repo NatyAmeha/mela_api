@@ -48,7 +48,7 @@ export class CreateOrderItemInput {
 @InputType()
 export class OrderItemDiscountInput {
     @Field(types => [LocalizedFieldInput])
-    name: LocalizedFieldInput[]
+    name?: LocalizedFieldInput[]
     @Field(types => Float)
     amount: number
 

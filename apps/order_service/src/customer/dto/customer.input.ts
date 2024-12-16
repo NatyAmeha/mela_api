@@ -6,7 +6,7 @@ export class CreateCustomerInput {
     @Field()
     name: string;
     @Field()
-    userId: string;
+    userId?: string;
     @Field()
     phoneNumber: string;
     @Field()

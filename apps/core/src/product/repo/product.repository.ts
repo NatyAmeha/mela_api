@@ -75,7 +75,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async createProduct(product: Product): Promise<Product> {
         try {
             const createdProduct = await this.$transaction(async (prisma) => {
-                const { businessId, branchIds, inventory, prices, ...productData } = product;
+                const { businessId, branchIds, inventory, calendars, prices, ...productData } = product;
                 const result = await prisma.product.create({
                     data: {
                         ...productData,
@@ -102,7 +102,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async getProductById(productId: string): Promise<Product> {
         try {
             const product = await this.product.findUnique({
-                where: { id: productId },
+                where: { id: productId }, include: { calendars: true }
             });
             return new Product({ ...product });
         } catch (error) {
@@ -113,12 +113,11 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
     async getProductsById(productIds: string[]): Promise<Product[]> {
         try {
             const products = await this.product.findMany({
-                where: {
-                    id: { in: productIds }
-                }
+                where: { id: { in: productIds } }, include: { calendars: true }
             });
             return products?.map(product => new Product({ ...product }));
         } catch (error) {
+            console.log(error)
             throw new PrismaException({ source: "Get products by id", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
@@ -127,7 +126,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
         try {
             const createdProducts = await this.$transaction(async (prisma) => {
                 const productResults = await Promise.all(products?.map(async (product) => {
-                    const { businessId, branchIds, inventory, prices, ...productData } = product;
+                    const { businessId, branchIds, inventory, prices, calendars, ...productData } = product;
                     const { inventoryLocation, inventoryLocationId, ...restInventoryInfo } = inventory[0];
                     const productCreateResult = await prisma.product.create({
                         data: {
@@ -179,7 +178,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
 
     async updateProduct(productId: string, productInfo: Partial<Product>): Promise<Product> {
         try {
-            const { businessId, business, branches, branchIds, inventory, addons, prices, ...productData } = productInfo;
+            const { businessId, business, branches, branchIds, inventory, addons, calendars, prices, ...productData } = productInfo;
             const result = await this.product.update({
                 where: { id: productId },
                 data: { ...productData }
@@ -260,6 +259,7 @@ export class ProductRepository extends PrismaClient implements OnModuleInit, OnM
                 take: query?.limit,
                 // ...query.query as any
             });
+            console.log("products", products)
             return products?.map(product => new Product({ ...product }));
         } catch (error) {
             throw new PrismaException({ source: "Get branch products", statusCode: 400, code: error.code, meta: error.meta });

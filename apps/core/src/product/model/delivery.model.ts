@@ -1,8 +1,9 @@
-import { Field, Float, ID, InputType, Int, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, Float, ID, InputType, Int, ObjectType } from "@nestjs/graphql";
 import { IsNotEmpty, IsNumber, ValidateIf } from "class-validator";
 
 
 @ObjectType()
+@Directive('@shareable')
 export class DeliveryInfo {
     @Field(types => ID)
     id?: string

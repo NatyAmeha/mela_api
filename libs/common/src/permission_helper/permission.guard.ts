@@ -6,7 +6,8 @@ import { RequestValidationException } from "../errors/request_validation_excepti
 import { User } from "apps/auth/src/auth/model/user.model";
 import { Access, Permission } from "apps/auth/src/authorization/model/access.model";
 import { BasePermissionHelper } from "./permission_helper";
-import { PermissionConfiguration, RequestedPermissionInfo } from "./require_permission.decorator";
+import { PermissionCheckType, PermissionConfiguration, PermissionSelectionCriteria, RequestedPermissionInfo } from "./require_permission.decorator";
+import { includes, some } from "lodash";
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -34,16 +35,35 @@ export class PermissionGuard implements CanActivate {
 
 
         let accesses = JSON.parse(gqlContext.req.headers.accesses as string) as Access[]
+        const userRoles = accesses?.map(access => access.role)
         let requestedPermissionConfig: PermissionConfiguration = this.reflector.get<PermissionConfiguration>(PermissionGuard.PERMISSION_CONFIGURATION, context.getHandler())
         if (!requestedPermissionConfig) {
             throw new RequestValidationException({ message: "Access is not provided", statusCode: 400 })
         }
+        const requestedRoles = requestedPermissionConfig.permissions?.map(permission => permission.role)
+
+        const selectionCriteria = requestedPermissionConfig.selectionCriteria || PermissionSelectionCriteria.ANY
+        const checkType = requestedPermissionConfig.checkType || PermissionCheckType.PERMISSION
+        console.log('role check', selectionCriteria, requestedRoles, userRoles,)
+        let isGrantedByRole = false;
+        isGrantedByRole = selectionCriteria == PermissionSelectionCriteria.ANY ? requestedRoles.some(role => userRoles.includes(role)) : requestedRoles.every(role => userRoles.includes(role))
 
         let resourceTarget = this.helper.getResourceTargetFromArgument(gql);
         let requiredPermissionWithResourceTarget = this.helper.addResourceTargetOnRequestedPermissions(requestedPermissionConfig, resourceTarget);
-
         let permissions = accesses?.map(access => access.permissions).flat()
-        return this.helper.isPermissionsGranted(permissions, requiredPermissionWithResourceTarget)
+        const isPermissionGranted = this.helper.isPermissionsGranted(permissions, requiredPermissionWithResourceTarget);
+        console.log('permission check', checkType, isGrantedByRole, isPermissionGranted)
+        if (checkType == PermissionCheckType.ROLE) {
+            return isGrantedByRole
+        }
+
+        else if (checkType == PermissionCheckType.ROLE_AND_PERMISSION) {
+            return isGrantedByRole && isPermissionGranted
+        }
+        return isPermissionGranted
+
+
+
     }
 
 

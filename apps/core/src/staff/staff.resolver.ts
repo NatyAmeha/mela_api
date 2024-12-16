@@ -9,6 +9,12 @@ import { BranchService } from "../branch/usecase/branch.service";
 import { Branch } from "../branch/model/branch.model";
 import { CoreServiceMsgBrockerClient } from "../msg_brocker_client/core_service_msg_brocker";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { PermissionCheckType, PermissionSelectionCriteria, RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
+import { DefaultRoles } from "apps/auth/src/authorization/model/access.model";
+import { UseGuards } from "@nestjs/common";
+import { PermissionGuard } from "@app/common/permission_helper/permission.guard";
+import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
+import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 
 @Resolver(of => Staff)
 export class StaffResolver {
@@ -28,6 +34,7 @@ export class StaffResolver {
         let staffInfo = CreateStaffInput.toStaff(staffInput);
         if (staffInfo.requireBranchAssignment()) {
             let staffUserAndAccessCreateResult = await this.coreServiceMsgBrocker.sendCreateStaffUserAndAccessMessage(staffInput);
+            console.log('staffUserAndAccessCreateResult', staffUserAndAccessCreateResult)
             if (!staffUserAndAccessCreateResult.success) {
                 throw new RequestValidationException({ message: staffUserAndAccessCreateResult.message })
             }
@@ -37,8 +44,24 @@ export class StaffResolver {
     }
 
     @Mutation(returns => StaffResponse)
-    async authenticateStaff(@Args('phoneNumber') phoneNumber: string, @Args('pin') pin: number, @Args('branchId') branchId: string, @Args('businessId') businessId: string): Promise<StaffResponse> {
-        const staffResponse = await this.staffService.authenticateStaff(phoneNumber, pin, branchId, businessId);
+    async authenticateStaff(@Args('phoneNumber') phoneNumber: string, @Args('businessId') businessId: string, @Args({ name: "pin", nullable: true }) pin?: number): Promise<StaffResponse> {
+        console.log('phoneNumber', phoneNumber, 'businessId', businessId, 'pin', pin)
+        const staffResponse = await this.staffService.authenticateStaff(phoneNumber, businessId, pin);
+        return staffResponse;
+    }
+
+    @Mutation(returns => StaffResponse)
+    @RequiresPermission({
+        permissions: [{ role: DefaultRoles.MANAGER, }, { role: DefaultRoles.BUSINESS_OWNER },
+        { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" },
+        { resourceType: AppResources.POS, action: PERMISSIONACTION.ANY, resourcTargetName: "branchId" }],
+        selectionCriteria: PermissionSelectionCriteria.ANY,
+        checkType: PermissionCheckType.ROLE_AND_PERMISSION
+    })
+    @UseGuards(PermissionGuard)
+    async checkManagerAccessToBranch(@Args('businessId') businessId: string, @Args('branchId') branchId: string, @Args('phoneNumber') phoneNumber: string): Promise<StaffResponse> {
+        const staffResponse = await this.staffService.checkManagerAccessToBranch(businessId, branchId, phoneNumber);
+
         return staffResponse;
     }
 
@@ -53,11 +76,8 @@ export class StaffResolver {
 
     @Query(returns => StaffResponse)
     async getBranchStaffs(@Args('branchId') branchId: string): Promise<StaffResponse> {
-        const staffs = await this.staffService.getBranchStaffs(branchId);
-        return {
-            success: true,
-            staffs: staffs
-        }
+        const staffResponse = await this.staffService.getBranchStaffs(branchId);
+        return staffResponse;
     }
 
     @Mutation(returns => StaffResponse)

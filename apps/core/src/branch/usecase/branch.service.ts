@@ -59,6 +59,11 @@ export class BranchService {
         return await this.branchRepo.getBranch(branchId);
     }
 
+    async getStaffBranches(staffId: string): Promise<BranchResponse> {
+        const result = await this.branchRepo.getStaffBranches(staffId);
+        return new BranchResponseBuilder().withBranches(result).build();
+    }
+
     async getBranchDetails(businessId: string, branchId: string): Promise<BranchResponse> {
         const branchResult = await this.branchRepo.getBranch(branchId);
         const branchProducts = await this.productRepository.getBranchProducts(branchId);

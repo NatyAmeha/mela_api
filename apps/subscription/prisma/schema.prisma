@@ -21,6 +21,7 @@ model SubscriptionPlan {
     type          String
     subscriptions Subscription[]
     owner         String?          @db.ObjectId
+    ownerName     String?
     isActive      Boolean          @default(true)
     createdAt     DateTime         @default(now())
     updatedAt     DateTime         @default(now())
@@ -69,6 +70,7 @@ model Membership {
     trialPeriod       Int              @default(0)
     type              String
     owner             String
+    ownerName         String?
     isActive          Boolean          @default(true)
     groupsId          String[]
     membersProductIds String[]         @default([])
@@ -142,7 +144,8 @@ type Benefit {
 }
 
 type GroupMember {
-    userId               String
+    userId               String?
+    phoneNumber          String?
     memberStatus         String
     activeSubscriptionId String?        @db.ObjectId
     paymentMethod        PaymentMethod?
@@ -172,7 +175,7 @@ type Discount {
     type           String
     value          Float?
     condition      String
-    conditionValue Float?
+    conditionValue String?
     startDate      DateTime?
     endDate        DateTime?
 }

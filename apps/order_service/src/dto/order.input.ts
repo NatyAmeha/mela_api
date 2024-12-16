@@ -1,10 +1,10 @@
 import { Field, Float, InputType } from "@nestjs/graphql";
-import { OrderStatus, OrderType } from "../model/order.model";
 import { CreateOrderItemInput, OrderItemDiscountInput, OrderPaymentMethodInput } from "./order_item.input";
 import { Type } from "class-transformer";
 import { ArrayNotEmpty, IsNotEmpty, ValidateIf, ValidateNested } from "class-validator";
 import { PaymentOptionType } from "apps/core/src/business/model/payment_option.model";
 import { CreateOrderConfigInput } from "./order_config.input";
+import { LocalizedFieldInput } from "@app/common/model/localized_model";
 
 @InputType()
 export class CreateOrderInput {
@@ -15,6 +15,10 @@ export class CreateOrderInput {
     @Type(() => CreateOrderItemInput)
     @ArrayNotEmpty()
     items: CreateOrderItemInput[]
+
+    @Field(types => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    businessName?: LocalizedFieldInput[]
 
     @Field()
     orderNumber?: number

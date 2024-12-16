@@ -17,6 +17,7 @@ import { LoyaltyService } from './loyalty/loyalty.service';
 import { CustomerRepository } from './customer/repo/customer.repository';
 import { LoyaltyRewardResolver } from './loyalty/loyalty_reward.resolver';
 import { CustomerResolver } from './customer/customer.resolver';
+import { OrderScheduleRepository } from './repo/schedule.repository';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { CustomerResolver } from './customer/customer.resolver';
     { provide: CartRepository.injectName, useClass: CartRepository },
     { provide: LoyaltyRepository.injectName, useClass: LoyaltyRepository },
     { provide: CustomerRepository.injectName, useClass: CustomerRepository },
+    { provide: OrderScheduleRepository.injectName, useClass: OrderScheduleRepository },
 
     OrderService, OrderResolver, CustomerService, LoyaltyService, LoyaltyRewardResolver, CustomerResolver
   ],

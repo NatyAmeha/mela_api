@@ -1,6 +1,7 @@
-import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, ID, InputType, Directive } from '@nestjs/graphql';
 
 @ObjectType()
+@Directive('@shareable')
 export class Address {
     @Field(types => ID)
     id?: string;

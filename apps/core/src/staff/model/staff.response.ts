@@ -4,6 +4,8 @@ import { Field, ObjectType } from "@nestjs/graphql";
 
 @ObjectType()
 export class StaffResponse extends BaseResponse {
+    @Field(type => String, { nullable: true })
+    accessToken?: string;
     @Field(type => Staff, { nullable: true })
     staff?: Staff;
     @Field(type => [Staff], { nullable: true })

@@ -35,3 +35,8 @@ export class CommonProductErrorMessages {
 export class CommonCustomerErrorMessages {
     static CUSTOMER_ALREADY_EXIST = "Customer already exist";
 }
+
+export class CommonCalendarErrorMessages {
+    static CREATE_CALENDAR_FAILED = "Create calendar failed";
+}
+

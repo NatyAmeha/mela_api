@@ -22,28 +22,43 @@ model Cart {
 }
 
 model Order {
-    id              String               @id @default(auto()) @map("_id") @db.ObjectId
-    orderNumber     Int?
+    id                  String               @id @default(auto()) @map("_id") @db.ObjectId
+    orderNumber         Int?
     // orderType       String
-    status          String
-    items           OrderItem[]
-    userId          String?              @db.ObjectId
-    paymentType     String
-    remainingAmount Float?
-    subTotal        Float
-    discount        OrderItemDiscount[]
-    totalAmount     Float?
-    paidAmount      Float?
-    paymentMethods  OrderPaymentMethod[]
-    config          OrderConfig[]
+    status              String
+    items               OrderItem[]
+    userId              String?              @db.ObjectId
+    paymentType         String
+    remainingAmount     Float?
+    subTotal            Float
+    discount            OrderItemDiscount[]
+    totalAmount         Float?
+    paidAmount          Float?
+    paymentMethods      OrderPaymentMethod[]
+    config              OrderConfig[]
+    customerPhoneNumber String?
+    isOnlineOrder       Boolean              @default(false)
+    note                String?
+    code                String?
+    businessId          String[]
+    businessName        LocalizedField[]
+    branchId            String?              @db.ObjectId
+    createdAt           DateTime             @default(now())
+    updatedAt           DateTime             @updatedAt
+    schedules           OrderSchedule[]
+}
 
-    isOnlineOrder Boolean  @default(false)
-    note          String?
-    code          String?
-    businessId    String[]
-    branchId      String?  @db.ObjectId
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
+model OrderSchedule {
+    id          String           @id @default(auto()) @map("_id") @db.ObjectId
+    calendarId  String?          @db.ObjectId
+    bookedTimes DateTime[]
+    productId   String?
+    orderId     String           @db.ObjectId
+    order       Order            @relation(fields: [orderId], references: [id])
+    status      String?
+    note        LocalizedField[]
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
 }
 
 model Customer {
@@ -101,19 +116,20 @@ model RedeemedReward {
 }
 
 type OrderItem {
-    id        String              @default(uuid())
-    name      LocalizedField[]
-    quantity  Float
-    branchId  String?             @db.ObjectId
-    image     String
-    productId String              @db.ObjectId
-    subTotal  Float
-    tax       Float?
-    discount  OrderItemDiscount[]
-    point     Float?              @default(0)
-    createdAt DateTime            @default(now())
-    updatedAt DateTime?
-    config    OrderConfig[]
+    id         String              @default(uuid())
+    name       LocalizedField[]
+    quantity   Float
+    branchId   String?             @db.ObjectId
+    image      String
+    productId  String              @db.ObjectId
+    calendarId String?
+    subTotal   Float
+    tax        Float?
+    discount   OrderItemDiscount[]
+    point      Float?              @default(0)
+    createdAt  DateTime            @default(now())
+    updatedAt  DateTime?
+    config     OrderConfig[]
 }
 
 type OrderConfig {
@@ -123,7 +139,9 @@ type OrderConfig {
     singleValue     String?
     multipleValue   String[]
     productIds      String[]
+    calendarId      String?
     additionalPrice Float            @default(0)
+    finalPrice      Float            @default(0)
     addonId         String?
 }
 

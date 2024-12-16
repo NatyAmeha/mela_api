@@ -18,6 +18,10 @@ export class OrderItem {
     image: string
     @Field()
     productId: string
+
+    @Field()
+    calendarId?: string
+
     @Field()
     subTotal: number
     @Field()

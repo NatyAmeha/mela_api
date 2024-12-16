@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Injectable, OnModuleDestroy, OnModuleInit, Scope } from "@nestjs/common";
 import { Membership } from "../model/memberhip.model";
 import { PrismaClient } from '@prisma/client'
 import { Group, GroupMember, GroupMemberStatus } from "../model/group.model";
@@ -7,6 +7,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { keyBy, result, uniq, uniqBy, update } from "lodash";
 import { Subscription } from "../../model/subscription.model";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
+import { PaymentMethod } from "../../model/payment_method";
 
 export interface IMembershipRepository {
     createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[]): Promise<Membership>
@@ -28,7 +29,7 @@ export interface IMembershipRepository {
     leaveGroups(groupIds: string[], userIds: string[]): Promise<boolean>
     updateGroupMembersInfos(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean>
 
-    approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription): Promise<boolean>
+    approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription, paymentMethod?: PaymentMethod): Promise<GroupMember[]>
 
     getUserMemberships(userId: string): Promise<Membership[]>
 
@@ -267,6 +268,7 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
                     const groupResult = await prisma.group.findUnique({ where: { id: groupId } })
                     if (groupResult) {
                         const updatedMembers = groupResult.members.map(member => {
+                            console.log("group group result", groupIds, membersInfo)
                             const updatedMemberInfo = membersInfo.find(m => m.userId == member.userId)
                             if (updatedMemberInfo) {
                                 return { ...member, ...updatedMemberInfo }
@@ -295,8 +297,9 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         }
     }
 
-    async approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription): Promise<boolean> {
+    async approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription, paymentMethod?: PaymentMethod): Promise<GroupMember[]> {
         try {
+            console.log("membershipId", membershipId, "userIds", userIds, "subscriptionInfo", subscriptionInfo, "paymentMethod", paymentMethod)
             const transactionResult = await this.$transaction(async (prisma) => {
                 const { plan, subscriptioinPlanId, ...resetSubscriptionInfo } = subscriptionInfo
                 const subscriptionCreateResult = await prisma.subscription.create({ data: { ...resetSubscriptionInfo } });
@@ -306,14 +309,14 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
                 const groupResult = await prisma.group.findMany({ where: { membershipId: membershipId } })
                 if (groupResult) {
                     const groupIds = groupResult.map(group => group.id)
-                    const membersInfo = GroupMember.getGroupMembers(userIds, GroupMemberStatus.ACTIVE, subscriptionCreateResult.id)
+                    const membersInfo = GroupMember.getGroupMembers({ userId: userIds, memberStatus: GroupMemberStatus.ACTIVE, activeSubscriptionId: subscriptionCreateResult.id, paymentMethod: paymentMethod })
                     const groupJoinResult = await this.updateGroupMembersInfos(groupIds, membersInfo)
-                    return groupJoinResult
+                    return membersInfo
                 }
 
-                return false;
+                return [];
             });
-            return true
+            return transactionResult;
         } catch (ex) {
             console.log("error", ex);
             throw new PrismaException({ message: " Unable to approve user membership request", exception: ex })
@@ -340,7 +343,8 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         const allMembers = userGroups.map(group => group.members).flat()
         const uniqueMembers = uniq(allMembers) as GroupMember[]
         const groupMembers = uniqueMembers.map(member => new GroupMember({ ...member }))
-        const activeSubscription = await this.subscription.findMany({ where: { id: { in: groupMembers.map(member => member.activeSubscriptionId) } } })
+        const membersActiveSubscriptionIds = groupMembers.map(member => member.activeSubscriptionId).filter(id => id != null)
+        const activeSubscription = await this.subscription.findMany({ where: { id: { in: membersActiveSubscriptionIds } } })
         const subscriptionMap = keyBy(activeSubscription, 'id')
         groupMembers?.forEach(member => {
             member.activeSubscription = new Subscription({ ...subscriptionMap[member.activeSubscriptionId] })
