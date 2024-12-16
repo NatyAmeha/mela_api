@@ -3,6 +3,7 @@ import { User } from "./user.model";
 import { ConfigService } from "@nestjs/config";
 import { ACCESS_TOKEN, ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN, REFRESH_TOKEN_EXPIRES_IN } from "apps/auth/auth_configuration";
 import { BaseResponse } from "@app/common/model/base.response";
+import { Access } from "../../authorization/model/access.model";
 
 @ObjectType()
 export class AuthResponse extends BaseResponse {
@@ -15,10 +16,16 @@ export class AuthResponse extends BaseResponse {
     refreshToken?: string
     @Field()
     isNewUser?: boolean
+    @Field(types => [Access])
+    accesses?: Access[]
 
     constructor(data: Partial<AuthResponse>) {
         super()
         Object.assign(this, data)
+    }
+
+    isUserExist() {
+        return this.user && this.user.id
     }
 
     static getEnvVariableForAuth(configService: ConfigService) {

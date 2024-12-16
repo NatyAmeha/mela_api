@@ -5,4 +5,5 @@ export class AuthInfo {
     email?: string
     password?: string
     phoneNumber?: string
+    accountType?: string
 }

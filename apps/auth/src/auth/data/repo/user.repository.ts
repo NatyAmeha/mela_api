@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 
-import { FavoriteBusinessInfo, User } from "../../model/user.model";
+import { AccountType, FavoriteBusinessInfo, User } from "../../model/user.model";
 import { IDatasource } from "@app/common/datasource_helper/datasource.interface";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
@@ -15,6 +15,7 @@ export abstract class IUserRepository {
     abstract updateUserInfo(userId: string, userInfo: Partial<User>): Promise<User>
     abstract addBusinessToFavorites(userId: string, businessInfos: FavoriteBusinessInfo[]): Promise<boolean>
     abstract removeBusinessFromFavorites(userId: string, businessIds: string[])
+    abstract getStaffUserByPhoneNumber(phoneNumber: string): Promise<User | undefined>
 }
 @Injectable()
 export class UserRepository extends PrismaClient implements IUserRepository, OnModuleInit, OnModuleDestroy {
@@ -37,11 +38,20 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
     }
 
     async getUser(userQuery: Partial<User>): Promise<User | undefined> {
-        var userInfo = await this.user.findFirst({ where: { ...userQuery as any } })
-        if (!userInfo.id) {
-            throw new RequestValidationException({ message: "Incorrect query data provided" })
+        try {
+            var userInfo = await this.user.findFirst({ where: { ...userQuery as any } })
+            if (!userInfo) {
+                return undefined
+            }
+            return new User({ ...userInfo });
         }
-        return new User({ ...userInfo });
+        catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error
+            }
+            console.log(error)
+            throw new PrismaException({ message: error.message, statusCode: 500, exception: error })
+        }
     }
 
     async updateUserInfo(userId: string, userInfo: Partial<User>): Promise<User> {
@@ -93,6 +103,17 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
         }
         catch (ex) {
             throw new PrismaException({ message: ex.message, statusCode: 500, exception: ex })
+        }
+    }
+
+    async getStaffUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
+        try {
+            const user = await this.user.findFirst({ where: { phoneNumber, OR: [{ accountType: AccountType.STAFF }, { accountType: AccountType.BUSINESS_OWNER }], } })
+            return user ? new User({ ...user }) : undefined
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({ message: error.message, statusCode: 500, exception: error })
+
         }
     }
 

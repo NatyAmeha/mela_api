@@ -11,7 +11,9 @@ import { Type } from "class-transformer";
 export enum AccountType {
     USER = "USER",
     ADMIN = "ADMIN",
-    SUPERADMIN = "SUPPERADMIN"
+    SUPERADMIN = "SUPPERADMIN",
+    STAFF = "STAFF",
+    BUSINESS_OWNER = "BUSINESS_OWNER"
 }
 
 registerEnumType(AccountType, {
@@ -81,10 +83,11 @@ export class User extends BaseModel {
         })
     }
 
-    static createUserInfoForPhoneAuth(phone: string) {
+    static createUserInfoForPhoneAuth(phone: string, accountType: AccountType) {
         return new User({
             phoneNumber: phone,
-            isEmailPlaceholder: true
+            isEmailPlaceholder: true,
+            accountType: accountType
         })
     }
 

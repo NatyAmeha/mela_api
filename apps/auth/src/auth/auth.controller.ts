@@ -13,9 +13,7 @@ export class AuthController {
         try {
             console.log('userId', userId)
             var userResult = await this.authservice.getUserInfo(userId)
-            console.log('userResult', userResult)
             let userAccesses = await this.authorizationService.getAllUserAccesses(userId)
-
             return new UserResponse({ user: userResult, accesses: userAccesses })
         } catch (error) {
             console.log('error', error)

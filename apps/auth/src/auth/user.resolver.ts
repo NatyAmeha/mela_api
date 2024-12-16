@@ -1,5 +1,5 @@
 import { Args, Int, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
-import { FavoriteBusienssInput, FavoriteBusinessInfo, User } from "./model/user.model";
+import { AccountType, FavoriteBusienssInput, FavoriteBusinessInfo, User } from "./model/user.model";
 import { UseGuards } from "@nestjs/common";
 import { JwtGuard } from "./service/guard/jwt.gurad";
 import { CurrentUser } from "../../../../libs/common/get_user_decorator";
@@ -26,6 +26,12 @@ export class UserResolver {
     async updateProfileInfo(@CurrentUser() currentUser: User, @Args("user") updateInput: UpdateUserInput): Promise<AuthResponse> {
         var userInfo = updateInput.getUserInfo();
         const result = await this.authService.updateUserInfo(currentUser.id!, userInfo);
+        return result;
+    }
+
+    @Query(returns => UserResponse)
+    async getUserByPhoneNumber(@Args("phoneNumber") phoneNumber: string): Promise<UserResponse> {
+        const result = await this.authService.getUserDataBy({ phoneNumber: phoneNumber, accountType: AccountType.USER });
         return result;
     }
 

@@ -8,13 +8,12 @@ import { AuthResponse } from './model/auth.response';
 import { AppException } from '@app/common/errors/app_exception.model';
 import { JwtGuard, JwtRefreshGuard } from './service/guard/jwt.gurad';
 import { CurrentUser } from '../../../../libs/common/get_user_decorator';
-import { UpdateUserInput } from './dto/update_user.input';
-import { boolean } from 'joi';
 import { AuthzGuard, Role, RoleGuard } from 'libs/common/authorization.guard';
+import { AuthorizationService } from '../authorization';
 
 @Resolver(of => User)
 export class AuthResolver {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService, private authorizationService: AuthorizationService) { }
 
   @Query(returns => User, { name: "placeholder" })
   getUser(): User {
@@ -47,8 +46,19 @@ export class AuthResolver {
 
   @Mutation(returns => AuthResponse)
   async signInWithPhoneNumber(@Args("phone") phone: string): Promise<AuthResponse> {
-    var userInfo = User.createUserInfoForPhoneAuth(phone)
+    var userInfo = User.createUserInfoForPhoneAuth(phone, AccountType.USER)
     var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(userInfo);
+    return authResponse;
+  }
+
+  @Mutation(returns => AuthResponse)
+  async generateTokenForStaff(@Args("phoneNumber") phoneNumber: string): Promise<AuthResponse> {
+    var authResponse = await this.authService.getTokenForStaff(phoneNumber);
+    if (authResponse.isUserExist()) {
+      const accesses = await this.authorizationService.getAllUserAccesses(authResponse.user.id)
+      authResponse.accesses = accesses
+    }
+
     return authResponse;
   }
 
