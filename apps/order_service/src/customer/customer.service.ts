@@ -5,12 +5,11 @@ import { Customer } from "./model/customer.model";
 import { CustomerResponse, CustomerResponseBuilder } from "./model/customer.response";
 import { Order } from "../model/order.model";
 import { User } from "apps/auth/src/auth/model/user.model";
-import { AppException } from "@app/common/errors/app_exception.model";
-import { ExceptionHelper } from "@app/common/errors/exception_helper";
 import { ILoyaltyRepository, LoyaltyRepository } from "../loyalty/repo/loyalty.repository";
 import { CreateCustomerInput } from "./dto/customer.input";
 import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
+import { PrismaTransaction } from "@app/common/datasource_helper/transaction_manager.interface";
 
 @Injectable()
 export class CustomerService {
@@ -18,7 +17,9 @@ export class CustomerService {
     constructor(
         @Inject(CustomerRepository.injectName) private customerRepository: ICustomerRepository,
         @Inject(LoyaltyRepository.injectName) private loyaltyRepository: ILoyaltyRepository,
-        @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator
+        @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator,
+        private transactionManager: PrismaTransaction
+
     ) { }
 
 
@@ -38,10 +39,13 @@ export class CustomerService {
     async handleCustomerLoyalty(currentUser: User, order: Order) {
         const businessId = order.businessId[0]
         let customerInfo = Customer.getCurrentUserAsCustomer(currentUser, businessId)
-        customerInfo = await this.customerRepository.addOrGetCustomer(customerInfo)
+        const orderCreateResult = await this.transactionManager.execute(this.customerRepository, async (transactionContext) => {
+            customerInfo = await this.customerRepository.addOrGetCustomer(customerInfo, { transactionClient: transactionContext })
+
+        })
         // deduct loyalty points from customer
         const appliedRewards = order.getAppliedRewards()
-        if (appliedRewards?.length > 0) {
+        if (appliedRewards?.length > 0 && order.usedRewardsPoints > 0) {
             const usedRewardPoints = await this.loyaltyRepository.getRewardsPoints(appliedRewards)
             const customerLoyaltyInfo = await this.loyaltyRepository.deductLoayltyPoints(customerInfo.id, customerInfo.businessId, usedRewardPoints)
             console.log('response', usedRewardPoints, customerLoyaltyInfo)
@@ -62,7 +66,7 @@ export class CustomerService {
 
     async getOrderCustomer(userId?: string, customerPhoneNumber?: string) {
         if (userId) {
-            const result = await this.customerRepository.getCustomerByUserIdOrPhoneNumber(userId, customerPhoneNumber)
+            const result = await this.customerRepository.getCustomerByUserIdOrPhoneNumber({ userId, phoneNumber: customerPhoneNumber })
             return result
         }
         return null

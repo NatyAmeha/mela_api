@@ -53,6 +53,12 @@ export class CreateOrderInput {
     @Type(() => OrderPaymentMethodInput)
     paymentMethods?: OrderPaymentMethodInput[]
 
+    @Field(types => [String])
+    appliedRewards?: string[]
+
+    @Field(types => Float)
+    usedRewardsPoints?: number
+
     @Field()
     isOnlineOrder?: boolean
 

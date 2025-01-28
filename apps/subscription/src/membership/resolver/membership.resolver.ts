@@ -107,6 +107,13 @@ export class MembershipResolver {
 
     @UseGuards(AuthzGuard)
     @Mutation(returns => MembershipResponse)
+    async renewMembership(@Args("membershipId") membershipId: string, @CurrentUser() user: User, @Args("paymentMethod") paymentMethod: PaymentMethodInput) {
+        const result = await this.membershipService.joinToMembershipGroups({ userId: user.id, membershipId: membershipId, paymentMethod: paymentMethod, onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING_RENEWAL });
+        return result;
+    }
+
+    @UseGuards(AuthzGuard)
+    @Mutation(returns => MembershipResponse)
     async createMembershipFromPOs(@Args("membershipId") membershipId: string, @Args("phoneNumber") phoneNumber: string, @Args("paymentMethod") paymentMethod: PaymentMethodInput) {
         // join membership
         const result = await this.membershipService.joinToMembershipGroups({ userId: null, membershipId: membershipId, phoneNumber: phoneNumber, paymentMethod: paymentMethod, onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING });

@@ -29,10 +29,10 @@ import * as path from 'path';
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
       useFactory: async () => {
-        const subscriptionServiceUrl = 'http://localhost:3001' //  `http://subscription-service:3001`; //  
-        const authServiceUrl = 'http://localhost:3002' // `http://auth-service:3002`; //
-        const coreServiceUrl = 'http://localhost:3003' // `http://core-service:3003`; //
-        const orderServiceUrl = 'http://localhost:3004' // `http://order-service:3004`; //
+        const subscriptionServiceUrl = `http://localhost:3001` // subscription-service
+        const authServiceUrl = `http://localhost:3002` // auth-service
+        const coreServiceUrl = `http://localhost:3003` // core-service
+        const orderServiceUrl = `http://localhost:3004` // order-service
 
         const subscriptionserviceGraphQLEndpoint = `${subscriptionServiceUrl}/graphql`
         const authserviceGraphQLEndpoint = `${authServiceUrl}/graphql`

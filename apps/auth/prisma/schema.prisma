@@ -19,6 +19,7 @@ model User {
   username              String?                @unique @default(uuid())
   firstName             String?
   lastName              String?
+  googleId              String?
   password              String?
   profileImageUrl       String?
   refreshToken          String?

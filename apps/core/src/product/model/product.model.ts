@@ -19,6 +19,16 @@ import { Membership } from "apps/subscription/src/membership/model/memberhip.mod
 import { SearchResult, SearchType } from "../../search/model/search.model";
 import { Calendar } from "../../calendar/model/calendar.model";
 
+
+@ObjectType()
+@Directive('@shareable')
+export class ProductFeaturedInfo {
+    @Field()
+    featured?: boolean
+    @Field(types => [String])
+    branchIds?: string[]
+}
+
 @ObjectType()
 @Directive('@extends')
 @Directive('@key(fields: "id")')
@@ -36,6 +46,9 @@ export class Product extends BaseModel {
 
     @Field({ defaultValue: false })
     featured: boolean
+
+    @Field(types => ProductFeaturedInfo)
+    featuredInfo?: ProductFeaturedInfo
 
     @Field(types => [LocalizedField])
     description: LocalizedField[];

@@ -1,13 +1,10 @@
 import { BaseResponse, BaseResponseBuilder } from "@app/common/model/base.response";
 import { Field, ObjectType } from "@nestjs/graphql";
-import { Reward } from "./reward.model";
 import { CustomerLoyalty } from "./customer_loyalty.model";
 import { Customer } from "../../customer/model/customer.model";
 
 @ObjectType()
-export class LoyaltyResponse extends BaseResponse {
-    @Field(type => [Reward])
-    rewards?: Reward[];
+export class CustomerLoyaltyResponse extends BaseResponse {
 
     @Field(type => CustomerLoyalty)
     customerLoyalty?: CustomerLoyalty
@@ -19,7 +16,7 @@ export class LoyaltyResponse extends BaseResponse {
     customer?: Customer
 
 
-    constructor(data: Partial<LoyaltyResponse>) {
+    constructor(data: Partial<CustomerLoyaltyResponse>) {
         super()
         Object.assign(this, data)
     }
@@ -29,22 +26,18 @@ export class LoyaltyResponse extends BaseResponse {
 export class LoyaltyResponseBuilder extends BaseResponseBuilder {
 
 
-    constructor(private loyaltyResponse: LoyaltyResponse = new LoyaltyResponse({})) {
+    constructor(private loyaltyResponse: CustomerLoyaltyResponse = new CustomerLoyaltyResponse({})) {
         super(loyaltyResponse);
 
     }
 
-    withError(error: string): LoyaltyResponse {
+    withError(error: string): CustomerLoyaltyResponse {
         this.loyaltyResponse.success = false
         this.loyaltyResponse.message = error
         return this.loyaltyResponse;
     }
 
-    withRewards(rewards: Reward[]): LoyaltyResponseBuilder {
-        this.loyaltyResponse.success = true
-        this.loyaltyResponse.rewards = rewards
-        return this
-    }
+
 
     withCustomerLoyalty(customerLoyalty: CustomerLoyalty): LoyaltyResponseBuilder {
         this.loyaltyResponse.success = true
@@ -67,7 +60,9 @@ export class LoyaltyResponseBuilder extends BaseResponseBuilder {
 
 
 
-    build(): LoyaltyResponse {
+
+
+    build(): CustomerLoyaltyResponse {
         return this.loyaltyResponse
     }
 }

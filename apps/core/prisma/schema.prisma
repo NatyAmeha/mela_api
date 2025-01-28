@@ -125,6 +125,7 @@ model Business {
     products                  Product[]
     openingStatus             String?
     sections                  BusinessSection[]
+    serviceOverviews          ServiceOverview[]
     mainAddress               Address
     phoneNumber               String
     email                     String?
@@ -283,6 +284,8 @@ type ProductAddon {
     minAmount          Float?
     maxAmount          Float?
     options            ProductAddonOption[]
+    configurations     OptionConfiguration[]
+    dependencies       AddonDependency[]
     checkCalendar      Boolean?
     calendarId         String?                  @db.ObjectId
     isProduct          Boolean                  @default(false)
@@ -294,6 +297,7 @@ type ProductAddon {
     isRequired         Boolean                  @default(false)
     additionalPrice    PriceInfo[]
     includeOnPOS       Boolean                  @default(true)
+    includeInBundle    Boolean                  @default(true)
     membershipIds      String[]                 @default([])
     createdAt          DateTime?                @default(now())
     updatedAt          DateTime?
@@ -305,6 +309,21 @@ type ProductAddonOption {
     images        String[]        @default([])
     membershipIds String[]        @default([])
     price         PriceInfo[]
+    maxSelection  Int             @default(1)
+    addresses     Address[]
+}
+
+type AddonDependency {
+    id      String   @default(uuid())
+    addonId String?
+    type    String
+    value   String[]
+}
+
+type OptionConfiguration {
+    forType String
+    uiType  String
+    row     Int
 }
 
 type AddonProductOptionInfo {
@@ -320,6 +339,7 @@ type PaymentOption {
     description        LocalizedData[]
     type               String
     upfrontPayment     Float?          @default(0)
+    payLaterMessage    LocalizedData[]
     upfrontPaymentType String?
     dueAfterDays       Int?
     dueDate            DateTime?
@@ -354,6 +374,8 @@ type Address {
     address   String?
     city      String
     location  String?
+    latitude  Float?
+    longitude Float?
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now())
 }
@@ -375,10 +397,24 @@ type BusinessSection {
     description LocalizedData[]
     categoryId  String?
     productIds  String[]        @default([]) @db.ObjectId
+    bundleIds   String[]        @default([]) @db.ObjectId
     images      String[]        @default([])
     orderAddons ProductAddon[]
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @default(now())
+}
+
+type ServiceOverview {
+    id              String          @default(uuid())
+    title           LocalizedData[]
+    description     LocalizedData[]
+    callToAction    LocalizedData[]
+    callToActionUrl String?
+    gallery         Gallery?
+    isActive        Boolean         @default(true)
+    featured        Boolean         @default(false)
+    createdAt       DateTime        @default(now())
+    updatedAt       DateTime?
 }
 
 type GalleryData {
@@ -410,4 +446,54 @@ type BusinessOrderStatus {
     description LocalizedData[]
     isDefault   Boolean?        @default(false)
     sequence    Int             @default(0)
+}
+
+model LoyaltyTier {
+    id                String          @id @default(auto()) @map("_id") @db.ObjectId
+    name              LocalizedData[]
+    description       LocalizedData[]
+    minPoints         Int             @default(1)
+    maxPoints         Int             @default(1000)
+    rewards           RewardUpdated[]
+    businessIds       String[]
+    productIds        String[]
+    customerLoyaltyId String?         @db.ObjectId
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime        @updatedAt
+}
+
+type RewardUpdated {
+    id                String          @default(uuid())
+    name              LocalizedData[]
+    description       LocalizedData[]
+    minPointsToRedeem Int?
+    businessIds       String[]
+    rewardTypes       String[]
+    applyOnAddon      Boolean         @default(false)
+    rewardInfo        RewardInfo[]
+    isActive          Boolean         @default(true)
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime?
+}
+
+type RewardInfo {
+    id                 String              @default(uuid())
+    discount           Discount?
+    deliveryRewardInfo DeliveryRewardInfo?
+    products           RewardProductInfo[]
+}
+
+type RewardProductInfo {
+    id        String    @default(uuid())
+    productId String
+    minQty    Float     @default(1)
+    maxQty    Float     @default(10)
+    discount  Discount?
+}
+
+type DeliveryRewardInfo {
+    id                String          @default(uuid())
+    description       LocalizedData[]
+    minPurchaseAmount Float           @default(0)
+    discount          Discount?
 }

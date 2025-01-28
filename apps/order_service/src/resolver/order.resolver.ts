@@ -16,6 +16,7 @@ import { RequiresPermission } from "@app/common/permission_helper/require_permis
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
 import { OrderSchedule } from "../model/order_schedule.model";
 import { AddOrderSchedulesInput } from "../dto/schedule.input";
+import { OrderPaymentMethodInput } from "../dto/order_item.input";
 
 
 @Resolver(of => Order)
@@ -48,6 +49,13 @@ export class OrderResolver {
     async placeOrderFromOnlineStore(@CurrentUser() user: User, @Args({ name: "businessIds", type: () => [String] }) businessIds: string[], @Args("orderInput") orderInput: CreateOrderInput, @Args({ name: "cartId", nullable: true }) cartId?: string): Promise<OrderResponse> {
         const result = await this.orderService.placeOrderForBusiness(user, businessIds, orderInput);
         return result;
+    }
+
+    @Query(returns => OrderResponse)
+    async getAddonUsage(@Args("addonIds", { type: () => [String] }) addonIds: string[], @Args({ name: "startDate", nullable: true }) startDate?: Date, @Args({ name: "endDate", nullable: true }) endDate?: Date): Promise<OrderResponse> {
+        const result = await this.orderService.getAddonUsage(addonIds, { startDate, endDate })
+        return result;
+
     }
 
     // @UseGuards(AuthzGuard)
@@ -115,6 +123,13 @@ export class OrderResolver {
     @Mutation(returns => OrderResponse)
     async addOrderSchedules(@Args("orderId") orderId: string, @Args("schedules", { type: () => [AddOrderSchedulesInput] }) schedules: AddOrderSchedulesInput[]): Promise<OrderResponse> {
         const result = await this.orderService.addOrderSchedules(orderId, schedules)
+        return result
+    }
+
+    @Mutation(returns => OrderResponse)
+    @UseGuards(AuthzGuard)
+    async payRemainingOrderPayment(@Args("orderId") orderId: string, @Args("paymentMethod") paymentMethod: OrderPaymentMethodInput): Promise<OrderResponse> {
+        const result = await this.orderService.payRemainingOrderPayment(orderId, paymentMethod)
         return result
     }
 

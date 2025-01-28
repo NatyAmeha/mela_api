@@ -1,7 +1,7 @@
 generator client {
     provider      = "prisma-client-js"
     output        = "./generated/prisma_order_client"
-    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x", "windows"]
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -35,6 +35,8 @@ model Order {
     totalAmount         Float?
     paidAmount          Float?
     paymentMethods      OrderPaymentMethod[]
+    appliedRewards      String[]
+    usedRewardsPoints   Float?
     config              OrderConfig[]
     customerPhoneNumber String?
     isOnlineOrder       Boolean              @default(false)
@@ -86,8 +88,38 @@ model CustomerLoyalty {
     updatedAt         DateTime         @updatedAt
     Customer          Customer         @relation(fields: [customerId], references: [id])
     Reward            Reward[]
+    LoyaltyTier       LoyaltyTier[]
 }
 
+model LoyaltyTier {
+    id                String           @id @default(auto()) @map("_id") @db.ObjectId
+    name              LocalizedField[]
+    description       LocalizedField[]
+    minPoints         Int              @default(1)
+    maxPoints         Int              @default(1000)
+    rewards           RewardUpdated[]
+    businessIds       String[]
+    productIds        String[]
+    customerLoyalty   CustomerLoyalty? @relation(fields: [customerLoyaltyId], references: [id])
+    customerLoyaltyId String?          @db.ObjectId
+    createdAt         DateTime         @default(now())
+    updatedAt         DateTime         @updatedAt
+}
+
+type RewardUpdated {
+    id                String           @default(uuid())
+    name              LocalizedField[]
+    description       LocalizedField[]
+    minPointsToRedeem Int?
+    businessIds       String[]
+    rewardTypes       String[]
+    rewardInfo        RewardInfo[]
+    isActive          Boolean          @default(true)
+    createdAt         DateTime         @default(now())
+    updatedAt         DateTime?
+}
+
+// will be removed
 model Reward {
     id                String           @id @default(auto()) @map("_id") @db.ObjectId
     name              LocalizedField[]
@@ -95,7 +127,8 @@ model Reward {
     minPointsToRedeem Int
     conditions        LocalizedField[]
     businessId        String           @db.ObjectId
-    rewardType        String?
+    rewardType        String[]
+    rewardInfo        RewardInfo[]
     isActive          Boolean          @default(true)
     discountType      String?
     discountAmount    Float?
@@ -103,6 +136,28 @@ model Reward {
     updatedAt         DateTime         @updatedAt
     CustomerLoyalty   CustomerLoyalty? @relation(fields: [customerLoyaltyId], references: [id])
     customerLoyaltyId String?          @db.ObjectId
+}
+
+type RewardInfo {
+    id                 String              @default(uuid())
+    discount           Discount?
+    deliveryRewardInfo DeliveryRewardInfo?
+    products           RewardProductInfo[]
+}
+
+type RewardProductInfo {
+    id        String    @default(uuid())
+    productId String
+    minQty    Float     @default(1)
+    maxQty    Float     @default(10)
+    discount  Discount?
+}
+
+type DeliveryRewardInfo {
+    id                String           @default(uuid())
+    description       LocalizedField[]
+    minPurchaseAmount Float            @default(0)
+    discount          Discount?
 }
 
 model RedeemedReward {
@@ -140,6 +195,7 @@ type OrderConfig {
     multipleValue   String[]
     productIds      String[]
     calendarId      String?
+    backupValues    String[]
     additionalPrice Float            @default(0)
     finalPrice      Float            @default(0)
     addonId         String?
@@ -177,6 +233,17 @@ type OrderItemDiscount {
 type LocalizedField {
     key   String
     value String
+}
+
+type Discount {
+    id             String?          @default(uuid())
+    name           LocalizedField[]
+    type           String
+    value          Float?
+    condition      String
+    conditionValue String?
+    startDate      DateTime?
+    endDate        DateTime?
 }
 
 type PointSource {

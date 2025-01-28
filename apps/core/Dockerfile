@@ -9,7 +9,7 @@ RUN npm config set fetch-retries 5
 RUN npm install --no-optional
 
 COPY . .
-ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1z
 RUN npx prisma generate --schema=./apps/core/prisma/schema.prisma
 # RUN apt-get update -y && apt-get install -y openssl
 # RUN npx prisma db push

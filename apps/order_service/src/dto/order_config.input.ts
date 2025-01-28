@@ -23,9 +23,14 @@ export class CreateOrderConfigInput {
     multipleValue?: string[];
 
     @Field(type => [String])
+    backupValues?: string[]
+
+    @Field(type => [String])
     @ValidateIf((obj: CreateOrderConfigInput) => obj.type == OrderConfigType.PRODUCT_ID_VALUE)
     @IsNotEmpty()
     productIds?: string[];
+
+
 
     @Field()
     calendarId?: string

@@ -15,8 +15,10 @@ import { PriceList } from "../../product/model/price_list_.model";
 import { Discount } from "../../product/model/discount.model";
 import { BusinessOrderStatus } from "./business_order_status";
 import { Calendar } from "../../calendar/model/calendar.model";
+import { ServiceOverview } from "./service_overview.model";
 
 @ObjectType()
+@Directive('@shareable')
 export class Business extends BaseModel {
 
     @Field(type => ID)
@@ -64,7 +66,7 @@ export class Business extends BaseModel {
     bundleIds?: string[]
 
     @Field(types => Address)
-    mainAddress: Address;
+    mainAddress?: Address;
     @Field()
     phoneNumber: string;
     @Field()
@@ -113,6 +115,9 @@ export class Business extends BaseModel {
 
     @Field(type => Boolean, { defaultValue: false })
     requireBranchSelection?: boolean
+
+    @Field(type => [ServiceOverview])
+    serviceOverviews?: ServiceOverview[]
 
     @Field(type => [BusinessOrderStatus], { defaultValue: BusinessOrderStatus.defaultOrderStatuses })
     orderStatuses?: BusinessOrderStatus[]

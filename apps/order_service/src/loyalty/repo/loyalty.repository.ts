@@ -1,93 +1,56 @@
 import { Injectable, OnModuleDestroy, OnModuleInit, Scope } from "@nestjs/common";
 import { PrismaClient } from "apps/order_service/prisma/generated/prisma_order_client";
-import { Reward } from "../model/reward.model"
 import { plainToClass } from "class-transformer";
 import { RedeemedReward } from "../model/redeemed_reward.model";
 import { CustomerLoyalty } from "../model/customer_loyalty.model";
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { sumBy } from "lodash";
+import { Reward } from "apps/core/src/loyalty/model/reward.model";
 
 export interface ILoyaltyRepository {
-    addTransactionClient: (client: PrismaClient) => void
-    addReward(reward: Reward): Promise<Reward>
-    createRewards(businessId: string, rewards: Reward[]): Promise<Reward[]>
-    getReward(rewardId: string): Promise<Reward>
-    getRewards(rewardIds: string[]): Promise<Reward[]>
-    getRewardsPoints(rewardIds: string[]): Promise<number>
-    getBusinessRewards(businessId: string): Promise<Reward[]>
+    getReward(rewardId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Reward>
+    getRewards(rewardIds: string[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Reward[]>
+    getRewardsPoints(rewardIds: string[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<number>
+    getBusinessRewards(businessId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Reward[]>
 
-    addRedeemedReward(redeemedReward: RedeemedReward): Promise<RedeemedReward>
-    getRedeemedRewards(customerId: string): Promise<RedeemedReward[]>
+    addRedeemedReward(redeemedReward: RedeemedReward, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<RedeemedReward>
+    getRedeemedRewards(customerId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<RedeemedReward[]>
 
-    getCustomerLoyalty(customerId: string, businessId: string): Promise<CustomerLoyalty>
-    addCustomerLoyalty(customerLoyalty: CustomerLoyalty): Promise<CustomerLoyalty>
-    getCustomerLoyalties(customerId: string): Promise<CustomerLoyalty[]>
-    getLoyaltiesByCustomerIds(customerIds: string[]): Promise<CustomerLoyalty[]>
-    addOrGetCustomerLoyalty(customerId: string, businessId: string): Promise<CustomerLoyalty>
-    addPointsToCustomerLoyalty(customerId: string, businessId: string, points: number): Promise<CustomerLoyalty>
-    deductLoayltyPoints(customerId: string, businessId: string, points: number): Promise<CustomerLoyalty>
+    getCustomerLoyalty(customerId: string, businessId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<CustomerLoyalty>
+    addCustomerLoyalty(customerLoyalty: CustomerLoyalty, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<CustomerLoyalty>
+    getCustomerLoyalties(customerId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<CustomerLoyalty[]>
+    getLoyaltiesByCustomerIds(customerIds: string[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<CustomerLoyalty[]>
+    addOrGetCustomerLoyalty(customerId: string, businessId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<CustomerLoyalty>
+    addPointsToCustomerLoyalty(customerId: string, businessId: string, points: number, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<CustomerLoyalty>
+    deductLoayltyPoints(customerId: string, businessId: string, points: number, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<CustomerLoyalty>
 }
 
 @Injectable()
 export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, ILoyaltyRepository {
     static injectName = 'LOYALTY_REPOSITORY'
 
-    transactionClient: PrismaClient | null
-
-    addTransactionClient(client: PrismaClient): void {
-        this.transactionClient = client;
-    }
 
     async onModuleInit() {
         await this.$connect()
     }
 
-    async addReward(reward: Reward): Promise<Reward> {
-        try {
-            const createRewardResult = await (this.transactionClient || this).reward.create({ data: reward })
-            return plainToClass(Reward, createRewardResult)
-        } catch (error) {
-            console.log(error)
-            throw new PrismaException({
-                source: LoyaltyRepository.name,
-                message: "Error adding reward"
-            })
-        }
-    }
 
-    async createRewards(businessId: string, rewards: Reward[]): Promise<Reward[]> {
-        try {
-            rewards.forEach(reward => reward.businessId = businessId)
-            const rewardCreateResults = await (this.transactionClient || this).$transaction(async (tx) => {
-                const result = await Promise.all(rewards.map(async reward => {
-                    const createResult = await tx.reward.create({ data: reward })
-                    return plainToClass(Reward, createResult)
-                }))
-                return result
-            })
-            return rewardCreateResults.map(reward => plainToClass(Reward, reward))
-        } catch (error) {
-            console.log(error)
-            throw new PrismaException({
-                source: LoyaltyRepository.name,
-                message: "Error creating rewards"
-            })
-        }
-    }
 
-    async getReward(rewardId: string): Promise<Reward> {
+
+
+    async getReward(rewardId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Reward> {
         try {
-            const reward = await (this.transactionClient || this).reward.findUnique({ where: { id: rewardId } })
+            const reward = await (transactionClient || this).reward.findUnique({ where: { id: rewardId } })
             return plainToClass(Reward, reward)
         } catch (error) {
             throw error
         }
     }
 
-    async getRewards(rewardIds: string[]): Promise<Reward[]> {
+    async getRewards(rewardIds: string[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Reward[]> {
         try {
-            const rewards = await (this.transactionClient || this).reward.findMany({ where: { id: { in: rewardIds } } })
+            const rewards = await (transactionClient || this).reward.findMany({ where: { id: { in: rewardIds } } })
             return rewards.map(reward => plainToClass(Reward, reward))
         } catch (error) {
             throw new PrismaException({
@@ -97,9 +60,9 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async getRewardsPoints(rewardIds: string[]): Promise<number> {
+    async getRewardsPoints(rewardIds: string[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<number> {
         try {
-            const rewards = await (this.transactionClient || this).reward.findMany({ where: { id: { in: rewardIds } } })
+            const rewards = await (transactionClient || this).reward.findMany({ where: { id: { in: rewardIds } } })
             if (rewards?.length > 0) {
                 const totalPoints = sumBy(rewards, reward => reward.minPointsToRedeem)
                 return totalPoints
@@ -113,18 +76,18 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async getBusinessRewards(businessId: string): Promise<Reward[]> {
+    async getBusinessRewards(businessId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Reward[]> {
         try {
-            const rewards = await (this.transactionClient || this).reward.findMany({ where: { businessId } })
+            const rewards = await (transactionClient || this).reward.findMany({ where: { businessId } })
             return rewards.map(reward => plainToClass(Reward, reward))
         } catch (error) {
             throw error
         }
     }
 
-    async getCustomerLoyalty(customerId: string, businessId: string): Promise<CustomerLoyalty> {
+    async getCustomerLoyalty(customerId: string, businessId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<CustomerLoyalty> {
         try {
-            const customerLoyalty = await this.customerLoyalty.findFirst({ where: { customerId, businessId } })
+            const customerLoyalty = await (transactionClient || this).customerLoyalty.findFirst({ where: { customerId, businessId } })
             if (!customerLoyalty) {
                 return null
             }
@@ -139,10 +102,10 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async getCustomerLoyalties(customerId: string): Promise<CustomerLoyalty[]> {
+    async getCustomerLoyalties(customerId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<CustomerLoyalty[]> {
         try {
             console.log("customerId", customerId)
-            const customerLoyalties = await (this).customerLoyalty.findMany({ where: { customerId } })
+            const customerLoyalties = await (transactionClient || this).customerLoyalty.findMany({ where: { customerId } })
             return customerLoyalties.map(customerLoyalty => plainToClass(CustomerLoyalty, customerLoyalty))
         } catch (error) {
             console.log(error)
@@ -153,36 +116,36 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async getLoyaltiesByCustomerIds(customerIds: string[]): Promise<CustomerLoyalty[]> {
+    async getLoyaltiesByCustomerIds(customerIds: string[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<CustomerLoyalty[]> {
         try {
-            const customerLoyalties = await this.customerLoyalty.findMany({ where: { customerId: { in: customerIds } } })
+            const customerLoyalties = await (transactionClient || this).customerLoyalty.findMany({ where: { customerId: { in: customerIds } } })
             return customerLoyalties.map(customerLoyalty => plainToClass(CustomerLoyalty, customerLoyalty))
         } catch (error) {
             throw error
         }
     }
 
-    async addRedeemedReward(redeemedReward: RedeemedReward): Promise<RedeemedReward> {
+    async addRedeemedReward(redeemedReward: RedeemedReward, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<RedeemedReward> {
         try {
-            const createRedeemedRewardResult = await (this.transactionClient || this).redeemedReward.create({ data: redeemedReward })
+            const createRedeemedRewardResult = await (transactionClient || this).redeemedReward.create({ data: redeemedReward })
             return plainToClass(RedeemedReward, createRedeemedRewardResult)
         } catch (error) {
             throw error
         }
     }
 
-    async getRedeemedRewards(customerId: string): Promise<RedeemedReward[]> {
+    async getRedeemedRewards(customerId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<RedeemedReward[]> {
         try {
-            const redeemedRewards = await (this.transactionClient || this).redeemedReward.findMany({ where: { customerId } })
+            const redeemedRewards = await (transactionClient || this).redeemedReward.findMany({ where: { customerId } })
             return redeemedRewards.map(redeemedReward => plainToClass(RedeemedReward, redeemedReward))
         } catch (error) {
             throw error
         }
     }
 
-    async addCustomerLoyalty(customerLoyalty: CustomerLoyalty): Promise<CustomerLoyalty> {
+    async addCustomerLoyalty(customerLoyalty: CustomerLoyalty, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<CustomerLoyalty> {
         try {
-            const createCustomerLoyaltyResult = await (this.transactionClient || this).customerLoyalty.create({ data: customerLoyalty })
+            const createCustomerLoyaltyResult = await (transactionClient || this).customerLoyalty.create({ data: customerLoyalty })
             return plainToClass(CustomerLoyalty, createCustomerLoyaltyResult)
         } catch (error) {
             console.log(error)
@@ -194,15 +157,15 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
     }
 
 
-    async addOrGetCustomerLoyalty(customerId: string, businessId: string): Promise<CustomerLoyalty> {
+    async addOrGetCustomerLoyalty(customerId: string, businessId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<CustomerLoyalty> {
         try {
-            const existingCustomerLoyalty = await (this.transactionClient || this).customerLoyalty.findFirst({ where: { customerId, businessId } })
+            const existingCustomerLoyalty = await (transactionClient || this).customerLoyalty.findFirst({ where: { customerId, businessId } })
             if (existingCustomerLoyalty) {
                 return plainToClass(CustomerLoyalty, existingCustomerLoyalty)
             }
             // const { customerId, ...customerLoyaltyData } = customerLoyalty
             const customerLoyaltyData = new CustomerLoyalty({ businessId, pointsSource: [], })
-            const createCustomerLoyaltyResult = await (this.transactionClient || this).customer.update({
+            const createCustomerLoyaltyResult = await (transactionClient || this).customer.update({
                 where: { id: customerId },
                 data: {
                     customerLoyalties: {
@@ -216,9 +179,9 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async addPointsToCustomerLoyalty(customerId: string, businessId: string, points: number): Promise<CustomerLoyalty> {
+    async addPointsToCustomerLoyalty(customerId: string, businessId: string, points: number, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<CustomerLoyalty> {
         try {
-            const customerLoyalty = await (this.transactionClient || this).customerLoyalty.findFirst({
+            const customerLoyalty = await (transactionClient || this).customerLoyalty.findFirst({
                 where: { customerId: customerId, businessId: businessId }
             });
             if (!customerLoyalty) {
@@ -228,7 +191,7 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
                 });
             }
 
-            const updatedCustomerLoyalty = await (this.transactionClient || this).customerLoyalty.update({
+            const updatedCustomerLoyalty = await (transactionClient || this).customerLoyalty.update({
                 where: { id: customerLoyalty.id }, data: {
                     currentPoints: { increment: points }
                 }
@@ -238,9 +201,9 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
         }
     }
 
-    async deductLoayltyPoints(customerId: string, businessId: string, points: number): Promise<CustomerLoyalty> {
+    async deductLoayltyPoints(customerId: string, businessId: string, points: number, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<CustomerLoyalty> {
         try {
-            const customerLoyalty = await (this.transactionClient || this).customerLoyalty.findFirst({
+            const customerLoyalty = await (transactionClient || this).customerLoyalty.findFirst({
                 where: { customerId: customerId, businessId: businessId }
             });
 
@@ -255,7 +218,7 @@ export class LoyaltyRepository extends PrismaClient implements OnModuleInit, OnM
                 // })
             }
             const amountAfterDeduction = customerLoyalty.currentPoints - points > 0 ? customerLoyalty.currentPoints - points : 0;
-            const updatedCustomerLoyalty = await (this.transactionClient || this).customerLoyalty.update({
+            const updatedCustomerLoyalty = await (transactionClient || this).customerLoyalty.update({
                 where: { id: customerLoyalty.id }, data: {
                     currentPoints: amountAfterDeduction
                 }

@@ -1,4 +1,4 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
+import { Args, Directive, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { BusinessService } from "../usecase/business.service";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
@@ -29,6 +29,7 @@ import { ProductBundle } from "../../product/model/product_bundle.model";
 import { BundleService } from "../../product/usecase/bundle.service";
 import { MembershipResponse } from "apps/subscription/src/membership/dto/membership.response";
 import { ProductResponse } from "../../product/model/product.response";
+import { CreateServiceOverviewInput, UpdateServiceOverviewInput } from "../dto/service_overview.input";
 
 
 @Resolver(of => Business)
@@ -180,18 +181,44 @@ export class BusinessResolver {
     }
 
 
+    // @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    // @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async addServiceOverviewsToBusiness(@Args("businessId") businessId: string, @Args({ name: "serviceOverviews", type: () => [CreateServiceOverviewInput] }) serviceOverviews: CreateServiceOverviewInput[]): Promise<BusinessResponse> {
+        let response = await this.businessService.addServiceOverviewsToBusiness(businessId, serviceOverviews);
+        return response;
+    }
+
+
+    @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async removeServiceOverviewsFromBusiness(@Args("businessId") businessId: string, @Args({ name: "serviceOverviewsId", type: () => [String] }) serviceOverviewsId: string[]): Promise<BusinessResponse> {
+        let response = await this.businessService.removeServiceOverviewsFromBusiness(businessId, serviceOverviewsId);
+        return response;
+    }
+
+
+    // @RequiresPermission({ permissions: [{ resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.UPDATE, resourcTargetName: "businessId" }] })
+    // @UseGuards(PermissionGuard)
+    @Mutation(returns => BusinessResponse)
+    async updateBusinessServiceOverview(@Args("businessId") businessId: string, @Args("serviceOverviewId") serviceOverviewId: string, @Args("data") data: UpdateServiceOverviewInput): Promise<BusinessResponse> {
+        let response = await this.businessService.updateServiceOverview(businessId, serviceOverviewId, data);
+        return response;
+    }
+
+
     // ------------------ Nested Queries ------------------
 
     // responsd for nested query for products field inside business type
     @ResolveField('products', returns => [Product])
     async getProductsforBusiness(@Parent() business: Business): Promise<Product[]> {
-        console.log("business product resolver")
         return await this.productService.getBusinessProducts(business.id, {});
     }
 
     @ResolveField('bundles', returns => [ProductBundle])
-    async getBundlesForBusiness(@Parent() business: Business, @Args('branchId', { nullable: true }) branchId?: string): Promise<ProductBundle[]> {
-        console.log("business bundle resolver")
+    async getBundlesForBusiness(@Parent() business: Business,
+        @Args({ nullable: true, name: "branchId", type: () => String }) branchId?: string): Promise<ProductBundle[]> {
         return await this.bundleService.getBusinessBundles([business.id], branchId);
     }
 

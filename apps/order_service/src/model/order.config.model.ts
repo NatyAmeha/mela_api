@@ -26,6 +26,9 @@ export class OrderConfig {
     additionalPrice: number;
     @Field(type => Float, { defaultValue: 0 })
     finalPrice: number;
+
+    @Field(type => [String])
+    backupValues?: string[]
     @Field()
     calendarId?: string;
     @Field()

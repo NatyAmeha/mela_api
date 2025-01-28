@@ -10,7 +10,7 @@ import { QueryHelper } from "@app/common/datasource_helper/query_helper";
 import { PaymentMethod } from "../../model/payment_method";
 
 export interface IMembershipRepository {
-    createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[]): Promise<Membership>
+    createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Membership>
     updateMembershipPlan(planId: string, membershipInfo: Partial<Membership>): Promise<boolean>
     getBusinessMembershipPlans(businessId: string): Promise<Membership[]>
     getMembershipPlan(planId: string): Promise<Membership>
@@ -24,10 +24,10 @@ export interface IMembershipRepository {
     assignProductstoMembershipPlan(planId: string, productIds: string[]): Promise<boolean>
     unassignProductsFromMembershipPlan(planId: string, productIds: string[]): Promise<boolean>
 
-    getDefaultGroupsForMembership(membershipId: string): Promise<Group[]>
-    joinGroups(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean>
-    leaveGroups(groupIds: string[], userIds: string[]): Promise<boolean>
-    updateGroupMembersInfos(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean>
+    getDefaultGroupsForMembership(membershipId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Group[]>
+    joinGroups(groupIds: string[], membersInfo: GroupMember[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<boolean>
+    leaveGroups(groupIds: string[], userIds: string[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<boolean>
+    updateGroupMembersInfos(groupIds: string[], membersInfo: GroupMember[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<boolean>
 
     approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription, paymentMethod?: PaymentMethod): Promise<GroupMember[]>
 
@@ -50,10 +50,10 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         await this.$connect();
     }
 
-    async createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[]): Promise<Membership> {
+    async createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Membership> {
         try {
             const { groups, groupsId, subscriptions, subscriptionsId, ...resetMembershipInfo } = membershipInfo
-            const createResult = await this.membership.create({
+            const createResult = await (transactionClient || this).membership.create({
                 data: {
                     ...resetMembershipInfo, groups: {
                         createMany: {
@@ -199,38 +199,49 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         }
     }
 
-    async getDefaultGroupsForMembership(membershipId: string): Promise<Group[]> {
+    async getDefaultGroupsForMembership(membershipId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Group[]> {
         try {
-            const defaultGroups = await this.group.findMany({ where: { membershipId, default: true } })
+            const defaultGroups = await (transactionClient || this).group.findMany({ where: { membershipId, default: true } })
             return defaultGroups.map(group => new Group({ ...group }))
         } catch (ex) {
             throw new PrismaException({ message: " Unable to get default groups for membership", exception: ex })
         }
     }
 
-    async joinGroups(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean> {
+    async joinGroups(groupIds: string[], membersInfo: GroupMember[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<boolean> {
         try {
-            const transactionResult = await this.$transaction(async (prisma) => {
-                const result = await Promise.all(groupIds.map(async groupId => {
-                    const groupResult = await prisma.group.findUnique({ where: { id: groupId } })
-                    if (groupResult) {
-                        const uniqMembers = uniqBy([...groupResult.members, ...membersInfo], (member) => member.userId)
-                        return prisma.group.update({
-                            where: { id: groupId },
-                            data: {
-                                members: {
-                                    set: uniqMembers
-                                }
+            await this.$transaction(async (prisma) => {
+                await Promise.all(groupIds.map(async groupId => {
+                    const groupResult = await prisma.group.findUnique({ where: { id: groupId } });
+                    if (!groupResult) return;
+
+                    // Merge existing and new members, preferring new member info when there's overlap
+                    let allMembers = groupResult.members.map(member => new GroupMember({ ...member }));
+                    membersInfo.forEach(newMember => {
+                        const existingIndex = allMembers.findIndex(m => m.userId === newMember.userId);
+                        if (existingIndex >= 0) {
+                            allMembers[existingIndex] = newMember;
+                        } else {
+                            allMembers.push(newMember);
+                        }
+                    });
+
+                    // Update group with unique members
+                    console.log("all members", allMembers)
+                    return prisma.group.update({
+                        where: { id: groupId },
+                        data: {
+                            members: {
+                                set: uniqBy(allMembers, 'userId')
                             }
-                        })
-                    }
-                }))
-                return result;
+                        }
+                    });
+                }));
             });
-            return true
+            return true;
         } catch (ex) {
             console.log("error", ex);
-            throw new PrismaException({ message: " Unable to join groups", exception: ex })
+            throw new PrismaException({ message: "Unable to join groups", exception: ex });
         }
     }
 

@@ -27,6 +27,23 @@ export class AuthResolver {
     return result;
   }
 
+  @Mutation(returns => AuthResponse)
+  async createOrAuthenticateUsingGoogle(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse | AppException> {
+    var userInfo = User.createUserFromSignupInfo(signupInfo);
+    var result = await this.authService.createAccountUsingGoogle(userInfo);
+    return result;
+  }
+
+  @Query(returns => AuthResponse)
+  async authenticateUsingGoogleId(@Args("googleId") googleId: string): Promise<AuthResponse> {
+    return await this.authService.authenticateUsingGoogleId(googleId);
+  }
+
+  @Query(returns => AuthResponse)
+  async authenticateWithGoogleId(@Args("googleId") googleId: string): Promise<AuthResponse> {
+    return await this.authService.authenticateUsingGoogleId(googleId);
+  }
+
   // @UseGuards(AuthzGuard)
   @Role(AccountType.ADMIN)
   @UseGuards(RoleGuard)
@@ -45,8 +62,8 @@ export class AuthResolver {
   }
 
   @Mutation(returns => AuthResponse)
-  async signInWithPhoneNumber(@Args("phone") phone: string): Promise<AuthResponse> {
-    var userInfo = User.createUserInfoForPhoneAuth(phone, AccountType.USER)
+  async signInWithPhoneNumber(@Args("phone") phone: string, @Args({ name: "googleId", nullable: true }) googleId: string): Promise<AuthResponse> {
+    var userInfo = User.createUserInfoForPhoneAuth(phone, AccountType.USER, googleId)
     var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(userInfo);
     return authResponse;
   }

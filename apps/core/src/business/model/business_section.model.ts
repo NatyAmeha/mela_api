@@ -23,6 +23,9 @@ export class BusinessSection {
     productIds?: string[];
 
     @Field(types => [String])
+    bundleIds?: string[];
+
+    @Field(types => [String])
     images?: string[];
 
     @Field(types => [ProductAddon])

@@ -105,6 +105,10 @@ export class Order {
     customerPhoneNumber?: string
     @Field(types => Customer, { nullable: true })
     customer?: Customer
+    @Field(types => [String])
+    appliedRewards?: string[]
+    @Field(types => Float)
+    usedRewardsPoints?: number
     @Field()
     createdAt?: Date;
     @Field()
@@ -118,14 +122,15 @@ export class Order {
     }
 
     getPoints() {
-        return sum(this.items?.map(item => item.point || 0));
+        return sum(this.items?.map(item => (item.point || 0) * item.quantity));
     }
 
     getAppliedRewards(): string[] {
-        const itemDiscountInfo = this.items?.map(item => item.discount ?? []).flat()
-        const rewardIds = itemDiscountInfo.map(discount => discount.claimedRewardId ?? []).flat()
-        // get uniq reward ids using lodash helper method
-        return remove(rewardIds);
+        // const itemDiscountInfo = this.items?.map(item => item.discount ?? []).flat()
+        // const rewardIds = itemDiscountInfo.map(discount => discount.claimedRewardId ?? []).flat()
+        // // get uniq reward ids using lodash helper method
+        // return remove(rewardIds);
+        return this.appliedRewards
     }
 
     generateOrderSchedules() {
@@ -227,6 +232,12 @@ export class OrderBuilder {
         return this;
     }
 
+    withRewardInfo(appliedRewards: string[], usedRewardsPoints: number) {
+        this.order.appliedRewards = appliedRewards;
+        this.order.usedRewardsPoints = usedRewardsPoints;
+        return this;
+    }
+
     withItems(items: CreateOrderItemInput[], config?: CreateOrderConfigInput[]) {
         this.order.items = items.map(item => new OrderItem({
             name: item.name,
@@ -304,6 +315,17 @@ export class OrderPaymentMethod {
     updatedAt?: Date
     constructor(partial) {
         Object.assign(this, partial);
+    }
+
+    static createPaymentMethod(paymentMethod: OrderPaymentMethodInput) {
+        return new OrderPaymentMethod({
+            name: paymentMethod.name.map(name => new LocalizedField(name)),
+            amount: new Price(paymentMethod.amount),
+            requireReceiptImage: paymentMethod.requireReceiptImage,
+            receiptImages: paymentMethod.receiptImages,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        })
     }
 }
 

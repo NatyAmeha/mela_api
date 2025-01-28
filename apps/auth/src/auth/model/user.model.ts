@@ -31,6 +31,9 @@ export class User extends BaseModel {
     @Field()
     phoneNumber?: string
     @Field()
+    googleId?: string
+
+    @Field()
     username?: string
     @Field()
     isUsernamePlaceholder?: boolean
@@ -77,17 +80,24 @@ export class User extends BaseModel {
 
     static createUserFromSignupInfo(signupInfo: SignupInput) {
         return new User({
-            email: signupInfo.email, phoneNumber: signupInfo.phoneNumber, firstName: signupInfo.firstName, lastName: signupInfo.lastName,
-            password: signupInfo.password, profileImageUrl: signupInfo.profileImageUrl,
-            accountStatus: AccountStatus.PENDING
+            email: signupInfo.email,
+            phoneNumber: signupInfo.phoneNumber,
+            firstName: signupInfo.firstName,
+            lastName: signupInfo.lastName,
+            password: signupInfo.password,
+            profileImageUrl: signupInfo.profileImageUrl,
+            accountStatus: AccountStatus.ACTIVE,
+            accountType: AccountType.USER,
+            googleId: signupInfo.googleId,
         })
     }
 
-    static createUserInfoForPhoneAuth(phone: string, accountType: AccountType) {
+    static createUserInfoForPhoneAuth(phone: string, accountType: AccountType, googleId?: string) {
         return new User({
             phoneNumber: phone,
             isEmailPlaceholder: true,
-            accountType: accountType
+            accountType: accountType,
+            googleId: googleId
         })
     }
 
@@ -98,6 +108,7 @@ export class User extends BaseModel {
             accesses: this.accesses,
             phoneNumber: this.phoneNumber,
             email: this.email,
+            profileImageUrl: this.profileImageUrl,
             // refreshToken: this.refreshToken,
         }
     }

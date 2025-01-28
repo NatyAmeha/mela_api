@@ -47,4 +47,6 @@ export class UserResolver {
         return await this.userService.removeBusinessFromFavorites(currentUser.id!, businessIds);
     }
 
+
+
 }

@@ -6,6 +6,7 @@ import { IUserRepository, UserRepository } from "../../data/repo/user.repository
 export interface IAuthProvider {
     createAccount(userInfo: User): Promise<User>
     authenticate(authInfo: AuthInfo): Promise<User>
+    authenticateWithGoogle(authInfo: AuthInfo): Promise<User>
     logout(userId: string): Promise<boolean>
 }
 
@@ -19,6 +20,9 @@ export class BaseAuthProvider implements IAuthProvider {
         throw new Error("Method not implemented.");
     }
     authenticate(authInfo: AuthInfo): Promise<User> {
+        throw new Error("Method not implemented.");
+    }
+    authenticateWithGoogle(authInfo: AuthInfo): Promise<User> {
         throw new Error("Method not implemented.");
     }
     async logout(userId: string): Promise<boolean> {

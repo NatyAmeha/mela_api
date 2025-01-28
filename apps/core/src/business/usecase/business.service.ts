@@ -2,21 +2,22 @@ import { Inject, Injectable } from "@nestjs/common";
 import { BusinessRepository, IBusinessRepository } from "../repo/business.repo";
 import { Business, BusinessRegistrationStage } from "../model/business.model";
 import { SubscriptionResponse } from "apps/subscription/src/model/response/subscription.response";
-import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
-import { BusinessSection, CreateBusinessSectionInput } from "../model/business_section.model";
+import { CreateBusinessSectionInput } from "../model/business_section.model";
 import { BaseResponse } from "@app/common/model/base.response";
-import { plainToClass } from "class-transformer";
 import { PaymentOption } from "../model/payment_option.model";
 import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
 import { IValidator } from "@app/common/validation_utils/validator.interface";
 import { CreatePaymentOptionInput } from "../dto/payment_option.input";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
-import { CoreServiceMsgBrockerClient } from "../../msg_brocker_client/core_service_msg_brocker";
 import { ProductPriceRepository } from "../../product/repo/product_price.repository";
 import { PriceList } from "../../product/model/price_list_.model";
 import { CreatePriceListInput, UpdatePriceListInput } from "../../product/dto/price_list.input";
 import { IProductRepository, ProductRepository } from "../../product/repo/product.repository";
+import { ServiceOverview } from "../model/service_overview.model";
+import { CreateServiceOverviewInput, UpdateServiceOverviewInput } from "../dto/service_overview.input";
+import { IBundleRepository, ProductBundleRepository } from "../../product/repo/bundle.repository";
+import { ProductBundle } from "../../product/model/product_bundle.model";
 
 @Injectable()
 export class BusinessService {
@@ -24,6 +25,7 @@ export class BusinessService {
     constructor(
         @Inject(BusinessRepository.injectName) private businessRepo: IBusinessRepository,
         @Inject(ProductRepository.injectName) private productRepo: IProductRepository,
+        @Inject(ProductBundleRepository.injectName) private bundleRepo: IBundleRepository,
         @Inject(ProductPriceRepository.injectName) private priceRepo: ProductPriceRepository,
         @Inject(ClassDecoratorValidator.injectName) private inputValidator: IValidator) {
 
@@ -50,10 +52,15 @@ export class BusinessService {
         const businessInfo = await this.getBusinessDetails(businessId);
         const sectionInfo = businessInfo.getsectionIinfo(sectionId);
         let sectionProducts = await this.productRepo.getProductsById(sectionInfo?.productIds);
+        let sectionBundles: ProductBundle[] = [];
+        if (sectionInfo?.bundleIds?.length > 0) {
+            sectionBundles = await this.bundleRepo.getBundlesById(sectionInfo?.bundleIds);
+        }
         if (branchId) {
             sectionProducts = sectionProducts.filter(product => product.branchIds?.some(id => id == branchId));
+            sectionBundles = sectionBundles.filter(bundle => bundle.branchIds?.some(id => id == branchId));
         }
-        return new BusinessResponseBuilder().withProducts(sectionProducts).build();
+        return new BusinessResponseBuilder().withProducts(sectionProducts).withBundles(sectionBundles).build();
     }
 
     async isBusinessExist(businessId: string): Promise<boolean> {
@@ -204,6 +211,23 @@ export class BusinessService {
     async deletePriceList(businessId: string, priceListIds: string[]): Promise<BusinessResponse> {
         const result = await this.priceRepo.deletePriceList(businessId, priceListIds);
         return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
+    }
+
+    async addServiceOverviewsToBusiness(businessId: string, serviceOverviewsInputs: CreateServiceOverviewInput[]): Promise<BusinessResponse> {
+        const serviceOverviews = serviceOverviewsInputs.map(input => ServiceOverview.fromInput(input));
+        const result = await this.businessRepo.addServiceOverviewsToBusiness(businessId, serviceOverviews);
+        return new BusinessResponseBuilder().withAddedServiceOverviews(result).build();
+    }
+
+    async removeServiceOverviewsFromBusiness(businessId: string, overviewIds: string[]): Promise<BusinessResponse> {
+        const result = await this.businessRepo.removeServiceOverviewsFromBusiness(businessId, overviewIds);
+        return new BusinessResponseBuilder().basicResponse(result) as BusinessResponse;
+    }
+
+    async updateServiceOverview(businessId: string, serviceOverviewId: string, inputs: UpdateServiceOverviewInput): Promise<BusinessResponse> {
+        const serviceOverview = ServiceOverview.fromInput(inputs);
+        const result = await this.businessRepo.updateServiceOverview(businessId, serviceOverviewId, serviceOverview);
+        return new BusinessResponseBuilder().withUpdatedServiceOverviews([result]).build();
     }
 
 }  

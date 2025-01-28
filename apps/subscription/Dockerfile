@@ -11,6 +11,7 @@ RUN npm install --no-optional
 
 COPY . .
 ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+
 RUN npx prisma generate --schema=./apps/subscription/prisma/schema.prisma
 # RUN apt-get update -y && apt-get install -y openssl
 # RUN npx prisma db push

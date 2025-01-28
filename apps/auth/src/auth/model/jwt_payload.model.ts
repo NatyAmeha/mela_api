@@ -6,6 +6,7 @@ export interface JwtPayload {
     username: string
     email: string
     phoneNumber: string
+    profileImageUrl: string
     accesses: Access[]
     refreshToken?: string
 }

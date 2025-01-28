@@ -45,6 +45,11 @@ import { ProductDataLoaders, ProductInventoryLoader, ProductPriceLoader } from '
 import { CalendarUsecase } from './calendar/calendar.usecase';
 import { CalendarResolver } from './calendar/calendar_resolver';
 import { CalendarRepository } from './calendar/repo/calendar.repository';
+import { LoyaltyTierResolver } from './loyalty/resolver/loyalty_tier.resolver';
+import { LoyaltyTierRepository } from './loyalty/repo/loyalty_tier.repository';
+import { LoyaltyTierService } from './loyalty/service/loyalty_tier.service';
+import { RewardResolver, RewardProductInfoResolver } from './loyalty/resolver/reward.resolver';
+import { RewardDataLoaders } from './loyalty/data_loader/reward.data_loader';
 
 
 @Module({
@@ -114,8 +119,19 @@ import { CalendarRepository } from './calendar/repo/calendar.repository';
     DiscoverResolver, DiscoverService,
 
     // Builders and utils
-    BusinessResponseBuilder, InventoryLocationBuilder
+    BusinessResponseBuilder, InventoryLocationBuilder,
+
+    LoyaltyTierResolver, LoyaltyTierService,
+    { provide: LoyaltyTierRepository.injectName, useClass: LoyaltyTierRepository },
+
+    // Reward resolvers and data loaders
+    ...RewardDataLoaders,
+    RewardResolver,
+    RewardProductInfoResolver,
   ],
-  exports: []
+  exports: [
+    LoyaltyTierResolver,
+    LoyaltyTierService
+  ]
 })
 export class CoreModule { } 

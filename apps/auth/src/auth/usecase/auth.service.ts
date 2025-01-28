@@ -14,15 +14,18 @@ import { ExceptionHelper } from '@app/common/errors/exception_helper';
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
 import { UserResponse, UserResponseBuilder } from '../dto/user.response';
 import { QueryHelper } from '@app/common/datasource_helper/query_helper';
+import { GoogleAuthProvider } from '../service/auth_provider/google_auth_provider';
 
 @Injectable()
 export class AuthService {
+
 
 
   constructor(
     @Inject(UserRepository.injectName) private userRepo: IUserRepository,
     @Inject(EmailAuthProvider.injectName) private emailAuthProvider: IAuthProvider,
     @Inject(PhoneAuthProvder.injectName) private phoneAuthProvider: IAuthProvider,
+    @Inject(GoogleAuthProvider.injectName) private googleAuthProvider: IAuthProvider,
     private jwtService: JwtService,
     private configService: ConfigService
   ) { }
@@ -60,6 +63,31 @@ export class AuthService {
     let authResponse = await this.tokenGeneratorHelper(authenticatedUser)
     await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: authResponse.refreshToken })
     // response
+    return new AuthResponse({
+      ...authResponse,
+      isNewUser: false,
+    })
+  }
+
+  async createAccountUsingGoogle(userInfo: User): Promise<AuthResponse> {
+    let authenticatedUser = await this.googleAuthProvider.createAccount(userInfo);
+    let authResponse = await this.tokenGeneratorHelper(authenticatedUser)
+    await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: authResponse.refreshToken, profileImageUrl: userInfo.profileImageUrl })
+    return new AuthResponse({
+      ...authResponse,
+    })
+  }
+
+  async authenticateUsingGoogleId(googleId: string): Promise<AuthResponse> {
+    let authenticatedUser = await this.googleAuthProvider.authenticate({ googleId: googleId });
+    if (!authenticatedUser) {
+      return new AuthResponse({
+        success: true,
+        user: null,
+      })
+    }
+    let authResponse = await this.tokenGeneratorHelper(authenticatedUser)
+    await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: authResponse.refreshToken })
     return new AuthResponse({
       ...authResponse,
       isNewUser: false,

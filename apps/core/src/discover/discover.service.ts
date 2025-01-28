@@ -28,7 +28,6 @@ export class DiscoverService {
         const topProducts = await this.getTopProductsFromUserFavoriteBusinesses(userFavoriteBusinessIds, limit);
         const favoriteBusinesses = await this.businessRepo.findBusinessesById(userFavoriteBusinessIds);
         const topBusinessBundles = await this.getTopBusinessBundles(userFavoriteBusinessIds, limit);
-        console.log('topBusinessBundles', topBusinessBundles)
         const result = new ForYouResponseBuilder().withTopProductsByBusiness(topProducts).withFavoriteBusinesses(favoriteBusinesses).withBundles(topBusinessBundles).build();
         return result;
     }

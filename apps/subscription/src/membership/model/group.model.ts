@@ -9,7 +9,8 @@ export enum GroupMemberStatus {
     PENDING = 'PENDING',
     ACTIVE = 'ACTIVE',
     INACTIVE = 'INACTIVE',
-    BLOCKED = 'BLOCKED'
+    BLOCKED = 'BLOCKED',
+    PENDING_RENEWAL = 'PENDING_RENEWAL'
 
 }
 @ObjectType()

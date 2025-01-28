@@ -11,6 +11,7 @@ import { PrismaException } from "@app/common/errors/prisma_exception";
 export abstract class IUserRepository {
     abstract createUser(userInfo: User): Promise<User>
     abstract isUserRegisteredBefore(checkingField: Partial<User>): Promise<boolean>
+    abstract getUserByOneOfFields(fields: Partial<User>[], accountType?: string): Promise<User | undefined>
     abstract getUser(query: Partial<User>): Promise<User | undefined>
     abstract updateUserInfo(userId: string, userInfo: Partial<User>): Promise<User>
     abstract addBusinessToFavorites(userId: string, businessInfos: FavoriteBusinessInfo[]): Promise<boolean>
@@ -31,6 +32,15 @@ export class UserRepository extends PrismaClient implements IUserRepository, OnM
         var result = await this.user.findFirst({ where: { ...checkingField as any } })
         return result?.id != undefined;
     }
+
+    async getUserByOneOfFields(fields: Partial<User>[], accountType?: string): Promise<User | undefined> {
+        var result = await this.user.findFirst({ where: { OR: [...fields as any] } })
+        if (!result) {
+            return undefined
+        }
+        return new User({ ...result })
+    }
+
     async createUser(userInfo: User): Promise<User> {
         const { accesses, ...restUserInfo } = userInfo;
         var userResult = await this.user.create({ data: { ...restUserInfo } });

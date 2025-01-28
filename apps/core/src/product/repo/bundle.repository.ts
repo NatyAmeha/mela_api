@@ -14,6 +14,7 @@ export interface IBundleRepository {
     createBundle(bundle: ProductBundle): Promise<ProductBundle>
     queryBundles(queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
     getBundleDetails(bundleId: string): Promise<ProductBundle>
+    getBundlesById(bundleIds: string[]): Promise<ProductBundle[]>
     getBundlesAvailableInBranch(branchId: string): Promise<ProductBundle[]>
     getBusinessBundles(businessId: string[], queryHelper: QueryHelper<Bundle>): Promise<ProductBundle[]>
     updateBundleInfo(bundleId: string, bundle: Partial<ProductBundle>): Promise<ProductBundle>
@@ -76,6 +77,19 @@ export class ProductBundleRepository extends PrismaClient implements OnModuleIni
                 throw ex;
             }
             throw new PrismaException({ source: "Get bundle", statusCode: 400, code: ex?.code, meta: ex?.meta });
+        }
+    }
+
+    async getBundlesById(bundleIds: string[]): Promise<ProductBundle[]> {
+        try {
+            const result = await this.bundle.findMany({ where: { id: { in: bundleIds } } });
+            if (!result) {
+                return [];
+            }
+            return result?.map(bundle => new ProductBundle({ ...bundle }));
+        } catch (ex) {
+            console.log(ex)
+            throw new PrismaException({ source: "Get bundles by id", statusCode: 400, code: ex?.code, meta: ex?.meta });
         }
     }
 
