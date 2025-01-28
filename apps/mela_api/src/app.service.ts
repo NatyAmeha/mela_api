@@ -14,7 +14,7 @@ export class AppService {
 
   }
 
-  async validateJwtAndQueryUser(authorization?: string, bypassToken: boolean = false): Promise<GatewayApiFetchResponse> {
+  async validateJwtAndQueryUser({ authorization, authServiceEndpoint, coreServiceEndpoint, bypassToken }: { authorization?: string, authServiceEndpoint?: string, coreServiceEndpoint?: string, bypassToken?: boolean }): Promise<GatewayApiFetchResponse> {
     try {
       var jwtService = new JwtService()
       var config = Configuration()
@@ -24,18 +24,17 @@ export class AppService {
 
           try {
             var jwtPayload = await jwtService.verifyAsync(token, { secret: config.auth.accessToken })
-            var userAccessApiEndpoint = config.auth.userAccessEndpointFromAuthService(jwtPayload.sub)
-            var businessSubscriptionEndpoint = config.auth.businessSubscriptionEndpoint(jwtPayload.sub)
+            var userAccessApiEndpoint = config.auth.userAccessEndpointFromAuthService(authServiceEndpoint, jwtPayload.sub)
             var axiosresponse = await axios.get(userAccessApiEndpoint)
             const { user, accesses } = axiosresponse.data as GatewayApiFetchResponse
             const { favoriteBusinesses, ...resetUserInfo } = user;
             var gatewayApiResponse = new GatewayApiFetchResponse({ user: { ...resetUserInfo, favoriteBusinesses: favoriteBusinesses.map(business => ({ businessId: business.businessId })) }, accesses })
-            console.log('axiosresponse', favoriteBusinesses, gatewayApiResponse.user?.favoriteBusinesses)
             if (!gatewayApiResponse) {
               throw new RequestValidationException({ message: "User not found by this id" })
             }
             return gatewayApiResponse
           } catch (ex) {
+            console.log('ex', ex)
             if (bypassToken) {
               return {}
             }

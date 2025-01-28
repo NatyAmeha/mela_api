@@ -1,4 +1,4 @@
-import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { OrderService } from "../usecase/order.usecase";
 import { Order } from "../model/order.model";
 import { OrderResponse } from "../model/response/order.reponse";
@@ -14,6 +14,9 @@ import { PermissionGuard } from "@app/common/permission_helper/permission.guard"
 import { AppResources } from "apps/mela_api/src/const/app_resource.constant";
 import { RequiresPermission } from "@app/common/permission_helper/require_permission.decorator";
 import { PERMISSIONACTION } from "@app/common/permission_helper/permission_constants";
+import { OrderSchedule } from "../model/order_schedule.model";
+import { AddOrderSchedulesInput } from "../dto/schedule.input";
+import { OrderPaymentMethodInput } from "../dto/order_item.input";
 
 
 @Resolver(of => Order)
@@ -48,10 +51,16 @@ export class OrderResolver {
         return result;
     }
 
+    @Query(returns => OrderResponse)
+    async getAddonUsage(@Args("addonIds", { type: () => [String] }) addonIds: string[], @Args({ name: "startDate", nullable: true }) startDate?: Date, @Args({ name: "endDate", nullable: true }) endDate?: Date): Promise<OrderResponse> {
+        const result = await this.orderService.getAddonUsage(addonIds, { startDate, endDate })
+        return result;
+
+    }
+
     // @UseGuards(AuthzGuard)
     @Mutation(returns => OrderResponse)
     async placeOrderFromPOS(@Args('businessId') businessId: string, @Args("orderInput") orderInput: CreateOrderInput, @Args({ name: "customerId", nullable: true }) customerId?: string): Promise<OrderResponse> {
-        console.log('orderInput', orderInput.paymentMethods)
         const result = await this.orderService.placeOrderFromPOS(businessId, orderInput, customerId);
         return result;
     }
@@ -87,6 +96,7 @@ export class OrderResolver {
     @RequiresPermission({
         permissions: [
             { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: "businessId" },
+            { resourceType: AppResources.POS, action: PERMISSIONACTION.ANY },
             { resourceType: AppResources.BRANCH, action: PERMISSIONACTION.MANAGE, resourcTargetName: "branchId" },
         ],
     })
@@ -95,4 +105,47 @@ export class OrderResolver {
         const result = await this.orderService.updateOrderStatus(orderId, status);
         return result;
     }
+
+    // Schedule
+
+    @Query(returns => OrderResponse)
+    async getBranchOrderSchedules(@Args("branchId") branchId: string): Promise<OrderResponse> {
+        const result = await this.orderService.getBranchOrderSchedules(branchId)
+        return result
+    }
+
+    @Query(returns => OrderResponse)
+    async getOrderSchedulesByCalendar(@Args("calendarId") calendarId: string): Promise<OrderResponse> {
+        const result = await this.orderService.getOrderSchedulesByCalendar(calendarId)
+        return result
+    }
+
+    @Mutation(returns => OrderResponse)
+    async addOrderSchedules(@Args("orderId") orderId: string, @Args("schedules", { type: () => [AddOrderSchedulesInput] }) schedules: AddOrderSchedulesInput[]): Promise<OrderResponse> {
+        const result = await this.orderService.addOrderSchedules(orderId, schedules)
+        return result
+    }
+
+    @Mutation(returns => OrderResponse)
+    @UseGuards(AuthzGuard)
+    async payRemainingOrderPayment(@Args("orderId") orderId: string, @Args("paymentMethod") paymentMethod: OrderPaymentMethodInput): Promise<OrderResponse> {
+        const result = await this.orderService.payRemainingOrderPayment(orderId, paymentMethod)
+        return result
+    }
+
+
+    // Field resolver
+    @ResolveField('schedules', returns => [OrderSchedule])
+    async getOrderSchedules(@Parent() order: Order): Promise<OrderSchedule[]> {
+        const result = await this.orderService.getOrderSchedules(order.id)
+        return result
+    }
+
+    @ResolveField('customer', returns => Customer, { nullable: true })
+    async getOrderCustomer(@Parent() order: Order): Promise<Customer> {
+        const result = await this.customerUseCase.getOrderCustomer(order.userId, order.customerPhoneNumber)
+        return result
+    }
+
+
 }

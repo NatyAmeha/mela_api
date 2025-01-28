@@ -13,7 +13,7 @@ import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { IReceivedMessageProcessor } from "libs/rmq/app_message_processor.interface";
 import { CoreServiceMessageProcessor } from "./core_service_msg_processor";
 import { BusinessMembership } from "../business/model/business_memership.model";
-import { User } from "apps/auth/src/auth/model/user.model";
+import { AccountType, User } from "apps/auth/src/auth/model/user.model";
 import { AuthResponse } from "apps/auth/src/auth/model/auth.response";
 import { CreateStaffInput } from "../staff/dto/staff.input";
 
@@ -38,8 +38,8 @@ export class CoreServiceMsgBrockerClient extends AppMessageBrocker implements On
 
     async sendCreateStaffUserAndAccessMessage(staffInput: CreateStaffInput) {
         let staffInfo = CreateStaffInput.toStaff(staffInput);
-        let accesses = staffInfo.createDefaultStaffAccess();
-        let StaffUserInfo = new User({ ...staffInfo.toUser(), accesses: accesses });
+        let accesses = staffInfo.createBranchStaffAccess();
+        let StaffUserInfo = new User({ ...staffInfo.toUser(), accesses: accesses, accountType: AccountType.STAFF });
         let messageInfo: IMessageBrocker<User> = {
             data: StaffUserInfo,
             coorelationId: AuthServiceMessageType.CREATE_STAFF_USER_AND_ASSIGN_ACCESS,

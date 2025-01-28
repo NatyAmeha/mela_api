@@ -14,6 +14,7 @@ import { SubscriptionRepository } from "../../repo/subscription.repository";
 import { User } from "apps/auth/src/auth/model/user.model";
 import { PaymentMethodInput } from "../../dto/payment_method_input";
 import { PaymentMethod } from "../../model/payment_method";
+import { PrismaTransaction } from "@app/common/datasource_helper/transaction_manager.interface";
 
 export class MembershipService {
 
@@ -23,20 +24,26 @@ export class MembershipService {
         @Inject(SubscriptionMessageBrocker.InjectName) private subscriptionBroker: SubscriptionMessageBrocker,
         private membershipResourceTracker: MembershipResourceTracker,
         private membershipSubscriptionOption: MembershipSubscriptionOption,
+        private transactionManager: PrismaTransaction
+
     ) {
 
     }
 
     async createMembershipPlan({ businessId, input, businessSubscription, platformServices }: { businessId: string, input: CreateMembershipInput, businessSubscription: Subscription, platformServices: PlatformService[] }): Promise<MembershipResponse> {
         const membershipInfo = Membership.fromCreateMembershipPlanInput(input, businessId)
+
         const resourceUsage = await this.membershipResourceTracker.getBusinessMembershipResourceUsage(businessId, businessSubscription, platformServices)
         console.log("resourceUsage", resourceUsage)
         if (resourceUsage.isExceededMaxUsage(1)) {
             return new MembershipResponseBuilder().basicResponse(false, resourceUsage.message ?? CommonSubscriptionErrorMessages.UPGRADE_SUBSCRIPTION_TO_USE_THIS_SERVICE)
         }
-        const defaultGroup = Group.getDefaultGroupForMembership(membershipInfo)
-        const result = await this.membershipRepo.createMembershipPlan(membershipInfo, [defaultGroup])
-        return new MembershipResponseBuilder().withMembership(result).build();
+        const membershipPlanCreateResult = await this.transactionManager.execute(this.membershipRepo, async (transactionContext) => {
+            const defaultGroup = Group.getDefaultGroupForMembership(membershipInfo)
+            const result = await this.membershipRepo.createMembershipPlan(membershipInfo, [defaultGroup], { transactionClient: transactionContext })
+            return new MembershipResponseBuilder().withMembership(result).build();
+        })
+        return membershipPlanCreateResult
     }
 
     async updateMembershipPlan(planId: string, input: UpdateMembershipInput) {
@@ -83,7 +90,7 @@ export class MembershipService {
     async getBusinessMembershipPlans(businessId: string, user?: User): Promise<MembershipResponse> {
         const membershipPlans = await this.membershipRepo.getBusinessMembershipPlans(businessId)
         const response = new MembershipResponseBuilder().withMemberships(membershipPlans);
-        return response.build();;
+        return response.build();
     }
 
     async getUserActiveMembershipSubscription(userId: string, membershipId: string): Promise<Subscription> {
@@ -91,12 +98,14 @@ export class MembershipService {
         return userActiveSubscription;
     }
 
-    async joinToMembershipGroups(userId: string, membershipId: string, options: { paymentMethod: PaymentMethodInput, onlyDefaultGroups: boolean, groupMemberStatus: GroupMemberStatus, selectedGroupIds?: string[] }) {
+
+
+    async joinToMembershipGroups(options: { userId: string, membershipId: string, phoneNumber?: string, paymentMethod: PaymentMethodInput, onlyDefaultGroups: boolean, groupMemberStatus: GroupMemberStatus, selectedGroupIds?: string[] }) {
         let groupsResult: Group[] = []
         if (options.onlyDefaultGroups) {
-            groupsResult = await this.membershipRepo.getDefaultGroupsForMembership(membershipId)
-            if (groupsResult?.length === 0) {
-                const membershipInfo = await this.membershipRepo.getMembershipPlan(membershipId)
+            groupsResult = await this.membershipRepo.getDefaultGroupsForMembership(options.membershipId)
+            if (groupsResult?.length == 0) {
+                const membershipInfo = await this.membershipRepo.getMembershipPlan(options.membershipId)
                 const defaultGroup = Group.getDefaultGroupForMembership(membershipInfo)
                 const createDefaultGroupsResult = await this.membershipRepo.createGroup(defaultGroup)
                 groupsResult.push(createDefaultGroupsResult)
@@ -104,20 +113,22 @@ export class MembershipService {
         }
         else {
             if (options.selectedGroupIds?.length > 0) {
-                groupsResult = await this.membershipRepo.getMembershipSelectedGroups(membershipId, options.selectedGroupIds)
+                groupsResult = await this.membershipRepo.getMembershipSelectedGroups(options.membershipId, options.selectedGroupIds)
             }
-            groupsResult = await this.membershipRepo.getMembershipGroups(membershipId)
+            groupsResult = await this.membershipRepo.getMembershipGroups(options.membershipId)
         }
         if (groupsResult.length === 0) {
             return new MembershipResponseBuilder().basicResponse(false, "No groups found for this membership")
         }
         const paymentMethod = PaymentMethod.from(options.paymentMethod)
-        const membersInfo = GroupMember.getGroupMembers([userId], options.groupMemberStatus, null, paymentMethod)
+        const membersInfo = GroupMember.getGroupMembers({ userId: options.userId ? [options.userId] : null, phoneNumber: options.phoneNumber, memberStatus: options.groupMemberStatus, activeSubscriptionId: null, paymentMethod: paymentMethod })
         const groupJoinResult = await this.membershipRepo.joinGroups(Group.getGroupIds(groupsResult), membersInfo)
         return new MembershipResponseBuilder().basicResponse(groupJoinResult)
     }
 
-    async approveUserMembershipRequest(membershipId: string, userIds: string[]) {
+
+
+    async approveUserMembershipRequest(membershipId: string, userIds: string[], paymentMethodInput?: PaymentMethodInput): Promise<MembershipResponse> {
         const membershipInfo = await this.membershipRepo.getMembershipPlan(membershipId)
         const groups = await this.membershipRepo.getMembershipGroups(membershipId)
         if (membershipInfo === null) {
@@ -127,9 +138,9 @@ export class MembershipService {
             return new MembershipResponseBuilder().basicResponse(false, "No groups found for this membership")
         }
         const subscriptionResponse = await this.membershipSubscriptionOption.createSubscriptionInfoBeta(membershipInfo, userIds[0]) // TODO: change array to single user
-
-        const approveResult = await this.membershipRepo.approveUserMembershipRequest(membershipId, userIds, subscriptionResponse.subscription);
-        return new MembershipResponseBuilder().basicResponse(approveResult)
+        const paymentMethod = paymentMethodInput ? PaymentMethod.from(paymentMethodInput) : null
+        const approveResult = await this.membershipRepo.approveUserMembershipRequest(membershipId, userIds, subscriptionResponse.subscription, paymentMethod);
+        return new MembershipResponseBuilder().withModifiedMembers(approveResult).build();
     }
 
     async getMembershipMembers(membershipId: string): Promise<GroupMember[]> {

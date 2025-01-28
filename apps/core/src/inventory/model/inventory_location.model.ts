@@ -1,10 +1,11 @@
 import { BaseModel } from "@app/common/model/base.model";
-import { Field, ID, ObjectType } from "@nestjs/graphql";
+import { Directive, Field, ID, ObjectType } from "@nestjs/graphql";
 import { Branch } from "../../branch/model/branch.model";
 import { Business } from "../../business/model/business.model";
 import { CreateInventoryLocationInput } from "../dto/inventory_location.input";
 
 @ObjectType()
+@Directive('@shareable')
 export class InventoryLocation extends BaseModel {
     @Field(types => ID)
     id: string;

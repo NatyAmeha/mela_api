@@ -17,7 +17,7 @@ export class ProductDiscovery extends IDiscovery<Product> {
         switch (discoverTypes) {
             case DiscoverTypes.TOP_BUSINESS_PRODUCTS:
                 if (selectedLanguage === LanguageKey.ENGLISH) {
-                    return `top products from ${LocalizedField.selectValueByKey(selectedLanguage, selectedFiledValue)}`
+                    return `Top products from ${LocalizedField.selectValueByKey(selectedLanguage, selectedFiledValue)}`
                 }
                 else if (selectedLanguage === LanguageKey.AMHARIC) {
                     return `ከ${LocalizedField.selectValueByKey(selectedLanguage, selectedFiledValue)} የተወደዱ አገልግሎቶች`

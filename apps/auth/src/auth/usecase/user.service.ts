@@ -1,9 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { UserRepository, IUserRepository } from "../data/repo/user.repository";
-import { FavoriteBusienssInput, FavoriteBusinessInfo } from "../model/user.model";
+import { AccountType, FavoriteBusienssInput, FavoriteBusinessInfo, User } from "../model/user.model";
 import { ClassDecoratorValidator } from "@app/common/validation_utils/class_decorator.validator";
 import { IValidator } from "@app/common/validation_utils/validator.interface";
-import { UserResponse } from "../dto/user.response";
+import { UserResponse, UserResponseBuilder } from "../dto/user.response";
 
 
 @Injectable()
@@ -26,6 +26,8 @@ export class UserService {
         const result = await this.userRepo.removeBusinessFromFavorites(userId, businessIds)
         return new UserResponse({ success: result })
     }
+
+
 
 
 }

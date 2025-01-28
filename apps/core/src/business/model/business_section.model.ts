@@ -1,11 +1,13 @@
 import { LocalizedField, LocalizedFieldInput } from '@app/common/model/localized_model';
-import { ObjectType, Field, InputType } from '@nestjs/graphql';
+import { ObjectType, Field, InputType, Directive } from '@nestjs/graphql';
 import { Type } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
 import { types } from 'joi';
 import { ProductAddon } from '../../product/model/product_addon.model';
+import { Calendar } from '../../calendar/model/calendar.model';
 
 @ObjectType()
+@Directive('@shareable')
 export class BusinessSection {
     @Field()
     id: string;
@@ -21,6 +23,9 @@ export class BusinessSection {
     productIds?: string[];
 
     @Field(types => [String])
+    bundleIds?: string[];
+
+    @Field(types => [String])
     images?: string[];
 
     @Field(types => [ProductAddon])
@@ -28,6 +33,9 @@ export class BusinessSection {
 
     @Field(types => [LocalizedField])
     description?: LocalizedField[];
+
+    @Field(type => [Calendar])
+    calendars?: Calendar[]
     constructor(partial?: Partial<BusinessSection>) {
         Object.assign(this, partial);
     }
@@ -55,3 +63,4 @@ export class CreateBusinessSectionInput {
         });
     }
 }
+

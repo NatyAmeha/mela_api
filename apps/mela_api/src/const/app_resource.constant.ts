@@ -14,6 +14,7 @@ export enum AppResources {
     POS = 'POS',
     LOYALTY_REWARD = 'LOYALTY_REWARD',
     ORDER = 'ORDER',
+    LOYALTY_TIER = 'LOYALTY_TIER',
 }
 
 export enum AppResourceAction {

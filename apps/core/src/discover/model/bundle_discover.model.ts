@@ -17,7 +17,7 @@ export class BundleDiscovery extends IDiscovery<ProductBundle> {
         switch (discoverTypes) {
             case DiscoverTypes.TOP_BUSINESS_BUNDLES:
                 if (selectedLanguage === LanguageKey.ENGLISH) {
-                    return `top bundles from ${LocalizedField.selectValueByKey(selectedLanguage, selectedFiledValue)}`
+                    return `Top bundles from ${LocalizedField.selectValueByKey(selectedLanguage, selectedFiledValue)}`
                 }
                 else if (selectedLanguage === LanguageKey.AMHARIC) {
                     return `ከ${LocalizedField.selectValueByKey(selectedLanguage, selectedFiledValue)} የተወደዱ ጥቅሎች`

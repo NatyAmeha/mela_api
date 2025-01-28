@@ -35,6 +35,9 @@ export class PaymentOption {
     @Field(type => PaymentOptionUpfrontPaymentType, { defaultValue: PaymentOptionUpfrontPaymentType.PERCENTAGE })
     upfrontPaymentType?: string
 
+    @Field(type => [LocalizedField])
+    payLaterMessage?: LocalizedField[]
+
     @Field()
     dueDate?: Date
 

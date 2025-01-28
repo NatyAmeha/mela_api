@@ -1,5 +1,4 @@
 import { Directive, Field, Float, ID, ObjectType } from "@nestjs/graphql";
-import { Reward } from "./reward.model";
 import { Customer } from "../../customer/model/customer.model";
 import { LocalizedField } from "@app/common/model/localized_model";
 
@@ -26,8 +25,6 @@ export class CustomerLoyalty {
     @Field(type => Customer)
     customer?: Customer
 
-    @Field(type => [Reward], { nullable: true })
-    businessRewards?: Reward[]
 
     @Field(type => Date, { defaultValue: new Date() })
     createdAt?: Date

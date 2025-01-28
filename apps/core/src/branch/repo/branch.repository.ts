@@ -15,6 +15,7 @@ export interface IBranchRepository {
 
     getBusinessBranches(businessId: string): Promise<Branch[]>;
     getProductBranchs(productId: string): Promise<Branch[]>;
+    getStaffBranches(staffId: string): Promise<Branch[]>;
 
     getBranchInfoForStaff(staffId: string): Promise<Branch>;
 }
@@ -28,11 +29,12 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
     }
 
     async addBranchToBusiness(bId: string, branchData: Branch): Promise<Branch> {
-        const { productIds, products, staffs, staffsId, businessId, inventoryLocations, bundles, productPrices, ...restBranchData } = branchData;
+        const { productIds, products, staffs, staffsId, businessId, inventoryLocations, bundles, productPrices, address, ...restBranchData } = branchData;
         var result = await this.$transaction(async (prisma) => {
             const branchCreateResult = await prisma.branch.create({
                 data: {
                     ...restBranchData,
+                    address: { city: address.city, location: address.location, address: address.address, latitude: address.latitude, longitude: address.longitude },
                     business: { connect: { id: bId } },
                 },
             });
@@ -71,6 +73,16 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
         }
     }
 
+    async getStaffBranches(staffId: string): Promise<Branch[]> {
+        try {
+            const result = await this.staff.findUnique({ where: { id: staffId } }).branch();
+            return result ? [new Branch({ ...result })] : [];
+        } catch (error) {
+            if (error instanceof RequestValidationException) throw error;
+            throw new PrismaException({ source: "Get staff branches", statusCode: 400, code: error.code, meta: { message: error.meta.message ?? error.meta.cause } })
+        }
+    }
+
     async getBusinessBranches(businessId: string): Promise<Branch[]> {
         try {
             const result = await this.business.findUnique({ where: { id: businessId } }).branches();
@@ -81,10 +93,10 @@ export class BranchRepository extends PrismaClient implements IBranchRepository,
         }
     }
 
-    async updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch> {
+        async updateBranch(branchId: string, branchData: Partial<Branch>): Promise<Branch> {
         try {
-            const { products, staffs, business, businessId, inventoryLocations, bundles, productPrices, ...restBranchData } = branchData;
-            var result = await this.branch.update({ where: { id: branchId }, data: { ...restBranchData } });
+            const { products, staffs, business, businessId, inventoryLocations, bundles, productPrices, address, ...restBranchData } = branchData;
+            var result = await this.branch.update({ where: { id: branchId }, data: { ...restBranchData, address: { update: { ...address } } } });
             if (!result.id) {
                 throw new RequestValidationException({ message: CommonBusinessErrorMessages.BRANCH_NOT_FOUND });
             }

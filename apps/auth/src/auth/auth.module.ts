@@ -25,6 +25,7 @@ import { AuthServiceMsgBrocker } from '../msg_brocker_client/auth_service_msg_br
 import { AuthController } from './auth.controller';
 import { AuthMsgProcessosor } from '../msg_brocker_client/auth_msg_processor';
 import { UserService } from './usecase/user.service';
+import { GoogleAuthProvider } from './service/auth_provider/google_auth_provider';
 
 
 
@@ -87,6 +88,10 @@ import { UserService } from './usecase/user.service';
     {
       provide: EmailAuthProvider.injectName,
       useClass: EmailAuthProvider,
+    },
+    {
+      provide: GoogleAuthProvider.injectName,
+      useClass: GoogleAuthProvider,
     },
     {
       provide: PhoneAuthProvder.injectName,

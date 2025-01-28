@@ -5,6 +5,7 @@ import { Benefit } from "apps/subscription/src/membership/model/benefit.model";
 
 // Contains the BusinessMembership information for the business, extension of Main Membership model inside subscription servivce
 @ObjectType()
+@Directive('@shareable')
 export class BusinessMembership {
     @Field(types => ID)
     id: string;

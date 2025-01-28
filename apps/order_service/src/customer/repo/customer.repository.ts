@@ -2,37 +2,29 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { PrismaClient } from "apps/order_service/prisma/generated/prisma_order_client";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
 import { PrismaException } from "@app/common/errors/prisma_exception";
-import { includes, remove, result, uniqBy, uniqWith } from "lodash";
 import { Customer } from "../model/customer.model";
 import { plainToClass } from "class-transformer";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
-import { CommonCustomerErrorMessages } from "apps/core/src/utils/const/error_constants";
+import { LocalizedField } from "@app/common/model/localized_model";
 
 export interface ICustomerRepository {
-    addTransactionClient: (client: PrismaClient) => void
     isCustomerAlreadyExist(userId: string, businessId: string): Promise<boolean>;
-    addOrGetCustomer(customer: Customer): Promise<Customer>
-    addCustomers(customers: Customer[]): Promise<Customer[]>
-    getCustomer(customerId: string): Promise<Customer | null>
-    getCustomerByUserId(userId: string): Promise<Customer | undefined>
-    getCustomerByPhoneNumber(phoneNumber: string, businessId: string): Promise<Customer | null>
-    getBusinessCustomer(userId: string, businessId: string): Promise<Customer | null>
-    getBusinessCustomers(businessId: string, queryHelper: QueryHelper<Customer>): Promise<Customer[]>
+    addOrGetCustomer(customer: Customer, { businessName, transactionClient }?: { businessName?: LocalizedField[], transactionClient?: PrismaClient | undefined }): Promise<Customer>
+    addCustomers(customers: Customer[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Customer[]>
+    getCustomer(customerId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Customer | null>
+    getCustomerByUserIdOrPhoneNumber({ userId, phoneNumber, transactionClient }?: { userId?: string, phoneNumber?: string, transactionClient?: PrismaClient | undefined }): Promise<Customer | null>
+    getCustomersByUserId(userId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Customer[] | undefined>
+    getCustomerByPhoneNumber(phoneNumber: string, { businessId, transactionClient }?: { businessId: string, transactionClient?: PrismaClient | undefined }): Promise<Customer | null>
+    getBusinessCustomer(userId: string, businessId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Customer | null>
+    getBusinessCustomers(businessId: string, queryHelper: QueryHelper<Customer>, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Customer[]>
 }
 
 @Injectable()
 export class CustomerRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, ICustomerRepository {
     static injectName = 'CUSTOMER_REPOSITORY'
 
-    transactionClient: PrismaClient | null
-
     async onModuleInit() {
         await this.$connect()
-    }
-
-
-    addTransactionClient(client: PrismaClient): void {
-        this.transactionClient = client;
     }
 
     async isCustomerAlreadyExist(userId: string, businessId: string): Promise<boolean> {
@@ -40,7 +32,18 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         return existingCustomerByUserIdAndBusinessId != null;
     }
 
-    async addOrGetCustomer(customer: Customer): Promise<Customer> {
+    async getCustomerByUserIdOrPhoneNumber({ userId, phoneNumber, transactionClient }: { userId?: string, phoneNumber?: string, transactionClient?: PrismaClient | undefined } = {}): Promise<Customer | null> {
+        try {
+            const queryData = userId == null ? { phoneNumber } : { userId }
+            const result = await (transactionClient || this).customer.findFirst({ where: queryData })
+            return plainToClass(Customer, result)
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({ source: "Get customer by user id or phone number", message: error })
+        }
+    }
+
+    async addOrGetCustomer(customer: Customer, { businessName, transactionClient }: { businessName?: LocalizedField[], transactionClient?: PrismaClient | undefined } = {}): Promise<Customer> {
         try {
             const whereConditions = [];
 
@@ -52,7 +55,7 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
                 whereConditions.push({ phoneNumber: customer.phoneNumber, businessId: customer.businessId });
             }
 
-            const existingCustomerByUserIdAndBusinessId = await (this.transactionClient || this).customer.findFirst({
+            const existingCustomerByUserIdAndBusinessId = await (transactionClient || this).customer.findFirst({
                 where: {
                     OR: whereConditions
                 },
@@ -61,7 +64,13 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
                 return existingCustomerByUserIdAndBusinessId;
             }
             const { customerLoyalties, redeemedRewards, ...customerData } = customer
-            const result = await this.customer.create({ data: customerData })
+            const result = await (transactionClient || this).customer.create({
+                data: {
+                    ...customerData, customerLoyalties: {
+                        create: { businessId: customer.businessId, currentPoints: 0, pointsSource: [], name: businessName }
+                    }
+                }
+            })
             return plainToClass(Customer, result)
         } catch (error) {
             console.log(error)
@@ -72,9 +81,9 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async addCustomers(customers: Customer[]): Promise<Customer[]> {
+    async addCustomers(customers: Customer[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Customer[]> {
         try {
-            const result = await (this.transactionClient || this).$transaction(async (tx) => {
+            const result = await (transactionClient || this).$transaction(async (tx) => {
                 const result = await Promise.all(customers.map(async (customer) => {
                     const { customerLoyalties, redeemedRewards, ...customerData } = customer
                     const createResult = await tx.customer.create({ data: customerData })
@@ -89,9 +98,9 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async getCustomer(customerId: string): Promise<Customer | null> {
+    async getCustomer(customerId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Customer | null> {
         try {
-            const result = await (this.transactionClient || this).customer.findUnique({ where: { id: customerId } })
+            const result = await (transactionClient || this).customer.findUnique({ where: { id: customerId } })
             if (!result) {
                 return null
             }
@@ -101,20 +110,20 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async getCustomerByUserId(userId: string): Promise<Customer | undefined> {
+    async getCustomersByUserId(userId: string): Promise<Customer[] | undefined> {
         try {
-            const result = await (this.transactionClient || this).customer.findFirst({ where: { userId } })
+            const result = await this.customer.findMany({ where: { userId } })
             if (!result) {
                 return null
             }
-            return plainToClass(Customer, result)
+            return result.map(customer => plainToClass(Customer, customer))
         } catch (error) {
             throw new PrismaException({ source: "Get customer by user id", message: error })
         }
     }
-    async getCustomerByPhoneNumber(phoneNumber: string, businessId: string): Promise<Customer | null> {
+    async getCustomerByPhoneNumber(phoneNumber: string, { businessId, transactionClient }: { businessId: string, transactionClient?: PrismaClient | undefined } = { businessId: "", transactionClient: undefined }): Promise<Customer | null> {
         try {
-            const result = await (this.transactionClient || this).customer.findFirst({ where: { phoneNumber, businessId } })
+            const result = await (transactionClient || this).customer.findFirst({ where: { phoneNumber, businessId } })
             if (!result) {
                 return null
             }
@@ -124,9 +133,9 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async getBusinessCustomer(userId: string, businessId: string): Promise<Customer> {
+    async getBusinessCustomer(userId: string, businessId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Customer> {
         try {
-            const result = await (this.transactionClient || this).customer.findFirst({ where: { userId, businessId } })
+            const result = await (transactionClient || this).customer.findFirst({ where: { userId, businessId } })
             if (result) {
                 console.log('result', result)
                 return plainToClass(Customer, result)
@@ -138,9 +147,9 @@ export class CustomerRepository extends PrismaClient implements OnModuleInit, On
         }
     }
 
-    async getBusinessCustomers(businessId: string, queryHelper: QueryHelper<Customer>): Promise<Customer[]> {
+    async getBusinessCustomers(businessId: string, queryHelper: QueryHelper<Customer>, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Customer[]> {
         try {
-            const result = await (this.transactionClient || this).customer.findMany({
+            const result = await (transactionClient || this).customer.findMany({
                 where: { businessId },
                 include: {
                     customerLoyalties: true,

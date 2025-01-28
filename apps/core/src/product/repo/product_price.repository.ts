@@ -85,17 +85,14 @@ export class ProductPriceRepository extends PrismaClient implements OnModuleInit
 
     async getProductsPrices(productIds: string[], { branchId, pricelistId }: { branchId?: string; pricelistId?: string; }): Promise<ProductPrice[]> {
         try {
-            const result = await this.$transaction(async (prisma) => {
-                const productPrices = await prisma.productPrice.findMany({
-                    where: {
-                        productId: { in: productIds },
-                        branchId: branchId != null ? branchId : undefined,
-                        priceListId: pricelistId != null ? pricelistId : undefined,
-                    }
-                })
-                return productPrices.map(price => new ProductPrice({ ...price }))
+            const productPrices = await this.productPrice.findMany({
+                where: {
+                    productId: { in: productIds },
+                    branchId: branchId != null ? branchId : undefined,
+                    priceListId: pricelistId != null ? pricelistId : undefined,
+                }
             })
-            return result;
+            return productPrices.map(price => new ProductPrice({ ...price }))
         } catch (ex) {
             console.log(ex);
             throw new PrismaException({ message: ex.message, meta: { modelName: "ProductPrice" } });

@@ -53,10 +53,10 @@ export class CreateBundleInput {
     @Field(types => DiscountCondition, { defaultValue: DiscountCondition.NONE })
     condition?: string
 
-    @Field(types => Float)
+    @Field(types => String)
     @ValidateIf((obj: CreateBundleInput) => (obj.condition != DiscountCondition.NONE && obj.condition != DiscountCondition.PURCHASE_ALL_ITEMS))
     @IsNotEmpty()
-    conditionValue?: number
+    conditionValue?: string
 
     constructor(partial?: Partial<CreateBundleInput>) {
         Object.assign(this, partial)
@@ -74,10 +74,10 @@ export class UpdateBundleInput extends PartialType(CreateBundleInput) {
     @IsNotEmpty()
     discountValue?: number
 
-    @Field(types => Float)
+    @Field(types => String)
     @ValidateIf((obj: UpdateBundleInput) => (obj.condition != DiscountCondition.NONE && obj.condition != DiscountCondition.PURCHASE_ALL_ITEMS))
     @IsNotEmpty()
-    conditionValue?: number
+    conditionValue?: string
 
 
     toBundleInfo(businessId: string): ProductBundle {

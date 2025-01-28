@@ -1,10 +1,31 @@
 import { Field, ID, InputType, OmitType, PartialType } from "@nestjs/graphql";
-import { AddonInputType, ProductAddon, ProductAddonOption, ProductAddonOptionInput } from "../model/product_addon.model";
+import { AddonInputType, OptionConfiguration, ProductAddon, ProductAddonOption } from "../model/product_addon.model";
 import { PriceInput } from "@app/common/model/price.model";
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { ArrayNotEmpty, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested, isNotEmpty } from "class-validator";
 import { Type } from "class-transformer";
 import { types } from "joi";
+
+@InputType()
+export class OptionConfigurationInput {
+    @Field(type => String)
+    forType: string
+    @Field(type => String)
+    uiType: string
+}
+
+@InputType()
+export class ProductAddonOptionInput {
+    @Field(type => [LocalizedFieldInput])
+    @Type(() => LocalizedFieldInput)
+    name: LocalizedFieldInput[]
+    @Field(type => [String], { defaultValue: [] })
+    images?: string[]
+
+    @Field(type => [OptionConfigurationInput], { defaultValue: [] })
+    configurations?: OptionConfigurationInput[]
+
+}
 
 
 @InputType()
@@ -73,6 +94,6 @@ export class UpdateProductAddonInput extends PartialType(CreateProductAddonInput
         super({ ...partial })
         Object.assign(this, partial)
     }
-
-
 }
+
+

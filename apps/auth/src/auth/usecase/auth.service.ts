@@ -12,25 +12,31 @@ import { IAuthProvider } from '../service/auth_provider/Iauth_provider.interface
 import { PhoneAuthProvder } from '../service/auth_provider/phone_auth_provider';
 import { ExceptionHelper } from '@app/common/errors/exception_helper';
 import { RequestValidationException } from '@app/common/errors/request_validation_exception';
-import { UserResponse } from '../dto/user.response';
+import { UserResponse, UserResponseBuilder } from '../dto/user.response';
+import { QueryHelper } from '@app/common/datasource_helper/query_helper';
+import { GoogleAuthProvider } from '../service/auth_provider/google_auth_provider';
 
 @Injectable()
 export class AuthService {
+
+
+
   constructor(
     @Inject(UserRepository.injectName) private userRepo: IUserRepository,
     @Inject(EmailAuthProvider.injectName) private emailAuthProvider: IAuthProvider,
     @Inject(PhoneAuthProvder.injectName) private phoneAuthProvider: IAuthProvider,
+    @Inject(GoogleAuthProvider.injectName) private googleAuthProvider: IAuthProvider,
     private jwtService: JwtService,
     private configService: ConfigService
   ) { }
-  async createUserAccountUsingEmailPassword(userInfo: User,) {
+  async createUserAccountUsingEmailPassword(userInfo: User) {
     let registredUser = await this.emailAuthProvider.createAccount(userInfo)
     let authResponse = await this.tokenGeneratorHelper(registredUser)
     await this.userRepo.updateUserInfo(registredUser.id, { refreshToken: authResponse.refreshToken })
-    return {
+    return new AuthResponse({
       ...authResponse,
       isNewUser: true
-    }
+    })
   }
 
   async createOrGetUserAccountUsingEmailPassword(userInfo: User) {
@@ -57,38 +63,72 @@ export class AuthService {
     let authResponse = await this.tokenGeneratorHelper(authenticatedUser)
     await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: authResponse.refreshToken })
     // response
-    return {
+    return new AuthResponse({
       ...authResponse,
       isNewUser: false,
+    })
+  }
+
+  async createAccountUsingGoogle(userInfo: User): Promise<AuthResponse> {
+    let authenticatedUser = await this.googleAuthProvider.createAccount(userInfo);
+    let authResponse = await this.tokenGeneratorHelper(authenticatedUser)
+    await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: authResponse.refreshToken, profileImageUrl: userInfo.profileImageUrl })
+    return new AuthResponse({
+      ...authResponse,
+    })
+  }
+
+  async authenticateUsingGoogleId(googleId: string): Promise<AuthResponse> {
+    let authenticatedUser = await this.googleAuthProvider.authenticate({ googleId: googleId });
+    if (!authenticatedUser) {
+      return new AuthResponse({
+        success: true,
+        user: null,
+      })
     }
+    let authResponse = await this.tokenGeneratorHelper(authenticatedUser)
+    await this.userRepo.updateUserInfo(authenticatedUser.id, { refreshToken: authResponse.refreshToken })
+    return new AuthResponse({
+      ...authResponse,
+      isNewUser: false,
+    })
   }
 
   async registerOrAuthenticateUsingPhoneNumber(userInfo: User): Promise<AuthResponse> {
-    let authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
     let authenticatedUserResult: User;
     //register user by phone first and it user exist authenticate it
     try {
       authenticatedUserResult = await this.phoneAuthProvider.createAccount(userInfo)
       let authResponse = await this.tokenGeneratorHelper(authenticatedUserResult);
       await this.userRepo.updateUserInfo(authenticatedUserResult.id, { refreshToken: authResponse.refreshToken })
-      return {
+      return new AuthResponse({
         ...authResponse,
         isNewUser: true
-      }
+      })
     } catch (error) {
       if (ExceptionHelper.isUserRegisteredBeforeException(error)) {
-        authenticatedUserResult = await this.phoneAuthProvider.authenticate({ phoneNumber: userInfo.phoneNumber });
+        authenticatedUserResult = await this.phoneAuthProvider.authenticate({ phoneNumber: userInfo.phoneNumber, accountType: userInfo.accountType });
         let authResponse = await this.tokenGeneratorHelper(authenticatedUserResult)
         await this.userRepo.updateUserInfo(authenticatedUserResult.id, { refreshToken: authResponse.refreshToken })
-        return {
+        return new AuthResponse({
           ...authResponse,
           isNewUser: false
-        }
+        })
       }
       else {
         throw error;
       }
     }
+  }
+
+  async getTokenForStaff(phoneNumber: string) {
+    let staffUser = await this.userRepo.getStaffUserByPhoneNumber(phoneNumber)
+    console.log("staff info", phoneNumber, staffUser);
+    if (!staffUser) {
+      throw new RequestValidationException({ message: "Staff user not found" })
+    }
+    const authResponse = await this.tokenGeneratorHelper(staffUser)
+    return authResponse
   }
 
   async updateUserInfo(userId: string, updateUserInfo: User): Promise<AuthResponse> {
@@ -100,27 +140,34 @@ export class AuthService {
   async refreshToken(userInfo: User): Promise<AuthResponse> {
     let authResponse = await this.tokenGeneratorHelper(userInfo)
     let updateTokenResult = await this.userRepo.updateUserInfo(userInfo.id, { refreshToken: authResponse.refreshToken })
-    return {
+    return new AuthResponse({
       ...authResponse,
       isNewUser: false
-    }
+    })
   }
 
   async tokenGeneratorHelper(user: User): Promise<AuthResponse> {
     let authTokenKeys = AuthResponse.getEnvVariableForAuth(this.configService)
     let generatedAccessToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.accessTokenKey, expiresIn: authTokenKeys.accessTokenExpires })
     let generatedRefreshToken = await this.jwtService.signAsync(user.getTokenPayloadFromUser(), { secret: authTokenKeys.refreshTokenKey, expiresIn: authTokenKeys.refreshTokenExpires })
-    return {
+    return new AuthResponse({
       success: true,
       user: user,
       accessToken: generatedAccessToken,
       refreshToken: generatedRefreshToken
-    }
+    })
   }
+
+
 
   async getUserInfo(userId: string): Promise<User | undefined> {
     let userInfo = await this.userRepo.getUser({ id: userId })
     return userInfo
+  }
+
+  async getUserDataBy(query: Partial<User>): Promise<UserResponse> {
+    let userInfo = await this.userRepo.getUser(query)
+    return new UserResponseBuilder().withUser(userInfo).build()
   }
 
   async logout(userId: string) {

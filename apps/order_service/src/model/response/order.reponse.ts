@@ -3,6 +3,8 @@ import { Field, ObjectType } from "@nestjs/graphql";
 import { Cart } from "../cart.model";
 import { Order } from "../order.model";
 import { types } from "joi";
+import { OrderSchedule } from "../order_schedule.model";
+import { AddonUsage } from "../addon_usage.model";
 
 @ObjectType()
 export class OrderResponse extends BaseResponse {
@@ -16,6 +18,12 @@ export class OrderResponse extends BaseResponse {
     order?: Order
     @Field(types => [Order])
     orders?: Order[]
+
+    @Field(types => [OrderSchedule])
+    schedules?: OrderSchedule[]
+
+    @Field(types => [AddonUsage])
+    addonUsages?: AddonUsage[]
 
     constructor(data: Partial<OrderResponse>) {
         super()
@@ -57,6 +65,18 @@ export class OrderResponseBuilder extends BaseResponseBuilder {
         this.orderResponse.success = true
         this.orderResponse.carts = carts
         return this
+    }
+
+    withSchedules(schedules: OrderSchedule[]): OrderResponseBuilder {
+        this.orderResponse.success = true
+        this.orderResponse.schedules = schedules
+        return this
+    }
+
+    withAddonUsages(addonUsages: AddonUsage[]): OrderResponseBuilder {
+        this.orderResponse.success = true
+        this.orderResponse.addonUsages = addonUsages;
+        return this;
     }
 
     build(): OrderResponse {

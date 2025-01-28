@@ -1,5 +1,5 @@
 import { Args, Int, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
-import { FavoriteBusienssInput, FavoriteBusinessInfo, User } from "./model/user.model";
+import { AccountType, FavoriteBusienssInput, FavoriteBusinessInfo, User } from "./model/user.model";
 import { UseGuards } from "@nestjs/common";
 import { JwtGuard } from "./service/guard/jwt.gurad";
 import { CurrentUser } from "../../../../libs/common/get_user_decorator";
@@ -29,6 +29,12 @@ export class UserResolver {
         return result;
     }
 
+    @Query(returns => UserResponse)
+    async getUserByPhoneNumber(@Args("phoneNumber") phoneNumber: string): Promise<UserResponse> {
+        const result = await this.authService.getUserDataBy({ phoneNumber: phoneNumber, accountType: AccountType.USER });
+        return result;
+    }
+
     @UseGuards(JwtGuard)
     @Mutation(returns => UserResponse, { description: "Returns success boolean value to indicate if the operation was successful or not" })
     async addBusinessToFavorites(@CurrentUser() currentUser: User, @Args("input", { type: () => [FavoriteBusienssInput] }) input: FavoriteBusienssInput[]): Promise<UserResponse> {
@@ -40,5 +46,7 @@ export class UserResolver {
     async removeBusinessFromFavorites(@CurrentUser() currentUser: User, @Args("businessIds", { type: () => [String] }) businessIds: string[]): Promise<UserResponse> {
         return await this.userService.removeBusinessFromFavorites(currentUser.id!, businessIds);
     }
+
+
 
 }

@@ -6,7 +6,7 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 
 export interface IStaffRepository {
     createStaff(staffInfo: Staff): Promise<Staff>
-    authenticateStaff(phoneNumber: string, pin: number, branchId: string, businessId: string): Promise<Staff>
+    authenticateStaff(phoneNumber: string, businessId: string, pin?: number): Promise<Staff>
     assignStaffToBranch(branchId: string, staffId: string): Promise<Staff>
     assignStaffToBusiness(businessId: string, staffId: string): Promise<Staff>
     unAssignStaffFromBranch(branchId: string, staffId: string): Promise<Staff>
@@ -16,6 +16,7 @@ export interface IStaffRepository {
 
     getBusinessStaffs(businessId: string): Promise<Staff[]>
     getBranchStaffs(branchId: string): Promise<Staff[]>
+    getStaffByPhoneNumber(phoneNumber: string, businessId: string): Promise<Staff>
 }
 
 @Injectable()
@@ -41,16 +42,32 @@ export class StaffRepository extends PrismaClient implements IStaffRepository, O
         }
     }
 
-    async authenticateStaff(phoneNumber: string, pin: number, branchId: string, businessId: string): Promise<Staff> {
+    async getStaffByPhoneNumber(phoneNumber: string, businessId: string): Promise<Staff> {
         try {
-            const staff = await this.staff.findFirst({
-                where: { phoneNumber, pin, branchId, businessId }
-            });
+            const staff = await this.staff.findFirst({ where: { phoneNumber, businessId, isActive: true } });
+            return new Staff({ ...staff });
+        } catch (error) {
+            throw new PrismaException({ source: 'StaffRepository.getStaffByPhoneNumber', message: error.message, statusCode: 500, exception: error })
+        }
+    }
+
+    async authenticateStaff(phoneNumber: string, businessId: string, pin?: number,): Promise<Staff> {
+        try {
+            console.log(phoneNumber, businessId, pin)
+            let staff;
+            if (pin) {
+                staff = await this.staff.findFirst({
+                    where: { phoneNumber, pin, businessId, isActive: true }
+                });
+            } else {
+                staff = await this.staff.findFirst({ where: { phoneNumber, businessId, isActive: true } });
+            }
             if (!staff) {
                 throw new RequestValidationException({ source: 'authenticate Staff', message: 'Invalid phone number, pin, branch or business' })
             }
             return new Staff({ ...staff });
         } catch (error) {
+            console.log(error)
             throw new PrismaException({ source: 'authenticate Staff', message: error.message, statusCode: 500, exception: error })
         }
     }

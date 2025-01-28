@@ -101,20 +101,51 @@ export class MembershipResolver {
     @Mutation(returns => MembershipResponse)
     async joinMemership(@Args("membershipId") membershipId: string, @CurrentUser() user: User, @Args("paymentMethod") paymentMethod: PaymentMethodInput) {
         // join membership
-        const result = await this.membershipService.joinToMembershipGroups(user.id, membershipId, { paymentMethod: paymentMethod, onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING });
+        const result = await this.membershipService.joinToMembershipGroups({ userId: user.id, membershipId: membershipId, paymentMethod: paymentMethod, onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING });
         return result;
     }
+
+    @UseGuards(AuthzGuard)
+    @Mutation(returns => MembershipResponse)
+    async renewMembership(@Args("membershipId") membershipId: string, @CurrentUser() user: User, @Args("paymentMethod") paymentMethod: PaymentMethodInput) {
+        const result = await this.membershipService.joinToMembershipGroups({ userId: user.id, membershipId: membershipId, paymentMethod: paymentMethod, onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING_RENEWAL });
+        return result;
+    }
+
+    @UseGuards(AuthzGuard)
+    @Mutation(returns => MembershipResponse)
+    async createMembershipFromPOs(@Args("membershipId") membershipId: string, @Args("phoneNumber") phoneNumber: string, @Args("paymentMethod") paymentMethod: PaymentMethodInput) {
+        // join membership
+        const result = await this.membershipService.joinToMembershipGroups({ userId: null, membershipId: membershipId, phoneNumber: phoneNumber, paymentMethod: paymentMethod, onlyDefaultGroups: true, groupMemberStatus: GroupMemberStatus.PENDING });
+        return result;
+    }
+
+    // async createMemberFromPOS(@Args(ResourceTargetIdentifier.BUSINESSID) businessId: string,
+    //     @Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string,
+    //     @Args({ name: "userId", type: () => String, nullable: true }) userId?: string,
+    //     @Args({ name: "phoneNumber", type: () => String, nullable: true }) customerPhoneNumber?: string,
+    //     @Args("paymentMethod") paymentMethod: PaymentMethodInput) {
+    //     const result = await this.membershipService.createMemberFromPOS(businessId, membershipId, userId, customerPhoneNumber);
+    //     return result;
+    // }
 
     @RequiresPermission({
         permissions: [
             { resourceType: AppResources.MEMBERSHIP, action: PERMISSIONACTION.UPDATE, resourcTargetName: ResourceTargetIdentifier.MEMBERSHIPID },
-            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: ResourceTargetIdentifier.BUSINESSID }
+            { resourceType: AppResources.BUSINESS, action: PERMISSIONACTION.ANY, resourcTargetName: ResourceTargetIdentifier.BUSINESSID },
+            { resourceType: AppResources.POS, action: PERMISSIONACTION.ANY, resourcTargetName: ResourceTargetIdentifier.BRANCHID }
         ],
     })
     @UseGuards(PermissionGuard)
     @Mutation(returns => MembershipResponse)
-    async approveMembershipRequest(@Args(ResourceTargetIdentifier.BUSINESSID) businessId: string, @Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string, @Args({ name: "membersId", type: () => [String] },) membersId: string[]) {
-        const result = await this.membershipService.approveUserMembershipRequest(membershipId, membersId);
+    async approveMembershipRequest(
+        @Args(ResourceTargetIdentifier.MEMBERSHIPID) membershipId: string,
+        @Args(ResourceTargetIdentifier.BUSINESSID) businessId: string,
+        @Args({ name: "membersId", type: () => [String] },) membersId: string[],
+        @Args({ name: ResourceTargetIdentifier.BRANCHID, nullable: true }) branchId?: string,
+        @Args({ name: "paymentMethod", nullable: true }) paymentMethod?: PaymentMethodInput) {
+        console.log('members id', membersId)
+        const result = await this.membershipService.approveUserMembershipRequest(membershipId, membersId, paymentMethod);
         return result;
     }
 
@@ -127,15 +158,12 @@ export class MembershipResolver {
 
     @ResolveField('activeSubscription', returns => Subscription)
     async getActiveSubscription(@Parent() membershipGroupMember: GroupMember): Promise<Subscription> {
-        console.log('resolve subscription  filed', membershipGroupMember)
         const result = await this.subscriptionService.getActiveSubscription(membershipGroupMember.activeSubscriptionId);
-        console.log('resolve subscription  filed', result)
         return result;
     }
 
     @ResolveField('currentUserSubscription', returns => Subscription, { nullable: true })
     async getCurrentUserSubscription(@Parent() membership: Membership, @CurrentUser() user?: User): Promise<Subscription | null> {
-        console.log('resolve current user subscription', membership, user)
         if (!user) {
             return null;
         }

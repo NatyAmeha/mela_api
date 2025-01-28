@@ -1,7 +1,7 @@
 generator client {
     provider      = "prisma-client-js"
     output        = "./generated/prisma_core_client"
-    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x", "windows"]
 }
 
 datasource db {
@@ -34,7 +34,7 @@ model Product {
     sectionId        String[]
     isActive         Boolean         @default(true)
     category         String[]
-    type             String
+    type             String?         @default("PRODUCT")
     createdAt        DateTime?       @default(now())
     updatedAt        DateTime?       @updatedAt
     canOrderOnline   Boolean         @default(false)
@@ -58,6 +58,7 @@ model Product {
     totalViews Int?           @default(0)
     prices     ProductPrice[]
     discounts  Discount[]
+    calendars  Calendar[]
 }
 
 type ProductOption {
@@ -107,43 +108,46 @@ model InventoryLocation {
 
 // business.model.ts
 model Business {
-    id                        String              @id @default(auto()) @map("_id") @db.ObjectId
+    id                        String                @id @default(auto()) @map("_id") @db.ObjectId
     name                      LocalizedData[]
     description               LocalizedData[]
-    type                      String              @default("RESTAURANT") // will be removed
+    type                      String                @default("RESTAURANT") // will be removed
     categories                String[]
-    workspaceUrl              String              @unique
-    isActive                  Boolean             @default(false)
+    workspaceUrl              String                @unique
+    isActive                  Boolean               @default(false)
     gallery                   Gallery
-    createdAt                 DateTime?           @default(now())
-    updatedAt                 DateTime?           @updatedAt
+    createdAt                 DateTime?             @default(now())
+    updatedAt                 DateTime?             @updatedAt
     creator                   String
-    customersId               String[]            @default([]) @db.ObjectId
+    customersId               String[]              @default([]) @db.ObjectId
     customers                 Customer[]
-    productIds                String[]            @default([]) @db.ObjectId
+    productIds                String[]              @default([]) @db.ObjectId
     products                  Product[]
     openingStatus             String?
     sections                  BusinessSection[]
+    serviceOverviews          ServiceOverview[]
     mainAddress               Address
     phoneNumber               String
     email                     String?
     website                   String?
-    branchIds                 String[]            @default([]) @db.ObjectId
+    branchIds                 String[]              @default([]) @db.ObjectId
     branches                  Branch[]
-    staffsId                  String[]            @default([]) @db.ObjectId
+    staffsId                  String[]              @default([]) @db.ObjectId
     staffs                    Staff[]
-    stage                     String              @default("CREATED")
-    subscriptionIds           String[]            @default([]) @db.ObjectId
+    stage                     String                @default("CREATED")
+    subscriptionIds           String[]              @default([]) @db.ObjectId
     activeSubscriptionId      String?
-    trialPeriodUsedServiceIds String[]            @default([]) @db.ObjectId
+    trialPeriodUsedServiceIds String[]              @default([]) @db.ObjectId
     inventoryLocations        InventoryLocation[]
     deliveryInfo              DeliveryInfo[]
-    bundles                   Bundle[]            @relation(fields: [bundleIds], references: [id])
-    bundleIds                 String[]            @default([]) @db.ObjectId
+    bundles                   Bundle[]              @relation(fields: [bundleIds], references: [id])
+    bundleIds                 String[]              @default([]) @db.ObjectId
     paymentOptions            PaymentOption[]
-    totalViews                Int?                @default(0)
+    totalViews                Int?                  @default(0)
     priceLists                PriceList[]
     discounts                 Discount[]
+    orderStatuses             BusinessOrderStatus[]
+    calendars                 Calendar[]
 }
 
 // branch.model.ts
@@ -176,7 +180,7 @@ model Staff {
     id          String    @id @default(auto()) @map("_id") @db.ObjectId
     name        String
     phoneNumber String
-    password    String
+    password    String?
     pin         Int?
     roles       String[]
     branchId    String?   @db.ObjectId
@@ -189,22 +193,27 @@ model Staff {
 }
 
 model Bundle {
-    id          String          @id @default(auto()) @map("_id") @db.ObjectId
-    name        LocalizedData[]
-    description LocalizedData[]
-    type        String          @default("DEFAULT")
-    productIds  String[]
-    startDate   DateTime?
-    endDate     DateTime?
-    gallery     Gallery
-    discount    Discount?
-    businessIds String[]        @default([]) @map("businessIds") @db.ObjectId
-    businesses  Business[]      @relation(fields: [businessIds], references: [id])
-    branchIds   String[]        @default([]) @db.ObjectId
-    branches    Branch[]        @relation(fields: [branchIds], references: [id])
-    isActive    Boolean?        @default(false)
-    createdAt   DateTime        @default(now())
-    updatedAt   DateTime        @updatedAt
+    id             String              @id @default(auto()) @map("_id") @db.ObjectId
+    name           LocalizedData[]
+    summary        LocalizedData[]
+    description    LocalizedData[]
+    type           String              @default("DEFAULT")
+    productIds     String[]
+    startDate      DateTime?
+    endDate        DateTime?
+    gallery        Gallery
+    discount       Discount?
+    condition      String?
+    conditionValue String?
+    addons         ProductAddon[]
+    productsInfo   BundleProductInfo[]
+    businessIds    String[]            @default([]) @map("businessIds") @db.ObjectId
+    businesses     Business[]          @relation(fields: [businessIds], references: [id])
+    branchIds      String[]            @default([]) @db.ObjectId
+    branches       Branch[]            @relation(fields: [branchIds], references: [id])
+    isActive       Boolean?            @default(false)
+    createdAt      DateTime            @default(now())
+    updatedAt      DateTime            @updatedAt
 }
 
 model ProductPrice {
@@ -224,6 +233,36 @@ model ProductPrice {
     @@unique([productId, branchId, priceListId])
 }
 
+model Calendar {
+    id            String              @id @default(auto()) @map("_id") @db.ObjectId
+    type          String?
+    productId     String              @db.ObjectId
+    product       Product             @relation(fields: [productId], references: [id])
+    businessId    String              @db.ObjectId
+    business      Business            @relation(fields: [businessId], references: [id])
+    sectionId     String?             @db.ObjectId
+    fromDate      DateTime
+    toDate        DateTime
+    disabledDays  DateTime[]          @default([])
+    disabledHours DateTime[]          @default([])
+    orderInfo     CalendarOrderInfo[]
+    createdAt     DateTime            @default(now())
+    updatedAt     DateTime?           @updatedAt
+}
+
+type CalendarOrderInfo {
+    id              String @default(uuid())
+    dayOfWeek       Int // Day of week (0: Sunday, 1: Monday, ..., 6: Saturday)
+    maxOrderPerDay  Int    @default(12)
+    maxOrderPerHour Int    @default(1)
+}
+
+type BundleProductInfo {
+    productId String
+    minQty    Float
+    maxQty    Float
+}
+
 type PriceList {
     id          String          @default(uuid())
     name        LocalizedData[]
@@ -235,29 +274,63 @@ type PriceList {
 }
 
 type ProductAddon {
-    id              String               @default(uuid())
-    name            LocalizedData[]
-    inputType       String?
-    minAmount       Float?
-    maxAmount       Float?
-    options         ProductAddonOption[]
-    checkCalendar   Boolean?
-    isProduct       Boolean              @default(false)
-    isDateRange     Boolean              @default(false)
-    productIds      String[]             @default([])
-    tag             String[]             @default([])
-    isActive        Boolean              @default(true)
-    isRequired      Boolean              @default(false)
-    additionalPrice PriceInfo[]
-    membershipIds   String[]             @default([])
-    createdAt       DateTime?            @default(now())
-    updatedAt       DateTime?
+    id                 String                   @default(uuid())
+    name               LocalizedData[]
+    summary            LocalizedData[]
+    description        LocalizedData[]
+    condition          String?
+    conditionValue     String?
+    inputType          String?
+    minAmount          Float?
+    maxAmount          Float?
+    options            ProductAddonOption[]
+    configurations     OptionConfiguration[]
+    dependencies       AddonDependency[]
+    checkCalendar      Boolean?
+    calendarId         String?                  @db.ObjectId
+    isProduct          Boolean                  @default(false)
+    isDateRange        Boolean                  @default(false)
+    productIds         String[]                 @default([])
+    productOptionInfos AddonProductOptionInfo[]
+    tag                String[]                 @default([])
+    isActive           Boolean                  @default(true)
+    isRequired         Boolean                  @default(false)
+    additionalPrice    PriceInfo[]
+    includeOnPOS       Boolean                  @default(true)
+    includeInBundle    Boolean                  @default(true)
+    membershipIds      String[]                 @default([])
+    createdAt          DateTime?                @default(now())
+    updatedAt          DateTime?
 }
 
 type ProductAddonOption {
-    id     String          @default(uuid())
-    name   LocalizedData[]
-    images String[]        @default([])
+    id            String          @default(uuid())
+    name          LocalizedData[]
+    images        String[]        @default([])
+    membershipIds String[]        @default([])
+    price         PriceInfo[]
+    maxSelection  Int             @default(1)
+    addresses     Address[]
+}
+
+type AddonDependency {
+    id      String   @default(uuid())
+    addonId String?
+    type    String
+    value   String[]
+}
+
+type OptionConfiguration {
+    forType String
+    uiType  String
+    row     Int
+}
+
+type AddonProductOptionInfo {
+    productId String
+    discounts Discount[]
+    minQty    Float
+    maxQty    Float
 }
 
 type PaymentOption {
@@ -266,6 +339,7 @@ type PaymentOption {
     description        LocalizedData[]
     type               String
     upfrontPayment     Float?          @default(0)
+    payLaterMessage    LocalizedData[]
     upfrontPaymentType String?
     dueAfterDays       Int?
     dueDate            DateTime?
@@ -300,6 +374,8 @@ type Address {
     address   String?
     city      String
     location  String?
+    latitude  Float?
+    longitude Float?
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now())
 }
@@ -321,10 +397,24 @@ type BusinessSection {
     description LocalizedData[]
     categoryId  String?
     productIds  String[]        @default([]) @db.ObjectId
+    bundleIds   String[]        @default([]) @db.ObjectId
     images      String[]        @default([])
     orderAddons ProductAddon[]
     createdAt   DateTime        @default(now())
     updatedAt   DateTime        @default(now())
+}
+
+type ServiceOverview {
+    id              String          @default(uuid())
+    title           LocalizedData[]
+    description     LocalizedData[]
+    callToAction    LocalizedData[]
+    callToActionUrl String?
+    gallery         Gallery?
+    isActive        Boolean         @default(true)
+    featured        Boolean         @default(false)
+    createdAt       DateTime        @default(now())
+    updatedAt       DateTime?
 }
 
 type GalleryData {
@@ -345,7 +435,65 @@ type Discount {
     type           String
     value          Float?
     condition      String
-    conditionValue Float?
+    conditionValue String?
     startDate      DateTime?
     endDate        DateTime?
+}
+
+type BusinessOrderStatus {
+    id          String          @default(uuid())
+    status      LocalizedData[]
+    description LocalizedData[]
+    isDefault   Boolean?        @default(false)
+    sequence    Int             @default(0)
+}
+
+model LoyaltyTier {
+    id                String          @id @default(auto()) @map("_id") @db.ObjectId
+    name              LocalizedData[]
+    description       LocalizedData[]
+    minPoints         Int             @default(1)
+    maxPoints         Int             @default(1000)
+    rewards           RewardUpdated[]
+    businessIds       String[]
+    productIds        String[]
+    customerLoyaltyId String?         @db.ObjectId
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime        @updatedAt
+}
+
+type RewardUpdated {
+    id                String          @default(uuid())
+    name              LocalizedData[]
+    description       LocalizedData[]
+    minPointsToRedeem Int?
+    businessIds       String[]
+    rewardTypes       String[]
+    applyOnAddon      Boolean         @default(false)
+    rewardInfo        RewardInfo[]
+    isActive          Boolean         @default(true)
+    createdAt         DateTime        @default(now())
+    updatedAt         DateTime?
+}
+
+type RewardInfo {
+    id                 String              @default(uuid())
+    discount           Discount?
+    deliveryRewardInfo DeliveryRewardInfo?
+    products           RewardProductInfo[]
+}
+
+type RewardProductInfo {
+    id        String    @default(uuid())
+    productId String
+    minQty    Float     @default(1)
+    maxQty    Float     @default(10)
+    discount  Discount?
+}
+
+type DeliveryRewardInfo {
+    id                String          @default(uuid())
+    description       LocalizedData[]
+    minPurchaseAmount Float           @default(0)
+    discount          Discount?
 }

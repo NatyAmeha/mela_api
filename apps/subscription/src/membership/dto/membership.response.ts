@@ -5,6 +5,7 @@ import { MembershipProduct } from "../model/membership_product.model";
 import { Subscription } from "../../model/subscription.model";
 import { GroupMember } from "../model/group.model";
 
+
 @ObjectType()
 @Directive('@shareable')
 export class MembershipResponse extends BaseResponse {
@@ -14,6 +15,9 @@ export class MembershipResponse extends BaseResponse {
     memberships?: Membership[]
     @Field(type => [MembershipProduct])
     products?: MembershipProduct[]
+
+    @Field(type => [GroupMember])
+    modifiedMembers?: GroupMember[]
 
     @Field(type => Subscription)
     currentUserSubscription?: Subscription
@@ -49,6 +53,12 @@ export class MembershipResponseBuilder extends BaseResponseBuilder {
     withCurrentUserSubscription(currentUserSubscription?: Subscription): MembershipResponseBuilder {
         this.response.success = true;
         this.response.currentUserSubscription = currentUserSubscription;
+        return this;
+    }
+
+    withModifiedMembers(modifiedMembers: GroupMember[]): MembershipResponseBuilder {
+        this.response.success = true;
+        this.response.modifiedMembers = modifiedMembers;
         return this;
     }
 

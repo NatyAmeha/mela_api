@@ -1,7 +1,7 @@
 import { LocalizedFieldInput } from "@app/common/model/localized_model";
 import { Field, Float, InputType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
-import { ArrayNotEmpty, IsNotEmpty, IsNumber, ValidateNested } from "class-validator";
+import { ArrayNotEmpty, IsNotEmpty, IsNumber, ValidateNested, ValidateIf } from "class-validator";
 import { CreateOrderConfigInput } from "./order_config.input";
 import { PriceInput } from "@app/common/model/price.model";
 
@@ -48,7 +48,7 @@ export class CreateOrderItemInput {
 @InputType()
 export class OrderItemDiscountInput {
     @Field(types => [LocalizedFieldInput])
-    name: LocalizedFieldInput[]
+    name?: LocalizedFieldInput[]
     @Field(types => Float)
     amount: number
 
@@ -74,7 +74,10 @@ export class OrderPaymentMethodInput {
     requireReceiptImage: boolean
 
     @Field(types => [String])
+    @ValidateIf(o => o.requireReceiptImage === true)
+    @ArrayNotEmpty({ message: 'Receipt images are required when requireReceiptImage is true' })
     receiptImages?: string[]
+
     constructor(partial) {
         Object.assign(this, partial);
     }

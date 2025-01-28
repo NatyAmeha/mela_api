@@ -20,4 +20,9 @@ export class BaseResponseBuilder {
         this.baseResponse.message = message
         return this.baseResponse;
     }
+
+    withSuccess<T extends BaseResponseBuilder>(): T {
+        this.baseResponse.success = true;
+        return this as unknown as T;
+    }
 }

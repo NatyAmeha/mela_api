@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { Injectable, OnModuleDestroy, OnModuleInit, Scope } from "@nestjs/common";
 import { Membership } from "../model/memberhip.model";
 import { PrismaClient } from '@prisma/client'
 import { Group, GroupMember, GroupMemberStatus } from "../model/group.model";
@@ -7,9 +7,10 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { keyBy, result, uniq, uniqBy, update } from "lodash";
 import { Subscription } from "../../model/subscription.model";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
+import { PaymentMethod } from "../../model/payment_method";
 
 export interface IMembershipRepository {
-    createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[]): Promise<Membership>
+    createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Membership>
     updateMembershipPlan(planId: string, membershipInfo: Partial<Membership>): Promise<boolean>
     getBusinessMembershipPlans(businessId: string): Promise<Membership[]>
     getMembershipPlan(planId: string): Promise<Membership>
@@ -23,12 +24,12 @@ export interface IMembershipRepository {
     assignProductstoMembershipPlan(planId: string, productIds: string[]): Promise<boolean>
     unassignProductsFromMembershipPlan(planId: string, productIds: string[]): Promise<boolean>
 
-    getDefaultGroupsForMembership(membershipId: string): Promise<Group[]>
-    joinGroups(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean>
-    leaveGroups(groupIds: string[], userIds: string[]): Promise<boolean>
-    updateGroupMembersInfos(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean>
+    getDefaultGroupsForMembership(membershipId: string, { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<Group[]>
+    joinGroups(groupIds: string[], membersInfo: GroupMember[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<boolean>
+    leaveGroups(groupIds: string[], userIds: string[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<boolean>
+    updateGroupMembersInfos(groupIds: string[], membersInfo: GroupMember[], { transactionClient }?: { transactionClient?: PrismaClient | undefined }): Promise<boolean>
 
-    approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription): Promise<boolean>
+    approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription, paymentMethod?: PaymentMethod): Promise<GroupMember[]>
 
     getUserMemberships(userId: string): Promise<Membership[]>
 
@@ -49,10 +50,10 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         await this.$connect();
     }
 
-    async createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[]): Promise<Membership> {
+    async createMembershipPlan(membershipInfo: Membership, defaultGroups: Group[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Membership> {
         try {
             const { groups, groupsId, subscriptions, subscriptionsId, ...resetMembershipInfo } = membershipInfo
-            const createResult = await this.membership.create({
+            const createResult = await (transactionClient || this).membership.create({
                 data: {
                     ...resetMembershipInfo, groups: {
                         createMany: {
@@ -126,8 +127,8 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
 
     async createGroup(groupInfo: Group): Promise<Group> {
         try {
-            const { members, membership, membershipId, ...resetGroupInfo } = groupInfo
-            const createResult = await this.group.create({ data: resetGroupInfo })
+            const { members, membership, membershipId, ...restGroupInfo } = groupInfo
+            const createResult = await this.group.create({ data: { ...restGroupInfo, membership: { connect: { id: membershipId } } } })
             if (!createResult.id) {
                 throw new PrismaException({ message: "Unable to create group", statusCode: 400 })
             }
@@ -198,38 +199,49 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         }
     }
 
-    async getDefaultGroupsForMembership(membershipId: string): Promise<Group[]> {
+    async getDefaultGroupsForMembership(membershipId: string, { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<Group[]> {
         try {
-            const defaultGroups = await this.group.findMany({ where: { membershipId, default: true } })
+            const defaultGroups = await (transactionClient || this).group.findMany({ where: { membershipId, default: true } })
             return defaultGroups.map(group => new Group({ ...group }))
         } catch (ex) {
             throw new PrismaException({ message: " Unable to get default groups for membership", exception: ex })
         }
     }
 
-    async joinGroups(groupIds: string[], membersInfo: GroupMember[]): Promise<boolean> {
+    async joinGroups(groupIds: string[], membersInfo: GroupMember[], { transactionClient }: { transactionClient?: PrismaClient | undefined } = {}): Promise<boolean> {
         try {
-            const transactionResult = await this.$transaction(async (prisma) => {
-                const result = await Promise.all(groupIds.map(async groupId => {
-                    const groupResult = await prisma.group.findUnique({ where: { id: groupId } })
-                    if (groupResult) {
-                        const uniqMembers = uniqBy([...groupResult.members, ...membersInfo], (member) => member.userId)
-                        return prisma.group.update({
-                            where: { id: groupId },
-                            data: {
-                                members: {
-                                    set: uniqMembers
-                                }
+            await this.$transaction(async (prisma) => {
+                await Promise.all(groupIds.map(async groupId => {
+                    const groupResult = await prisma.group.findUnique({ where: { id: groupId } });
+                    if (!groupResult) return;
+
+                    // Merge existing and new members, preferring new member info when there's overlap
+                    let allMembers = groupResult.members.map(member => new GroupMember({ ...member }));
+                    membersInfo.forEach(newMember => {
+                        const existingIndex = allMembers.findIndex(m => m.userId === newMember.userId);
+                        if (existingIndex >= 0) {
+                            allMembers[existingIndex] = newMember;
+                        } else {
+                            allMembers.push(newMember);
+                        }
+                    });
+
+                    // Update group with unique members
+                    console.log("all members", allMembers)
+                    return prisma.group.update({
+                        where: { id: groupId },
+                        data: {
+                            members: {
+                                set: uniqBy(allMembers, 'userId')
                             }
-                        })
-                    }
-                }))
-                return result;
+                        }
+                    });
+                }));
             });
-            return true
+            return true;
         } catch (ex) {
             console.log("error", ex);
-            throw new PrismaException({ message: " Unable to join groups", exception: ex })
+            throw new PrismaException({ message: "Unable to join groups", exception: ex });
         }
     }
 
@@ -267,6 +279,7 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
                     const groupResult = await prisma.group.findUnique({ where: { id: groupId } })
                     if (groupResult) {
                         const updatedMembers = groupResult.members.map(member => {
+                            console.log("group group result", groupIds, membersInfo)
                             const updatedMemberInfo = membersInfo.find(m => m.userId == member.userId)
                             if (updatedMemberInfo) {
                                 return { ...member, ...updatedMemberInfo }
@@ -295,8 +308,9 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         }
     }
 
-    async approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription): Promise<boolean> {
+    async approveUserMembershipRequest(membershipId: string, userIds: string[], subscriptionInfo: Subscription, paymentMethod?: PaymentMethod): Promise<GroupMember[]> {
         try {
+            console.log("membershipId", membershipId, "userIds", userIds, "subscriptionInfo", subscriptionInfo, "paymentMethod", paymentMethod)
             const transactionResult = await this.$transaction(async (prisma) => {
                 const { plan, subscriptioinPlanId, ...resetSubscriptionInfo } = subscriptionInfo
                 const subscriptionCreateResult = await prisma.subscription.create({ data: { ...resetSubscriptionInfo } });
@@ -306,14 +320,14 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
                 const groupResult = await prisma.group.findMany({ where: { membershipId: membershipId } })
                 if (groupResult) {
                     const groupIds = groupResult.map(group => group.id)
-                    const membersInfo = GroupMember.getGroupMembers(userIds, GroupMemberStatus.ACTIVE, subscriptionCreateResult.id)
+                    const membersInfo = GroupMember.getGroupMembers({ userId: userIds, memberStatus: GroupMemberStatus.ACTIVE, activeSubscriptionId: subscriptionCreateResult.id, paymentMethod: paymentMethod })
                     const groupJoinResult = await this.updateGroupMembersInfos(groupIds, membersInfo)
-                    return groupJoinResult
+                    return membersInfo
                 }
 
-                return false;
+                return [];
             });
-            return true
+            return transactionResult;
         } catch (ex) {
             console.log("error", ex);
             throw new PrismaException({ message: " Unable to approve user membership request", exception: ex })
@@ -340,7 +354,8 @@ export class MembershipRepository extends PrismaClient implements OnModuleInit, 
         const allMembers = userGroups.map(group => group.members).flat()
         const uniqueMembers = uniq(allMembers) as GroupMember[]
         const groupMembers = uniqueMembers.map(member => new GroupMember({ ...member }))
-        const activeSubscription = await this.subscription.findMany({ where: { id: { in: groupMembers.map(member => member.activeSubscriptionId) } } })
+        const membersActiveSubscriptionIds = groupMembers.map(member => member.activeSubscriptionId).filter(id => id != null)
+        const activeSubscription = await this.subscription.findMany({ where: { id: { in: membersActiveSubscriptionIds } } })
         const subscriptionMap = keyBy(activeSubscription, 'id')
         groupMembers?.forEach(member => {
             member.activeSubscription = new Subscription({ ...subscriptionMap[member.activeSubscriptionId] })

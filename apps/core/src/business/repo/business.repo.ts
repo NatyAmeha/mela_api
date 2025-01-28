@@ -5,11 +5,12 @@ import { RequestValidationException } from "@app/common/errors/request_validatio
 import { PrismaException } from "@app/common/errors/prisma_exception";
 import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { BusinessResponse, BusinessResponseBuilder } from "../model/business.response";
-import { includes, isEqual, uniq, uniqBy, uniqWith } from "lodash";
+import { includes, isEqual, isNil, omitBy, uniq, uniqBy, uniqWith } from "lodash";
 import { BusinessSection } from "../model/business_section.model";
 import { PaymentOption } from "../model/payment_option.model";
 import { Stat } from "../../product/model/product_stat.model";
 import { QueryHelper } from "@app/common/datasource_helper/query_helper";
+import { ServiceOverview } from "../model/service_overview.model";
 export interface IBusinessRepository {
     createBusiness(data: Business): Promise<Business>;
     getBusinessByWorkspaceUrl(workspaceUrl: string): Promise<Business>;
@@ -35,6 +36,11 @@ export interface IBusinessRepository {
     updateBusinessStats(businessId: string, stats: Partial<Stat>): Promise<boolean>
 
     queryBusinesses(queryHelper: QueryHelper<Business>): Promise<Business[]>
+
+
+    addServiceOverviewsToBusiness(businessId: string, serviceOverviews: ServiceOverview[]): Promise<ServiceOverview[]>
+    removeServiceOverviewsFromBusiness(businessId: string, overviewIds: string[]): Promise<boolean>
+    updateServiceOverview(businessId: string, serviceOverviewId: string, serviceOverview: Partial<ServiceOverview>): Promise<ServiceOverview>
 }
 
 export class BusinessRepository extends PrismaClient implements OnModuleInit, OnModuleDestroy, IBusinessRepository {
@@ -46,6 +52,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     async updateBusinessStats(businessId: string, stats: Partial<Stat>): Promise<boolean> {
         try {
             const result = await this.business.update({ where: { id: businessId }, data: { totalViews: stats.totalViews } });
+            // throw new Error("test")
             return true;
         } catch (error) {
             console.log("error", error)
@@ -54,17 +61,22 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     }
 
     async createBusiness(data: Business): Promise<Business> {
-        const { branches, staffs, products, bundles, ...businessData } = data;
-        var result = await this.business.create({ data: { ...businessData } });
+        const { branches, staffs, calendars, products, bundles, bundleIds, mainAddress, ...businessData } = data;
+        var result = await this.business.create({ data: { ...businessData, mainAddress: { address: mainAddress.address, city: mainAddress.city, location: mainAddress.location, latitude: mainAddress.latitude, longitude: mainAddress.longitude } } });
         return new Business({ ...result })
     }
 
     async getBusinessByWorkspaceUrl(workspaceUrl: string): Promise<Business> {
-        const business = await this.business.findUnique({ where: { workspaceUrl: workspaceUrl } });
-        if (!business) {
-            throw new RequestValidationException({ message: "Business not found" });
+        try {
+            const business = await this.business.findUnique({ where: { workspaceUrl: workspaceUrl } });
+            if (!business) {
+                throw new RequestValidationException({ message: "Business not found" });
+            }
+            return new Business({ ...business });
+        } catch (error) {
+            console.log(error)
+            throw new PrismaException({ source: "Get business by workspace", statusCode: 400, code: error.code, meta: error.meta });
         }
-        return new Business({ ...business });
     }
 
     async createBusinessSection(businessId: string, newSections: BusinessSection[]): Promise<BusinessResponse> {
@@ -98,7 +110,6 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
     async removeBusinessSection(businessId: string, sectionIds: string[]): Promise<BusinessResponse> {
         try {
             const business = await this.business.findUnique({ where: { id: businessId } });
-            console.log("business info", business.name);
             if (!business) {
                 return new BusinessResponseBuilder().withError(CommonBusinessErrorMessages.BUSINESS_NOT_FOUND);
             }
@@ -124,6 +135,7 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             }
             return new Business({ ...businessInfo });
         } catch (error) {
+            console.log("error", error)
             throw new PrismaException({ source: "Remove business section", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
@@ -142,7 +154,8 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             const businesses = await this.business.findMany({ where: { id: { in: businessIds } } });
             return businesses.map(business => new Business({ ...business }));
         } catch (ex) {
-            throw new PrismaException({ source: "Find businesses by id", statusCode: 400, code: ex.code, meta: ex.meta });
+            console.log("find businesses by id error", businessIds, ex)
+            throw new PrismaException({ source: "Find businesses by id, ", statusCode: 400, code: ex.code, meta: ex.meta });
         }
     }
 
@@ -152,8 +165,8 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             if (!businessInfo) {
                 throw new RequestValidationException({ message: "Business not found" });
             }
-            const { branches, products, staffs, bundles, ...businessData } = updatedBusinessData;
-            var result = await this.business.update({ where: { id: businessId }, data: { ...businessData } });
+            const { branches, products, calendars, staffs, bundles, bundleIds, mainAddress, ...businessData } = updatedBusinessData;
+            var result = await this.business.update({ where: { id: businessId }, data: { ...businessData, mainAddress: { update: { ...mainAddress } } } });
             if (!result.id) {
                 throw new RequestValidationException({ message: "Business not updated" });
             }
@@ -334,6 +347,77 @@ export class BusinessRepository extends PrismaClient implements OnModuleInit, On
             return businesses.map(business => new Business({ ...business }));
         } catch (ex) {
             throw new PrismaException({ source: "Find businesses", statusCode: 400, code: ex.code, meta: ex.meta });
+        }
+    }
+
+
+    async addServiceOverviewsToBusiness(businessId: string, serviceOverviews: ServiceOverview[]): Promise<ServiceOverview[]> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: "Business not found" });
+            }
+
+            const existingServiceOverviews = business.serviceOverviews;
+            const result = await this.business.update({ where: { id: businessId }, data: { serviceOverviews: { push: serviceOverviews } } });
+            const businessInfo = new Business({ ...result });
+            const newlyAddedServiceOverviews = businessInfo.serviceOverviews.filter(
+                overview => !existingServiceOverviews.find(existing => existing.id === overview.id)
+            );
+            return newlyAddedServiceOverviews;
+        } catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            throw new PrismaException({ source: "Add service overviews to business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async removeServiceOverviewsFromBusiness(businessId: string, overviewIds: string[]): Promise<boolean> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: "Business not found" });
+            }
+            const remainingServiceOverviews = business.serviceOverviews.filter((overview) => !overviewIds.includes(overview.id));
+            const result = await this.business.update({ where: { id: businessId }, data: { serviceOverviews: { set: remainingServiceOverviews } } });
+            return true;
+        } catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            throw new PrismaException({ source: "Remove service overviews from business", statusCode: 400, code: error.code, meta: error.meta });
+        }
+    }
+
+    async updateServiceOverview(businessId: string, serviceOverviewId: string, serviceOverview: Partial<ServiceOverview>): Promise<ServiceOverview> {
+        try {
+            const business = await this.business.findUnique({ where: { id: businessId } });
+            if (!business) {
+                throw new RequestValidationException({ message: "Business not found" });
+            }
+            const businessData = new Business({ ...business });
+            const updatedServiceOverviews = businessData.serviceOverviews.map((overview) => {
+                if (overview.id == serviceOverviewId) {
+                    // Use lodash's omitBy to remove undefined values
+                    const filteredUpdates = omitBy(serviceOverview, isNil);  // isNil checks for both undefined and null
+                    return {
+                        ...overview,
+                        ...filteredUpdates,
+                        id: overview.id
+                    };
+                }
+                return overview;
+            });
+            const result = await this.business.update({ where: { id: businessId }, data: { serviceOverviews: updatedServiceOverviews } });
+            const businessInfo = new Business({ ...result });
+            const updatedOverview = businessInfo.serviceOverviews.find((overview) => overview.id === serviceOverviewId);
+            return updatedOverview;
+        } catch (error) {
+            if (error instanceof RequestValidationException) {
+                throw error;
+            }
+            throw new PrismaException({ source: "Update service overview", statusCode: 400, code: error.code, meta: error.meta });
         }
     }
 

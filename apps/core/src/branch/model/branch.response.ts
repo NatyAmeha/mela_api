@@ -38,11 +38,13 @@ export class BranchResponseBuilder extends BaseResponseBuilder {
     }
 
     withProducts(products: Product[]): BranchResponseBuilder {
+        this.branchResponse.success = true;
         this.branchResponse.products = products;
         return this;
     }
 
     withBranches(branches: Branch[]): BranchResponseBuilder {
+        this.branchResponse.success = true;
         this.branchResponse.branches = branches;
         return this;
     }

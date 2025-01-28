@@ -8,7 +8,7 @@ import { IMessageBrockerResponse } from "libs/rmq/message_brocker.response";
 import { Injectable } from "@nestjs/common";
 import { AccessQueryMetadata, AccessRenewalInfo } from "../authorization/model/revoke_access.metadata";
 import { AccessResponse } from "../authorization/model/acces.response";
-import { User } from "../auth/model/user.model";
+import { AccountType, User } from "../auth/model/user.model";
 import { AuthService } from "../auth/usecase/auth.service";
 import { access } from "fs";
 import { plainToClass } from "class-transformer";
@@ -52,16 +52,16 @@ export class AuthMsgProcessosor implements IReceivedMessageProcessor {
                     replyResponse.data = <AccessResponse>{ deleteAccessCount: revokeResult.deleteAccessCount, accesses: createResult.accesses }
                 }
                 else if (messageResult.properties.correlationId == AuthServiceMessageType.CREATE_STAFF_USER_AND_ASSIGN_ACCESS) {
-                    let userAndAcessInfo = plainToClass(User, messageContent,)
-                    let userResultResponse = await this.authService.createOrGetUserAccountUsingEmailPassword(userAndAcessInfo)
+                    let userAndAcessInfo = plainToClass(User, messageContent)
+                    userAndAcessInfo.accountType = AccountType.STAFF
+                    console.log('user access ', userAndAcessInfo)
+                    let userResultResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(userAndAcessInfo)
                     if (userResultResponse.success) {
-                        console.log('user access ', userAndAcessInfo.accesses)
                         userAndAcessInfo.assignOwnerToAccess(userResultResponse.user.id);
                         let assignAccessResult = await this.authorizationService.createAccess(userAndAcessInfo.accesses)
                         replyResponse.success = assignAccessResult.isSafeErrorIfExist();
                         replyResponse.data = assignAccessResult;
                     }
-
                 }
             }
             if (canAckMessage) {

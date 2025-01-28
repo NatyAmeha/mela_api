@@ -8,13 +8,12 @@ import { AuthResponse } from './model/auth.response';
 import { AppException } from '@app/common/errors/app_exception.model';
 import { JwtGuard, JwtRefreshGuard } from './service/guard/jwt.gurad';
 import { CurrentUser } from '../../../../libs/common/get_user_decorator';
-import { UpdateUserInput } from './dto/update_user.input';
-import { boolean } from 'joi';
 import { AuthzGuard, Role, RoleGuard } from 'libs/common/authorization.guard';
+import { AuthorizationService } from '../authorization';
 
 @Resolver(of => User)
 export class AuthResolver {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService, private authorizationService: AuthorizationService) { }
 
   @Query(returns => User, { name: "placeholder" })
   getUser(): User {
@@ -26,6 +25,23 @@ export class AuthResolver {
     var userInfo = User.createUserFromSignupInfo(signupInfo);
     var result = await this.authService.createUserAccountUsingEmailPassword(userInfo);
     return result;
+  }
+
+  @Mutation(returns => AuthResponse)
+  async createOrAuthenticateUsingGoogle(@Args("signup") signupInfo: SignupInput): Promise<AuthResponse | AppException> {
+    var userInfo = User.createUserFromSignupInfo(signupInfo);
+    var result = await this.authService.createAccountUsingGoogle(userInfo);
+    return result;
+  }
+
+  @Query(returns => AuthResponse)
+  async authenticateUsingGoogleId(@Args("googleId") googleId: string): Promise<AuthResponse> {
+    return await this.authService.authenticateUsingGoogleId(googleId);
+  }
+
+  @Query(returns => AuthResponse)
+  async authenticateWithGoogleId(@Args("googleId") googleId: string): Promise<AuthResponse> {
+    return await this.authService.authenticateUsingGoogleId(googleId);
   }
 
   // @UseGuards(AuthzGuard)
@@ -46,9 +62,20 @@ export class AuthResolver {
   }
 
   @Mutation(returns => AuthResponse)
-  async signInWithPhoneNumber(@Args("phone") phone: string): Promise<AuthResponse> {
-    var userInfo = User.createUserInfoForPhoneAuth(phone)
+  async signInWithPhoneNumber(@Args("phone") phone: string, @Args({ name: "googleId", nullable: true }) googleId: string): Promise<AuthResponse> {
+    var userInfo = User.createUserInfoForPhoneAuth(phone, AccountType.USER, googleId)
     var authResponse = await this.authService.registerOrAuthenticateUsingPhoneNumber(userInfo);
+    return authResponse;
+  }
+
+  @Mutation(returns => AuthResponse)
+  async generateTokenForStaff(@Args("phoneNumber") phoneNumber: string): Promise<AuthResponse> {
+    var authResponse = await this.authService.getTokenForStaff(phoneNumber);
+    if (authResponse.isUserExist()) {
+      const accesses = await this.authorizationService.getAllUserAccesses(authResponse.user.id)
+      authResponse.accesses = accesses
+    }
+
     return authResponse;
   }
 

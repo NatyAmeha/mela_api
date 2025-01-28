@@ -18,16 +18,16 @@ export class Subscription extends BaseModel {
     @Field(type => ID)
     id?: string
     @Field(type => Date)
-    startDate: Date
+    startDate?: Date
     @Field(type => Date)
-    endDate: Date
+    endDate?: Date
     @Field(types => Float, { defaultValue: 0 })
     amountPaid?: number
     @Field()
     subscriptioinPlanId?: string
-    @Field()
-    isTrialPeriod: boolean
-    @Field(type => SubscriptionType)
+    @Field({ defaultValue: false })
+    isTrialPeriod?: boolean
+    @Field(type => String, { nullable: true })
     type: string
     @Field()
     subscribedTo?: string

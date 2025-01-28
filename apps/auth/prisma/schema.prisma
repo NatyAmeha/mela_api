@@ -4,7 +4,7 @@
 generator client {
   provider      = "prisma-client-js"
   output        = "./generated/prisma_auth_client"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x"]
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "darwin", "debian-openssl-1.1.x", "linux-arm64-openssl-1.1.x", "windows"]
 }
 
 datasource db {
@@ -15,10 +15,11 @@ datasource db {
 model User {
   id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
   email                 String?                @unique @default(uuid())
-  phoneNumber           String?                @unique @default(uuid())
+  phoneNumber           String?                @default(uuid())
   username              String?                @unique @default(uuid())
   firstName             String?
   lastName              String?
+  googleId              String?
   password              String?
   profileImageUrl       String?
   refreshToken          String?
@@ -33,6 +34,8 @@ model User {
   dateCreated           DateTime               @default(now())
   dateUpdated           DateTime               @default(now())
   favoriteBusinesses    FavoriteBusinessInfo[]
+
+  @@unique([phoneNumber, accountType])
 }
 
 model Access {

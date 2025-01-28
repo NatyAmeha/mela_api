@@ -28,7 +28,6 @@ export class DiscoverService {
         const topProducts = await this.getTopProductsFromUserFavoriteBusinesses(userFavoriteBusinessIds, limit);
         const favoriteBusinesses = await this.businessRepo.findBusinessesById(userFavoriteBusinessIds);
         const topBusinessBundles = await this.getTopBusinessBundles(userFavoriteBusinessIds, limit);
-        console.log('topBusinessBundles', topBusinessBundles)
         const result = new ForYouResponseBuilder().withTopProductsByBusiness(topProducts).withFavoriteBusinesses(favoriteBusinesses).withBundles(topBusinessBundles).build();
         return result;
     }
@@ -62,7 +61,7 @@ export class DiscoverService {
         const businesses = await this.businessRepo.findBusinessesById(businessIds);
         const topProductResponse = await Promise.all(
             businesses.map(async (business) => {
-                let businessProducts = await this.productRepo.getBusinessTopProducts(business.id, { limit: limit });
+                let businessProducts = await this.productRepo.getBusinessTopProducts(business.id, { query: { mainProduct: true }, limit: limit });
                 // const businessProductsWithPrice = await this.productService.addSelectedPricesToProducts(businessProducts, {});
                 let discoverResponse = ProductDiscovery.toDiscoverResponse({ lcoalizedField: business.name, items: businessProducts, selectedLanguage: LanguageKey.ENGLISH, discoverType: DiscoverTypes.TOP_BUSINESS_PRODUCTS, sequence: 0 });
                 return discoverResponse;

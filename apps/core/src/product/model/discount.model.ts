@@ -15,7 +15,8 @@ export enum DiscountCondition {
     MAXIMUM_PURCHASE = "MAXIMUM_PURCHASE",
     TIME_BASED = "TIME_BASED",
     QUANTITY = "QUANTITY",
-    FIRST_TIME_PURCHASE = "FIRST_TIME_PURCHASE"
+    FIRST_TIME_PURCHASE = "FIRST_TIME_PURCHASE",
+    PRODUCT_ADDON = "PRODUCT_ADDON"
 
 }
 
@@ -32,8 +33,8 @@ export class Discount {
     value: number
     @Field(types => String, { defaultValue: DiscountCondition.NONE.toString() })
     condition: string
-    @Field(types => Float)
-    conditionValue?: number
+    @Field(types => String)
+    conditionValue?: string
     @Field(types => Date)
     startDate?: Date
     @Field(types => Date)

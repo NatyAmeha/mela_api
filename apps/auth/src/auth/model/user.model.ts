@@ -11,7 +11,9 @@ import { Type } from "class-transformer";
 export enum AccountType {
     USER = "USER",
     ADMIN = "ADMIN",
-    SUPERADMIN = "SUPPERADMIN"
+    SUPERADMIN = "SUPPERADMIN",
+    STAFF = "STAFF",
+    BUSINESS_OWNER = "BUSINESS_OWNER"
 }
 
 registerEnumType(AccountType, {
@@ -28,6 +30,9 @@ export class User extends BaseModel {
     email?: string
     @Field()
     phoneNumber?: string
+    @Field()
+    googleId?: string
+
     @Field()
     username?: string
     @Field()
@@ -75,16 +80,24 @@ export class User extends BaseModel {
 
     static createUserFromSignupInfo(signupInfo: SignupInput) {
         return new User({
-            email: signupInfo.email, phoneNumber: signupInfo.phoneNumber, firstName: signupInfo.firstName, lastName: signupInfo.lastName,
-            password: signupInfo.password, profileImageUrl: signupInfo.profileImageUrl,
-            accountStatus: AccountStatus.PENDING
+            email: signupInfo.email,
+            phoneNumber: signupInfo.phoneNumber,
+            firstName: signupInfo.firstName,
+            lastName: signupInfo.lastName,
+            password: signupInfo.password,
+            profileImageUrl: signupInfo.profileImageUrl,
+            accountStatus: AccountStatus.ACTIVE,
+            accountType: AccountType.USER,
+            googleId: signupInfo.googleId,
         })
     }
 
-    static createUserInfoForPhoneAuth(phone: string) {
+    static createUserInfoForPhoneAuth(phone: string, accountType: AccountType, googleId?: string) {
         return new User({
             phoneNumber: phone,
-            isEmailPlaceholder: true
+            isEmailPlaceholder: true,
+            accountType: accountType,
+            googleId: googleId
         })
     }
 
@@ -95,6 +108,7 @@ export class User extends BaseModel {
             accesses: this.accesses,
             phoneNumber: this.phoneNumber,
             email: this.email,
+            profileImageUrl: this.profileImageUrl,
             // refreshToken: this.refreshToken,
         }
     }

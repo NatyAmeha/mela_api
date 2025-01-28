@@ -5,4 +5,6 @@ export class AuthInfo {
     email?: string
     password?: string
     phoneNumber?: string
+    googleId?: string
+    accountType?: string
 }

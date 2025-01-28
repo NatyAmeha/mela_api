@@ -16,10 +16,23 @@ import { ProductAddon } from "./product_addon.model";
 import { ProductPrice } from "./product_price.model";
 import { Discount } from "./discount.model";
 import { Membership } from "apps/subscription/src/membership/model/memberhip.model";
+import { SearchResult, SearchType } from "../../search/model/search.model";
+import { Calendar } from "../../calendar/model/calendar.model";
+
+
+@ObjectType()
+@Directive('@shareable')
+export class ProductFeaturedInfo {
+    @Field()
+    featured?: boolean
+    @Field(types => [String])
+    branchIds?: string[]
+}
 
 @ObjectType()
 @Directive('@extends')
 @Directive('@key(fields: "id")')
+@Directive('@shareable')
 export class Product extends BaseModel {
     @Field(types => String)
     id?: string;
@@ -33,6 +46,9 @@ export class Product extends BaseModel {
 
     @Field({ defaultValue: false })
     featured: boolean
+
+    @Field(types => ProductFeaturedInfo)
+    featuredInfo?: ProductFeaturedInfo
 
     @Field(types => [LocalizedField])
     description: LocalizedField[];
@@ -65,8 +81,8 @@ export class Product extends BaseModel {
     @Field(types => [String])
     category: string[];
 
-    @Field(types => ProductType)
-    type: string;
+    @Field(types => ProductType, { defaultValue: "PRODUCT" })
+    type?: string;
 
     @Field(types => Date)
     createdAt?: Date;
@@ -127,6 +143,9 @@ export class Product extends BaseModel {
     @Field(type => [Discount])
     discounts?: Discount[]
 
+    @Field(type => [Calendar])
+    calendars?: Calendar[]
+
 
     // stats
     @Field(types => Int, { defaultValue: 0 })
@@ -164,24 +183,12 @@ export class Product extends BaseModel {
         return this.businessId === businessId;
     }
 
-    static applyFetchedPrices(products: Product[], prices: ProductPrice[]): Product[] {
-        const priceMap = new Map<string, ProductPrice[]>();
-
-        // Group prices by product ID
-        prices.forEach(price => {
-            if (!priceMap.has(price.productId)) {
-                priceMap.set(price.productId, []);
-            }
-            priceMap.get(price.productId)!.push(price);
-        });
-
-        // Apply prices to products
-        return products.map(product => {
-            const productPrices = priceMap.get(product.id);
-            if (productPrices) {
-                product.prices = productPrices;
-            }
-            return product;
+    toSearchResult(): SearchResult {
+        return new SearchResult({
+            id: this.id,
+            type: SearchType.PRODUCT,
+            name: this.name,
+            prices: this.prices?.[0]?.price,
         });
     }
 }

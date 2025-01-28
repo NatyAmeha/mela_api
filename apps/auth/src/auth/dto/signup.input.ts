@@ -6,18 +6,28 @@ import { AccountStatus } from "../model/account_status.enum";
 @InputType()
 export class SignupInput {
     @Field()
+    @IsOptional()
     @IsEmail()
-    email: string
+    email?: string
     @Field()
+    @IsOptional()
     @IsString()
-    phoneNumber: string
+    phoneNumber?: string
     @Field()
+    @IsOptional()
     password?: string
     @Field()
-    firstName: string
+    @IsOptional()
+    firstName?: string
     @Field()
+    @IsOptional()
     lastName?: string
+
     @Field()
+    @IsOptional()
+    googleId?: string
+    @Field()
+    @IsOptional()
     profileImageUrl?: string
 
     createUserFromSignupInfo() {

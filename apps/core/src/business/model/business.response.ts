@@ -8,6 +8,8 @@ import { CommonBusinessErrorMessages } from "../../utils/const/error_constants";
 import { PaymentOption } from "./payment_option.model";
 import { BusinessMembership } from "./business_memership.model";
 import { BusinessSection } from "./business_section.model";
+import { ServiceOverview } from "./service_overview.model";
+import { ProductBundle } from "../../product/model/product_bundle.model";
 
 @ObjectType()
 export class BusinessResponse extends BaseResponse {
@@ -19,10 +21,17 @@ export class BusinessResponse extends BaseResponse {
     products?: Product[]
     @Field(type => [Branch])
     branches?: Branch[]
+    @Field(type => [ProductBundle])
+    bundles?: ProductBundle[]
     @Field(type => [Branch])
     branchAdded?: Branch[]
     @Field(type => [Branch])
     branchUpdated?: Branch[]
+
+    @Field(type => [ServiceOverview])
+    addedServiceOverviews?: ServiceOverview[]
+    @Field(type => [ServiceOverview])
+    updatedServiceOverviews?: ServiceOverview[]
 
 
     @Field(type => [PaymentOption])
@@ -88,6 +97,12 @@ export class BusinessResponseBuilder extends BaseResponseBuilder {
         return this;
     }
 
+    withBundles(bundles: ProductBundle[]): BusinessResponseBuilder {
+        this.response.success = true;
+        this.response.bundles = bundles;
+        return this;
+    }
+
     withBranches(branches: Branch[]): BusinessResponseBuilder {
         this.response.success = true;
         this.response.branches = branches;
@@ -132,6 +147,18 @@ export class BusinessResponseBuilder extends BaseResponseBuilder {
 
     withSections(sections: BusinessSection[]): BusinessResponseBuilder {
         this.response.sections = sections;
+        return this;
+    }
+
+    withAddedServiceOverviews(serviceOverviews: ServiceOverview[]): BusinessResponseBuilder {
+        this.response.success = true;
+        this.response.addedServiceOverviews = serviceOverviews;
+        return this;
+    }
+
+    withUpdatedServiceOverviews(serviceOverviews: ServiceOverview[]): BusinessResponseBuilder {
+        this.response.success = true;
+        this.response.updatedServiceOverviews = serviceOverviews;
         return this;
     }
 

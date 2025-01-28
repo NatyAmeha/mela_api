@@ -355,7 +355,7 @@ export class ProductResolver {
         console.log("product business field resolve")
         return await this.businessService.getProductBusiness(product.id);
     }
-    d
+
     @ResolveField('prices', returns => [ProductPrice])
     async getProductPrices(
         @Parent() product: Product,

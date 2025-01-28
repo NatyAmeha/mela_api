@@ -2,7 +2,7 @@ import { Directive, Field, Float, ID, InputType, ObjectType, OmitType, PartialTy
 import { CurrencyKey } from "./currency.model";
 
 @ObjectType()
-@Directive('@key(fields: "id, amount, currency")')
+@Directive('@shareable')
 export class Price {
     @Field(type => ID)
     id?: string;

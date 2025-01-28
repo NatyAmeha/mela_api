@@ -12,7 +12,7 @@ export class Customer {
     @Field()
     name: string;
     @Field()
-    userId: string;
+    userId?: string;
     @Field()
     businessId: string;
     @Field()
@@ -44,7 +44,7 @@ export class Customer {
 
     static getCurrentUserAsCustomer(user: User, businessId: string): Customer {
         return new Customer({
-            name: user.username,
+            name: user.username ?? user.firstName ?? user.lastName ?? user.email,
             userId: user.id,
             businessId,
             phoneNumber: user.phoneNumber,

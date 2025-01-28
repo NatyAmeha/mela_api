@@ -1,10 +1,10 @@
 import { BaseModel } from "@app/common/model/base.model";
 import { InventoryLocation } from "./inventory_location.model";
-import { Field, Float, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
-import { PriceInfo } from "apps/subscription/src/model/price.model";
+import { Directive, Field, Float, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { CreateInventoryInput } from "../../product/dto/inventory.input";
 import { validate } from "class-validator";
 import { RequestValidationException } from "@app/common/errors/request_validation_exception";
+import { Price } from "@app/common/model/price.model";
 
 export enum ProductUnitType {
     Unit = "Unit",
@@ -14,6 +14,7 @@ export enum ProductUnitType {
 }
 
 @ObjectType()
+@Directive('@shareable')
 export class Inventory extends BaseModel {
     @Field(types => ID)
     id: string;
@@ -21,12 +22,12 @@ export class Inventory extends BaseModel {
     name: string;
     @Field()
     sku: string;
-    @Field(types => [PriceInfo])
-    priceInfo: PriceInfo[];
+    @Field(types => [Price])
+    priceInfo: Price[];
     @Field(types => Float)
     qty: number;
 
-    @Field(types => ProductUnitType, { defaultValue: ProductUnitType.Unit })
+    @Field(type => String, { defaultValue: ProductUnitType.Unit })
     unit?: string;
 
     @Field()

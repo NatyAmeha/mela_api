@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: iimela/mela-auth-service
+          # imagePullPolicy: Never
+          imagePullPolicy: Always
+          # env:
+          #   - name: NODE_ENV
+          #     value: "development"
+          ports:
+            - containerPort: 3002
+          # volumeMounts:
+          #   - name: node-modules
+          #     mountPath: /usr/src/app/node_modules
+          #   - name: app-source
+          #     mountPath: /usr/src/app
+          envFrom:
+            - configMapRef:
+                name: my-app-config
+          resources: # Add resource requests and limits here
+            requests:
+              memory: "128Mi" # Minimum memory the container needs
+              cpu: "100m" # Minimum CPU the container needs
+            limits:
+              memory: "256Mi" # Maximum memory the container can use
+              cpu: "500m"
+      # volumes:
+      #   - name: app-source
+      #     hostPath:
+      #       path: /usr/src/app
+      #   - name: node-modules
+      #     emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - protocol: TCP
+      port: 3002
+      targetPort: 3002
+  type: ClusterIP

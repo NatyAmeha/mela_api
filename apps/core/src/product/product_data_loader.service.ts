@@ -28,7 +28,7 @@ export class ProductPriceLoader {
 }
 
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class ProductInventoryLoader {
     constructor(private readonly inventoryService: InventoryService) { }
 

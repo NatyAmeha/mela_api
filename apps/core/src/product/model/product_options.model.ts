@@ -1,7 +1,8 @@
-import { Field, InputType, ObjectType, PickType } from "@nestjs/graphql"
+import { Directive, Field, InputType, ObjectType, PickType } from "@nestjs/graphql"
 import { ArrayNotEmpty, IsNotEmpty } from "class-validator"
 
 @ObjectType()
+@Directive('@shareable')
 export class Productoption {
     @Field()
     key: string
